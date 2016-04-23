@@ -32,6 +32,8 @@ public class ServerConfiguration {
 
 		QWAZR_DATA,
 
+		QWAZR_ETC,
+
 		LISTEN_ADDR,
 
 		PUBLIC_ADDR,
@@ -77,6 +79,11 @@ public class ServerConfiguration {
 	 */
 	final File dataDirectory;
 
+	/**
+	 * The configuration directory
+	 */
+	final File etcDirectory;
+
 	final Connector webServiceConnector;
 
 	final Connector webAppConnector;
@@ -84,6 +91,7 @@ public class ServerConfiguration {
 	public ServerConfiguration() {
 
 		dataDirectory = buildDataDir(getPropertyOrEnv(null, VariablesEnum.QWAZR_DATA));
+		etcDirectory = buildEtcDir(dataDirectory, getPropertyOrEnv(null, VariablesEnum.QWAZR_ETC));
 
 		webAppConnector = new Connector(PrefixEnum.WEBAPP, 9090);
 		webServiceConnector = new Connector(PrefixEnum.WEBSERVICE, 9091);
@@ -96,6 +104,12 @@ public class ServerConfiguration {
 		if (!StringUtils.isEmpty(path))
 			return new File(path);
 		return new File(System.getProperty("user.dir"));
+	}
+
+	private static File buildEtcDir(File dataDirectory, String path) {
+		if (!StringUtils.isEmpty(path))
+			return new File(path);
+		return new File(dataDirectory, "etc");
 	}
 
 	final protected Integer getPropertyOrEnvInt(PrefixEnum prefix, Enum<?> key, Integer defaultValue) {

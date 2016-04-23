@@ -198,5 +198,12 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		return serverConfiguration.dataDirectory;
 	}
 
+	/**
+	 * @return the etc directory
+	 */
+	public File getCurrentEtcDir() {
+		return serverConfiguration.etcDirectory;
+	}
+
 	protected abstract IdentityManager getIdentityManager(String realm) throws IOException;
 }
