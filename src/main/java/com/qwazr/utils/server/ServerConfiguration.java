@@ -34,6 +34,8 @@ public class ServerConfiguration {
 
 		QWAZR_ETC,
 
+		QWAZR_ETC_DIR,
+
 		LISTEN_ADDR,
 
 		PUBLIC_ADDR,
@@ -91,7 +93,7 @@ public class ServerConfiguration {
 	public ServerConfiguration() {
 
 		dataDirectory = buildDataDir(getPropertyOrEnv(null, VariablesEnum.QWAZR_DATA));
-		etcDirectory = buildEtcDir(dataDirectory, getPropertyOrEnv(null, VariablesEnum.QWAZR_ETC));
+		etcDirectory = buildEtcDir(dataDirectory, getPropertyOrEnv(null, VariablesEnum.QWAZR_ETC_DIR));
 
 		webAppConnector = new Connector(PrefixEnum.WEBAPP, 9090);
 		webServiceConnector = new Connector(PrefixEnum.WEBSERVICE, 9091);
