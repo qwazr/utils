@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 public class AnnotationsUtils {
 
 	public static <A extends Annotation> A getFirstAnnotation(Class<?> clazz, Class<A> annotationClass,
-					Set<Class<?>> checked) {
+	                                                          Set<Class<?>> checked) {
 		if (clazz == null)
 			return null;
 		if (checked.contains(clazz))
@@ -44,7 +44,7 @@ public class AnnotationsUtils {
 	}
 
 	public static <A extends Annotation> A getFirstAnnotation(Class<?>[] classes, Class<A> annotationClass,
-					Set<Class<?>> checked) {
+	                                                          Set<Class<?>> checked) {
 		if (classes == null)
 			return null;
 		for (Class<?> cl : classes) {
@@ -55,28 +55,21 @@ public class AnnotationsUtils {
 		return null;
 	}
 
-	public static void injectRecursive(Object object, Consumer<Field> consumer) {
-		if (object == null)
-			return;
-		injectRecursive(object, object.getClass(), consumer);
-	}
-
-	private static void injectRecursive(Object object, Class<?> clazz, Consumer<Field> consumer) {
+	public static void browseFieldsRecursive(final Class<?> clazz, final Consumer<Field> consumer) {
 		if (clazz == null || clazz.isPrimitive())
 			return;
-		inject(object, clazz.getDeclaredFields(), consumer);
+		browseFields(clazz.getDeclaredFields(), consumer);
 		Class<?> nextClazz = clazz.getSuperclass();
 		if (nextClazz == clazz)
 			return;
-		injectRecursive(object, nextClazz, consumer);
+		browseFieldsRecursive(nextClazz, consumer);
 	}
 
-	private static void inject(Object object, Field[] fields, Consumer<Field> consumer) {
-		if (fields == null)
+	public static void browseFields(final Field[] fields, final Consumer<Field> consumer) {
+		if (fields == null || consumer == null)
 			return;
 		for (Field field : fields)
 			consumer.accept(field);
 	}
-
 
 }
