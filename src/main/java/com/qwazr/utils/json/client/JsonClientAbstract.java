@@ -242,6 +242,13 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 			return this;
 		}
 
+		public UBuilder setParameter(String param, Number value) {
+			if (value == null)
+				return this;
+			super.setParameter(param, value.toString());
+			return this;
+		}
+
 		/**
 		 * Set common parameters for QWAZR services
 		 *

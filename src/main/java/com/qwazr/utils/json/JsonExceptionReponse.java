@@ -65,13 +65,14 @@ public class JsonExceptionReponse {
 		this.stackTraces = cause == null ? null : ExceptionUtils.getStackTraces(cause);
 	}
 
-	public JsonExceptionReponse(int status, String message) {
+	public JsonExceptionReponse(int status, String message, Throwable e) {
 		this.error = null;
 		this.reason_phrase = null;
 		this.status_code = status;
-		this.message = message;
-		this.exception = null;
-		this.stackTraces = null;
+		Throwable cause = e == null ? null : ExceptionUtils.getRootCause(e);
+		this.message = message == null ? cause == null ? null : cause.getMessage() : null;
+		this.exception = cause == null ? null : cause.getClass().getName();
+		this.stackTraces = cause == null ? null : ExceptionUtils.getStackTraces(cause);
 	}
 
 	public Response toResponse() {

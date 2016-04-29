@@ -82,11 +82,11 @@ public class ServerException extends RuntimeException {
 
 	private Response getTextResponse() {
 		return Response.status(statusCode).type(MediaType.TEXT_PLAIN)
-						.entity(message == null ? StringUtils.EMPTY : message).build();
+				.entity(message == null ? StringUtils.EMPTY : message).build();
 	}
 
 	private Response getJsonResponse() {
-		return new JsonExceptionReponse(statusCode, message).toResponse();
+		return new JsonExceptionReponse(statusCode, message, this).toResponse();
 	}
 
 	public WebApplicationException getTextException() {
