@@ -70,7 +70,7 @@ public class JsonExceptionReponse {
 		this.reason_phrase = null;
 		this.status_code = status;
 		Throwable cause = e == null ? null : ExceptionUtils.getRootCause(e);
-		this.message = message == null ? cause == null ? null : cause.getMessage() : null;
+		this.message = message == null ? cause == null ? null : cause.getMessage() : message;
 		this.exception = cause == null ? null : cause.getClass().getName();
 		this.stackTraces = cause == null ? null : ExceptionUtils.getStackTraces(cause);
 	}
