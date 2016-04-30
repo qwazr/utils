@@ -36,7 +36,8 @@ public interface JsonClientInterface {
 	 * @return An instance of the expected class
 	 * @throws IOException if any IO error occur
 	 */
-	<T> T execute(Request request, Object bodyObject, Integer msTimeOut, Class<T> jsonResultClass, int... expectedCodes) throws IOException;
+	<T> T execute(Request request, Object bodyObject, Integer msTimeOut, Class<T> jsonResultClass, int... expectedCodes)
+			throws IOException;
 
 	/**
 	 * Execute an HTTP request returning an objet of the expected type
@@ -51,7 +52,8 @@ public interface JsonClientInterface {
 	 * @return An instance of the expected type
 	 * @throws IOException in case of IO error
 	 */
-	<T> T execute(Request request, Object bodyObject, Integer msTimeOut, TypeReference<T> typeRef, int... expectedCodes) throws IOException;
+	<T> T execute(Request request, Object bodyObject, Integer msTimeOut, TypeReference<T> typeRef, int... expectedCodes)
+			throws IOException;
 
 	/**
 	 * @param request       the HTTP request to execute
@@ -61,8 +63,7 @@ public interface JsonClientInterface {
 	 * @return a new JsonNode object
 	 * @throws IOException in case of IO error
 	 */
-	JsonNode execute(Request request, Object bodyObject, Integer msTimeOut, int... expectedCodes)
-					throws IOException;
+	JsonNode execute(Request request, Object bodyObject, Integer msTimeOut, int... expectedCodes) throws IOException;
 
 	/**
 	 * Execute an HTTP request. The bodyObject is sent as payload if it is not

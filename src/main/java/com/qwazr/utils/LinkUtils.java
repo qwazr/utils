@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2016 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,11 +19,11 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.client.utils.URLEncodedUtils;
 
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
 import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class LinkUtils {
 
@@ -88,8 +88,7 @@ public class LinkUtils {
 		return parts[parts.length - 1];
 	}
 
-	public final static String UTF8_URL_Encode(String s)
-			throws UnsupportedEncodingException {
+	public final static String UTF8_URL_Encode(String s) throws UnsupportedEncodingException {
 		return URLEncoder.encode(s, "UTF-8").replace("+", "%20");
 	}
 
@@ -101,21 +100,17 @@ public class LinkUtils {
 		}
 	}
 
-	public final static URI newEncodedURI(String u)
-			throws MalformedURLException, URISyntaxException {
+	public final static URI newEncodedURI(String u) throws MalformedURLException, URISyntaxException {
 		URL tmpUrl = new URL(u);
-		return new URI(tmpUrl.getProtocol(), tmpUrl.getUserInfo(),
-				tmpUrl.getHost(), tmpUrl.getPort(), tmpUrl.getPath(),
+		return new URI(tmpUrl.getProtocol(), tmpUrl.getUserInfo(), tmpUrl.getHost(), tmpUrl.getPort(), tmpUrl.getPath(),
 				tmpUrl.getQuery(), tmpUrl.getRef());
 	}
 
-	public final static URL newEncodedURL(String u)
-			throws MalformedURLException, URISyntaxException {
+	public final static URL newEncodedURL(String u) throws MalformedURLException, URISyntaxException {
 		return newEncodedURI(u).toURL();
 	}
 
-	public static void main(String[] args) throws MalformedURLException,
-			UnsupportedEncodingException {
+	public static void main(String[] args) throws MalformedURLException, UnsupportedEncodingException {
 		System.out.println(lastPart("/my+folder/"));
 		System.out.println(lastPart("my folder/"));
 		System.out.println(lastPart("my folder/my+sub-folder/"));
@@ -125,14 +120,18 @@ public class LinkUtils {
 		System.out.println(UTF8_URL_Encode("outlook:INBOX/~TEST TEST"));
 	}
 
-	public final static Map<String, String> getUniqueQueryParameters(
-			final URI uri, final String charset) {
-		final Map<String, String> map = new TreeMap<String, String>();
-		final List<NameValuePair> parameters = URLEncodedUtils.parse(uri,
-				"UTF-8");
-		for (NameValuePair parameter : parameters)
-			map.put(parameter.getName(), parameter.getValue());
+	public final static MultivaluedMap<String, String> getQueryParameters(final String queryString) {
+		if (queryString == null || queryString.isEmpty())
+			return null;
+		final MultivaluedHashMap<String, String> map = new MultivaluedHashMap();
+		final List<NameValuePair> parameters = URLEncodedUtils.parse(queryString, CharsetUtils.CharsetUTF8);
+		if (parameters != null)
+			parameters.forEach(pair -> map.add(pair.getName(), pair.getValue()));
 		return map;
+	}
+
+	public final static String[] getPathSegments(final String path) {
+		return path == null ? null : StringUtils.split(path, '/');
 	}
 
 	public final static URI resolveQuietly(URI uri, String href) {

@@ -24,5 +24,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface ServiceName {
 
-	public String value();
+	String value();
 }
