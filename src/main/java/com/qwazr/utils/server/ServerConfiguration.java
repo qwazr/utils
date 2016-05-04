@@ -25,7 +25,10 @@ public class ServerConfiguration {
 
 		WEBAPP,
 
-		WEBSERVICE
+		WEBSERVICE,
+
+		MULTICAST
+
 	}
 
 	public enum VariablesEnum {
@@ -44,7 +47,10 @@ public class ServerConfiguration {
 
 		AUTHTYPE,
 
-		PORT
+		PORT,
+
+		ADDRESS
+
 	}
 
 	/**
@@ -58,7 +64,7 @@ public class ServerConfiguration {
 	 */
 	final String publicAddress;
 
-	final class Connector {
+	final class TcpConnector {
 
 		/**
 		 * The port TCP port used by the listening socket
@@ -69,10 +75,22 @@ public class ServerConfiguration {
 
 		final String authType;
 
-		private Connector(PrefixEnum prefix, int defaultPort) {
+		private TcpConnector(PrefixEnum prefix, int defaultPort) {
 			port = getPropertyOrEnvInt(prefix, VariablesEnum.PORT, defaultPort);
 			realm = getPropertyOrEnv(prefix, VariablesEnum.REALM);
 			authType = getPropertyOrEnv(prefix, VariablesEnum.AUTHTYPE);
+		}
+	}
+
+	final class MulticastConnector {
+
+		final int port;
+
+		final String address;
+
+		private MulticastConnector(int defaultPort) {
+			address = getPropertyOrEnv(PrefixEnum.MULTICAST, VariablesEnum.ADDRESS);
+			port = getPropertyOrEnvInt(PrefixEnum.MULTICAST, VariablesEnum.PORT, defaultPort);
 		}
 	}
 
@@ -86,17 +104,20 @@ public class ServerConfiguration {
 	 */
 	final File etcDirectory;
 
-	final Connector webServiceConnector;
+	final TcpConnector webServiceConnector;
 
-	final Connector webAppConnector;
+	final TcpConnector webAppConnector;
+
+	final MulticastConnector multicastConnector;
 
 	public ServerConfiguration() {
 
 		dataDirectory = buildDataDir(getPropertyOrEnv(null, VariablesEnum.QWAZR_DATA));
 		etcDirectory = buildEtcDir(dataDirectory, getPropertyOrEnv(null, VariablesEnum.QWAZR_ETC_DIR));
 
-		webAppConnector = new Connector(PrefixEnum.WEBAPP, 9090);
-		webServiceConnector = new Connector(PrefixEnum.WEBSERVICE, 9091);
+		webAppConnector = new TcpConnector(PrefixEnum.WEBAPP, 9090);
+		webServiceConnector = new TcpConnector(PrefixEnum.WEBSERVICE, 9091);
+		multicastConnector = new MulticastConnector(9092);
 
 		listenAddress = getPropertyOrEnv(null, VariablesEnum.LISTEN_ADDR, "localhost");
 		publicAddress = getPropertyOrEnv(null, VariablesEnum.PUBLIC_ADDR, listenAddress);

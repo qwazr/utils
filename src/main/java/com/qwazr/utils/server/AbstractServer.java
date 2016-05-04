@@ -60,6 +60,8 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 
 	protected T serverConfiguration;
 
+	protected final UdpServerThread udpServer;
+
 	private static final Logger logger = LoggerFactory.getLogger(AbstractServer.class);
 
 	protected AbstractServer(ExecutorService executorService, T serverConfiguration) {
@@ -69,6 +71,9 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		this.INSTANCE = this;
 		this.undertows = new ArrayList<>();
 		this.deploymentManagers = new ArrayList<>();
+		this.udpServer = serverConfiguration.multicastConnector.address == null ? null :
+		                 new UdpServerThread(serverConfiguration.multicastConnector.port,
+				                 serverConfiguration.multicastConnector.address, 32768);
 	}
 
 	private synchronized void start(final Undertow undertow) {
@@ -94,7 +99,7 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 			undertow.stop();
 	}
 
-	private final IdentityManager getIdentityManager(ServerConfiguration.Connector connector,
+	private final IdentityManager getIdentityManager(ServerConfiguration.TcpConnector connector,
 			DeploymentInfo deploymentInfo) throws IOException {
 		if (connector == null)
 			return null;
@@ -108,7 +113,7 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		return identityManager;
 	}
 
-	private final void startServer(ServerConfiguration.Connector connector, DeploymentInfo deploymentInfo)
+	private final void startServer(ServerConfiguration.TcpConnector connector, DeploymentInfo deploymentInfo)
 			throws IOException, ServletException {
 		IdentityManager identityManager = getIdentityManager(connector, deploymentInfo);
 
@@ -145,6 +150,9 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		logger.info("Data directory sets to: " + serverConfiguration.dataDirectory);
 
 		ServletApplication servletApplication = load(services);
+
+		if (udpServer != null)
+			udpServer.checkStarted();
 
 		// Launch the servlet application if any
 		if (servletApplication != null)
