@@ -18,7 +18,10 @@ package com.qwazr.utils.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,7 +38,7 @@ public class UdpServerThread extends Thread {
 
 	private final static int DEFAULT_BUFFER_SIZE = 64;
 	private final static String DEFAULT_MULTICAST = "224.0.0.10";
-	private final static int DEFAULT_PORT = 9092;
+	private final static int DEFAULT_PORT = 9091;
 
 	private final String multicastAddress;
 	private final int port;
@@ -44,7 +47,6 @@ public class UdpServerThread extends Thread {
 
 	private volatile Collection<Consumer<DatagramPacket>> datagramConsumersCache;
 	private volatile InetAddress address;
-
 
 	public UdpServerThread(Integer port, String multicastAddress, Integer dataBufferSize) {
 		super();
@@ -71,9 +73,18 @@ public class UdpServerThread extends Thread {
 		if (bufferSize == 0 || bufferSize > data.length)
 			throw new IOException("Buffer overflow: " + bufferSize + "/" + data.length);
 		try (final DatagramSocket clientSocket = new DatagramSocket()) {
-			final DatagramPacket datagramPacket =
-					new DatagramPacket(data, bufferSize, address, port);
+			final DatagramPacket datagramPacket = new DatagramPacket(data, bufferSize, address, port);
 			clientSocket.send(datagramPacket);
+		}
+	}
+
+	public void send(Externalizable object) throws IOException {
+		try (final ByteArrayOutputStream bos = new ByteArrayOutputStream(dataBufferSize)) {
+			try (final ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+				object.writeExternal(oos);
+				oos.flush();
+				send(bos.toByteArray());
+			}
 		}
 	}
 
@@ -85,6 +96,8 @@ public class UdpServerThread extends Thread {
 	public void run() {
 		try (final MulticastSocket socket = new MulticastSocket(this.port)) {
 			socket.joinGroup(address);
+			if (logger.isInfoEnabled())
+				logger.info("UDP Server started: " + address + ":" + port);
 			for (; ; ) {
 				final byte[] dataBuffer = new byte[dataBufferSize];
 				final DatagramPacket datagramPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
@@ -99,6 +112,9 @@ public class UdpServerThread extends Thread {
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		} finally {
+			if (logger.isInfoEnabled())
+				logger.info("UDP Server exit: " + address + ":" + port);
 		}
 	}
 
@@ -110,5 +126,11 @@ public class UdpServerThread extends Thread {
 			return;
 		this.address = InetAddress.getByName(multicastAddress);
 		this.start();
+	}
+
+	public void shutdown() {
+		if (isInterrupted())
+			return;
+		this.interrupt();
 	}
 }

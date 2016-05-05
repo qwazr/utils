@@ -51,7 +51,7 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 
 	static volatile AbstractServer INSTANCE = null;
 
-	final Collection<Class<? extends ServiceInterface>> services;
+	final protected Collection<Class<? extends ServiceInterface>> services;
 
 	final Collection<Undertow> undertows;
 	final Collection<DeploymentManager> deploymentManagers;
@@ -71,9 +71,10 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		this.INSTANCE = this;
 		this.undertows = new ArrayList<>();
 		this.deploymentManagers = new ArrayList<>();
-		this.udpServer = serverConfiguration.multicastConnector.address == null ? null :
-		                 new UdpServerThread(serverConfiguration.multicastConnector.port,
-				                 serverConfiguration.multicastConnector.address, 32768);
+		this.udpServer = serverConfiguration.multicastConnector.address == null ?
+				null :
+				new UdpServerThread(serverConfiguration.multicastConnector.port,
+						serverConfiguration.multicastConnector.address, 32768);
 	}
 
 	private synchronized void start(final Undertow undertow) {
@@ -88,6 +89,8 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 	}
 
 	public synchronized void stopAll() {
+		if (udpServer != null)
+			udpServer.shutdown();
 		for (DeploymentManager manager : deploymentManagers)
 			try {
 				manager.stop();
@@ -174,8 +177,8 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 	private static HttpHandler addSecurity(HttpHandler handler, final IdentityManager identityManager, String realm) {
 		handler = new AuthenticationCallHandler(handler);
 		handler = new AuthenticationConstraintHandler(handler);
-		final List<AuthenticationMechanism> mechanisms = Collections.<AuthenticationMechanism>singletonList(
-				new BasicAuthenticationMechanism(realm));
+		final List<AuthenticationMechanism> mechanisms =
+				Collections.<AuthenticationMechanism>singletonList(new BasicAuthenticationMechanism(realm));
 		handler = new AuthenticationMechanismsHandler(handler, mechanisms);
 		handler = new SecurityInitialHandler(AuthenticationMode.PRO_ACTIVE, identityManager, handler);
 		return handler;

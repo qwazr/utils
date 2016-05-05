@@ -117,7 +117,7 @@ public class ServerConfiguration {
 
 		webAppConnector = new TcpConnector(PrefixEnum.WEBAPP, 9090);
 		webServiceConnector = new TcpConnector(PrefixEnum.WEBSERVICE, 9091);
-		multicastConnector = new MulticastConnector(9092);
+		multicastConnector = new MulticastConnector(9091);
 
 		listenAddress = getPropertyOrEnv(null, VariablesEnum.LISTEN_ADDR, "localhost");
 		publicAddress = getPropertyOrEnv(null, VariablesEnum.PUBLIC_ADDR, listenAddress);

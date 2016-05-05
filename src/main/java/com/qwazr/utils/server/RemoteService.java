@@ -26,6 +26,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -302,6 +303,30 @@ public class RemoteService {
 		return builderList.isEmpty() ? null : builderList;
 	}
 
+	public static List<Builder> builders(final Collection<String> remoteServiceURLs) throws URISyntaxException {
+
+		if (remoteServiceURLs == null || remoteServiceURLs.isEmpty())
+			return null;
+
+		final List<Builder> builderList = new ArrayList<>();
+		for (String url : remoteServiceURLs)
+			if (url != null && !url.isEmpty())
+				builderList.add(new Builder(url));
+
+		return builderList.isEmpty() ? null : builderList;
+	}
+
+	private static RemoteService[] fromBuilders(final Collection<Builder> builders) {
+		if (builders == null || builders.isEmpty())
+			return null;
+		// Build the array
+		int i = 0;
+		RemoteService[] remotes = new RemoteService[builders.size()];
+		for (Builder builder : builders)
+			remotes[i++] = new RemoteService(builder);
+		return remotes;
+	}
+
 	/**
 	 * Build an array of RemoteService filled with an array of URL.
 	 * The form of the URL should be:
@@ -312,15 +337,19 @@ public class RemoteService {
 	 * @throws URISyntaxException
 	 */
 	public static RemoteService[] build(final String... remoteServiceURLs) throws URISyntaxException {
+		return fromBuilders(builders(remoteServiceURLs));
+	}
 
-		final List<Builder> builders = builders(remoteServiceURLs);
-		if (builders == null)
-			return null;
-		// Build the array
-		int i = 0;
-		RemoteService[] remotes = new RemoteService[builders.size()];
-		for (Builder builder : builders)
-			remotes[i++] = new RemoteService(builder);
-		return remotes;
+	/**
+	 * Build an array of RemoteService filled with an array of URL.
+	 * The form of the URL should be:
+	 * {protocol}://{username:password@}{host}:{port}/{service_path}?timeout={timeout}
+	 *
+	 * @param remoteServiceURLs
+	 * @return
+	 * @throws URISyntaxException
+	 */
+	public static RemoteService[] build(final Collection<String> remoteServiceURLs) throws URISyntaxException {
+		return fromBuilders(builders(remoteServiceURLs));
 	}
 }
