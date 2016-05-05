@@ -37,7 +37,7 @@ public class UdpServerThread extends Thread {
 	private static final Logger logger = LoggerFactory.getLogger(UdpServerThread.class);
 
 	private final static int DEFAULT_BUFFER_SIZE = 64;
-	private final static String DEFAULT_MULTICAST = "224.0.0.10";
+	private final static String DEFAULT_MULTICAST = "239.255.90.91";
 	private final static int DEFAULT_PORT = 9091;
 
 	private final String multicastAddress;
