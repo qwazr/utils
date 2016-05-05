@@ -68,24 +68,20 @@ public class UdpClient {
 		send(address, port, data, data.length);
 	}
 
-	private void send(final InetAddress address, final int port, final Externalizable object) throws IOException {
+	public void send(final Externalizable object) throws IOException {
 		try (final ByteArrayOutputStream bos = new ByteArrayOutputStream(dataBufferSize)) {
 			try (final ObjectOutputStream oos = new ObjectOutputStream(bos)) {
 				object.writeExternal(oos);
 				oos.flush();
-				send(address, port, bos.toByteArray());
+				serverList.forEach((address, port) -> {
+					try {
+						send(address, port, bos.toByteArray());
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+				});
 			}
 		}
-	}
-
-	public void send(final Externalizable object) throws IOException {
-		serverList.forEach((address, port) -> {
-			try {
-				send(address, port, object);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
 	}
 
 }
