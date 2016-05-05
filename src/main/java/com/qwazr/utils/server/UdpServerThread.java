@@ -37,7 +37,7 @@ public class UdpServerThread extends Thread {
 	private static final Logger logger = LoggerFactory.getLogger(UdpServerThread.class);
 
 	private final static int DEFAULT_BUFFER_SIZE = 64;
-	private final static String DEFAULT_MULTICAST = "239.255.90.91";
+	public final static String DEFAULT_MULTICAST = "239.255.90.91";
 	private final static int DEFAULT_PORT = 9091;
 
 	private final String multicastAddress;
@@ -94,8 +94,12 @@ public class UdpServerThread extends Thread {
 
 	@Override
 	public void run() {
-		try (final MulticastSocket socket = new MulticastSocket(this.port)) {
-			socket.joinGroup(address);
+		try (final DatagramSocket socket = address.isMulticastAddress() ?
+				new MulticastSocket(port) :
+				new DatagramSocket(port, address)) {
+			socket.setReuseAddress(true);
+			if (socket instanceof MulticastSocket)
+				((MulticastSocket) socket).joinGroup(address);
 			if (logger.isInfoEnabled())
 				logger.info("UDP Server started: " + address + ":" + port);
 			for (; ; ) {
