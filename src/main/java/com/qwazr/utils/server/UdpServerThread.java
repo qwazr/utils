@@ -18,15 +18,11 @@ package com.qwazr.utils.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -40,23 +36,22 @@ public class UdpServerThread extends Thread {
 	public final static String DEFAULT_MULTICAST = "239.255.90.91";
 	private final static int DEFAULT_PORT = 9091;
 
-	private final String multicastAddress;
 	private final int port;
 	private final int dataBufferSize;
 	private final Collection<Consumer<DatagramPacket>> datagramConsumers;
 
 	private volatile Collection<Consumer<DatagramPacket>> datagramConsumersCache;
-	private volatile InetAddress address;
+	private final InetAddress address;
 
-	public UdpServerThread(Integer port, String multicastAddress, Integer dataBufferSize) {
+	public UdpServerThread(Integer port, String socketAddress, Integer dataBufferSize) throws UnknownHostException {
 		super();
 		setName("UDP Server");
 		setDaemon(true);
 		this.datagramConsumers = new HashSet<>();
 		this.dataBufferSize = dataBufferSize == null ? DEFAULT_BUFFER_SIZE : dataBufferSize;
 		this.port = port == null ? DEFAULT_PORT : port;
-		this.multicastAddress = multicastAddress == null ? DEFAULT_MULTICAST : multicastAddress;
-		this.address = null;
+		final String datagramAddress = socketAddress == null ? DEFAULT_MULTICAST : socketAddress;
+		this.address = InetAddress.getByName(datagramAddress);
 		register(null); // To create an initial empty array
 	}
 
@@ -68,28 +63,8 @@ public class UdpServerThread extends Thread {
 		}
 	}
 
-	public void send(final byte[] data, final int bufferSize) throws IOException {
-		Objects.requireNonNull(data, "The data is null");
-		if (bufferSize == 0 || bufferSize > data.length)
-			throw new IOException("Buffer overflow: " + bufferSize + "/" + data.length);
-		try (final DatagramSocket clientSocket = new DatagramSocket()) {
-			final DatagramPacket datagramPacket = new DatagramPacket(data, bufferSize, address, port);
-			clientSocket.send(datagramPacket);
-		}
-	}
-
-	public void send(Externalizable object) throws IOException {
-		try (final ByteArrayOutputStream bos = new ByteArrayOutputStream(dataBufferSize)) {
-			try (final ObjectOutputStream oos = new ObjectOutputStream(bos)) {
-				object.writeExternal(oos);
-				oos.flush();
-				send(bos.toByteArray());
-			}
-		}
-	}
-
-	public void send(final byte[] data) throws IOException {
-		send(data, data.length);
+	public UdpClient getClient(final String[] addresses) throws UnknownHostException {
+		return new UdpClient(dataBufferSize, address, port, addresses);
 	}
 
 	@Override
@@ -128,7 +103,6 @@ public class UdpServerThread extends Thread {
 	public synchronized void checkStarted() throws UnknownHostException {
 		if (isAlive())
 			return;
-		this.address = InetAddress.getByName(multicastAddress);
 		this.start();
 	}
 

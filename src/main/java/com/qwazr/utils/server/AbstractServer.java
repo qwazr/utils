@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.ServletException;
 import java.io.File;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -64,17 +65,17 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractServer.class);
 
-	protected AbstractServer(ExecutorService executorService, T serverConfiguration) {
+	protected AbstractServer(ExecutorService executorService, T serverConfiguration) throws UnknownHostException {
 		this.serverConfiguration = serverConfiguration;
 		this.executorService = executorService;
 		this.services = new ArrayList<>();
 		this.INSTANCE = this;
 		this.undertows = new ArrayList<>();
 		this.deploymentManagers = new ArrayList<>();
-		this.udpServer = serverConfiguration.multicastConnector.address == null ?
+		this.udpServer = serverConfiguration.udpConnector.address == null ?
 				null :
-				new UdpServerThread(serverConfiguration.multicastConnector.port,
-						serverConfiguration.multicastConnector.address, 32768);
+				new UdpServerThread(serverConfiguration.udpConnector.port, serverConfiguration.udpConnector.address,
+						32768);
 	}
 
 	private synchronized void start(final Undertow undertow) {

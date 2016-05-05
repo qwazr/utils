@@ -27,7 +27,7 @@ public class ServerConfiguration {
 
 		WEBSERVICE,
 
-		MULTICAST
+		UDP
 
 	}
 
@@ -82,15 +82,15 @@ public class ServerConfiguration {
 		}
 	}
 
-	final class MulticastConnector {
+	final class UdpConnector {
 
 		final int port;
 
 		final String address;
 
-		private MulticastConnector(int defaultPort) {
-			address = getPropertyOrEnv(PrefixEnum.MULTICAST, VariablesEnum.ADDRESS);
-			port = getPropertyOrEnvInt(PrefixEnum.MULTICAST, VariablesEnum.PORT, defaultPort);
+		private UdpConnector(int defaultPort) {
+			address = getPropertyOrEnv(PrefixEnum.UDP, VariablesEnum.ADDRESS);
+			port = getPropertyOrEnvInt(PrefixEnum.UDP, VariablesEnum.PORT, defaultPort);
 		}
 	}
 
@@ -108,7 +108,7 @@ public class ServerConfiguration {
 
 	final TcpConnector webAppConnector;
 
-	final MulticastConnector multicastConnector;
+	final UdpConnector udpConnector;
 
 	public ServerConfiguration() {
 
@@ -117,7 +117,7 @@ public class ServerConfiguration {
 
 		webAppConnector = new TcpConnector(PrefixEnum.WEBAPP, 9090);
 		webServiceConnector = new TcpConnector(PrefixEnum.WEBSERVICE, 9091);
-		multicastConnector = new MulticastConnector(9091);
+		udpConnector = new UdpConnector(9091);
 
 		listenAddress = getPropertyOrEnv(null, VariablesEnum.LISTEN_ADDR, "localhost");
 		publicAddress = getPropertyOrEnv(null, VariablesEnum.PUBLIC_ADDR, listenAddress);
