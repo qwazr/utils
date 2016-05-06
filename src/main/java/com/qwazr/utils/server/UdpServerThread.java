@@ -32,7 +32,7 @@ public class UdpServerThread extends Thread {
 
 	private static final Logger logger = LoggerFactory.getLogger(UdpServerThread.class);
 
-	private final static int DEFAULT_BUFFER_SIZE = 64;
+	public final static int DEFAULT_BUFFER_SIZE = 65536;
 	public final static String DEFAULT_MULTICAST = "239.255.90.91";
 	private final static int DEFAULT_PORT = 9091;
 
@@ -61,10 +61,6 @@ public class UdpServerThread extends Thread {
 				datagramConsumers.add(datagramConsumer);
 			datagramConsumersCache = new ArrayList<>(datagramConsumers);
 		}
-	}
-
-	public UdpClient getClient(final String[] addresses) throws UnknownHostException {
-		return new UdpClient(dataBufferSize, address, port, addresses);
 	}
 
 	@Override

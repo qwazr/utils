@@ -75,7 +75,7 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		this.udpServer = serverConfiguration.udpConnector.address == null ?
 				null :
 				new UdpServerThread(serverConfiguration.udpConnector.port, serverConfiguration.udpConnector.address,
-						32768);
+						null);
 	}
 
 	private synchronized void start(final Undertow undertow) {

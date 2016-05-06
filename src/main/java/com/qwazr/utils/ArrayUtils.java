@@ -15,6 +15,9 @@
  */
 package com.qwazr.utils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 
