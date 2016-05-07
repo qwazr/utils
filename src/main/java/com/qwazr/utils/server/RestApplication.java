@@ -36,19 +36,20 @@ class RestApplication extends Application {
 
 	@Override
 	final public Set<Class<?>> getClasses() {
-		Set<Class<?>> classes = new HashSet<Class<?>>();
+		Set<Class<?>> classes = new HashSet<>();
 		classes.add(JacksonConfig.class);
 		classes.add(JacksonJsonProvider.class);
 		classes.add(JsonMappingExceptionMapper.class);
-		if (AbstractServer.INSTANCE != null && AbstractServer.INSTANCE.services != null)
-			classes.addAll(AbstractServer.INSTANCE.services);
+		if (GenericServer.INSTANCE != null && GenericServer.INSTANCE.webServices != null)
+			classes.addAll(GenericServer.INSTANCE.webServices.values());
 		return classes;
 	}
 
 	final static DeploymentInfo getDeploymentInfo() {
-		DeploymentInfo deploymentInfo = Servlets.deployment().setClassLoader(RestApplication.class.getClassLoader())
-				.setContextPath("/").setDeploymentName("REST");
-		List<ServletInfo> servletInfos = new ArrayList<ServletInfo>();
+		DeploymentInfo deploymentInfo =
+				Servlets.deployment().setClassLoader(RestApplication.class.getClassLoader()).setContextPath("/")
+						.setDeploymentName("REST");
+		List<ServletInfo> servletInfos = new ArrayList<>();
 		servletInfos.add(new ServletInfo("REST", ServletContainer.class)
 				.addInitParam("javax.ws.rs.Application", RestApplication.class.getName()).setAsyncSupported(true)
 				.addMapping("/*"));

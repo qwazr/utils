@@ -34,25 +34,24 @@ public class UdpServerThread extends Thread {
 
 	public final static int DEFAULT_BUFFER_SIZE = 65536;
 	public final static String DEFAULT_MULTICAST = "239.255.90.91";
-	private final static int DEFAULT_PORT = 9091;
 
-	private final int port;
 	private final int dataBufferSize;
 	private final Collection<Consumer<DatagramPacket>> datagramConsumers;
 
 	private volatile Collection<Consumer<DatagramPacket>> datagramConsumersCache;
-	private final InetAddress address;
+	private final InetSocketAddress socketAddress;
+	private final InetAddress multicastAddress;
 
-	public UdpServerThread(Integer port, String socketAddress, Integer dataBufferSize) throws UnknownHostException {
+	public UdpServerThread(final InetSocketAddress socketAddress, final InetAddress multicastAddress,
+			Integer dataBufferSize) {
 		super();
 		setName("UDP Server");
 		setDaemon(true);
 		this.datagramConsumers = new HashSet<>();
 		this.dataBufferSize = dataBufferSize == null ? DEFAULT_BUFFER_SIZE : dataBufferSize;
-		this.port = port == null ? DEFAULT_PORT : port;
-		final String datagramAddress = socketAddress == null ? DEFAULT_MULTICAST : socketAddress;
-		this.address = InetAddress.getByName(datagramAddress);
-		register(null); // To create an initial empty array
+		this.socketAddress = socketAddress;
+		this.multicastAddress = multicastAddress;
+		register(null); // To create an initial empty cache array
 	}
 
 	public void register(Consumer<DatagramPacket> datagramConsumer) {
@@ -65,14 +64,13 @@ public class UdpServerThread extends Thread {
 
 	@Override
 	public void run() {
-		try (final DatagramSocket socket = address.isMulticastAddress() ?
-				new MulticastSocket(port) :
-				new DatagramSocket(port, address)) {
-			socket.setReuseAddress(true);
+		try (final DatagramSocket socket = multicastAddress != null ?
+				new MulticastSocket(socketAddress) :
+				new DatagramSocket(socketAddress)) {
 			if (socket instanceof MulticastSocket)
-				((MulticastSocket) socket).joinGroup(address);
+				((MulticastSocket) socket).joinGroup(multicastAddress);
 			if (logger.isInfoEnabled())
-				logger.info("UDP Server started: " + address + ":" + port);
+				logger.info("UDP Server started: " + socketAddress);
 			for (; ; ) {
 				final byte[] dataBuffer = new byte[dataBufferSize];
 				final DatagramPacket datagramPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
@@ -89,7 +87,7 @@ public class UdpServerThread extends Thread {
 			throw new RuntimeException(e);
 		} finally {
 			if (logger.isInfoEnabled())
-				logger.info("UDP Server exit: " + address + ":" + port);
+				logger.info("UDP Server exit: " + socketAddress);
 		}
 	}
 

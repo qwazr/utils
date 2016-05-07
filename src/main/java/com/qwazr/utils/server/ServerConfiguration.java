@@ -64,7 +64,17 @@ public class ServerConfiguration {
 	 */
 	final String publicAddress;
 
-	final class TcpConnector {
+	/**
+	 * the hostname and port on which the web application can be contacted
+	 */
+	public final String webApplicationPublicAddress;
+
+	/**
+	 * the hostname and port on which the web service can be contacted
+	 */
+	public final String webServicePublicAddress;
+
+	final class HttpConnector {
 
 		/**
 		 * The port TCP port used by the listening socket
@@ -75,7 +85,7 @@ public class ServerConfiguration {
 
 		final String authType;
 
-		private TcpConnector(PrefixEnum prefix, int defaultPort) {
+		private HttpConnector(PrefixEnum prefix, int defaultPort) {
 			port = getPropertyOrEnvInt(prefix, VariablesEnum.PORT, defaultPort);
 			realm = getPropertyOrEnv(prefix, VariablesEnum.REALM);
 			authType = getPropertyOrEnv(prefix, VariablesEnum.AUTHTYPE);
@@ -97,16 +107,16 @@ public class ServerConfiguration {
 	/**
 	 * The data directory
 	 */
-	final File dataDirectory;
+	public final File dataDirectory;
 
 	/**
 	 * The configuration directory
 	 */
-	final File etcDirectory;
+	public final File etcDirectory;
 
-	final TcpConnector webServiceConnector;
+	final HttpConnector webServiceConnector;
 
-	final TcpConnector webAppConnector;
+	final HttpConnector webAppConnector;
 
 	final UdpConnector udpConnector;
 
@@ -115,12 +125,15 @@ public class ServerConfiguration {
 		dataDirectory = buildDataDir(getPropertyOrEnv(null, VariablesEnum.QWAZR_DATA));
 		etcDirectory = buildEtcDir(dataDirectory, getPropertyOrEnv(null, VariablesEnum.QWAZR_ETC_DIR));
 
-		webAppConnector = new TcpConnector(PrefixEnum.WEBAPP, 9090);
-		webServiceConnector = new TcpConnector(PrefixEnum.WEBSERVICE, 9091);
+		webAppConnector = new HttpConnector(PrefixEnum.WEBAPP, 9090);
+		webServiceConnector = new HttpConnector(PrefixEnum.WEBSERVICE, 9091);
 		udpConnector = new UdpConnector(9091);
 
 		listenAddress = getPropertyOrEnv(null, VariablesEnum.LISTEN_ADDR, "localhost");
 		publicAddress = getPropertyOrEnv(null, VariablesEnum.PUBLIC_ADDR, listenAddress);
+
+		webApplicationPublicAddress = publicAddress + ':' + webAppConnector.port;
+		webServicePublicAddress = publicAddress + ':' + webServiceConnector.port;
 	}
 
 	private static File buildDataDir(String path) {

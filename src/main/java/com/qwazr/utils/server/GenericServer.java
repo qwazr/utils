@@ -35,47 +35,56 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
-import java.io.File;
 import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.net.InetSocketAddress;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 
-/**
- * Generic REST server
- */
-public abstract class AbstractServer<T extends ServerConfiguration> {
+public class GenericServer {
 
-	static volatile AbstractServer INSTANCE = null;
+	static volatile GenericServer INSTANCE = null;
 
-	final protected Collection<Class<? extends ServiceInterface>> services;
+	final Map<String, Class<? extends ServiceInterface>> webServices;
 
-	final Collection<Undertow> undertows;
-	final Collection<DeploymentManager> deploymentManagers;
+	final private Collection<Listener> startedListeners;
+	final private Collection<Listener> shutdownListeners;
 
-	protected final ExecutorService executorService;
+	final protected Collection<Undertow> undertows;
+	final protected Collection<DeploymentManager> deploymentManagers;
 
-	protected T serverConfiguration;
+	final private Map<String, IdentityManager> identityManagerMap;
 
-	protected final UdpServerThread udpServer;
+	final protected ExecutorService executorService;
 
-	private static final Logger logger = LoggerFactory.getLogger(AbstractServer.class);
+	final protected ServerConfiguration serverConfiguration;
 
-	protected AbstractServer(ExecutorService executorService, T serverConfiguration) throws UnknownHostException {
-		this.serverConfiguration = serverConfiguration;
-		this.executorService = executorService;
-		this.services = new ArrayList<>();
-		this.INSTANCE = this;
+	final private ServletApplication servletApplication;
+
+	final protected UdpServerThread udpServer;
+
+	private static final Logger logger = LoggerFactory.getLogger(GenericServer.class);
+
+	public GenericServer(ServerBuilder builder) {
+		this.executorService = builder.executorService;
+		this.serverConfiguration = builder.serverConfiguration;
+		this.webServices = builder.webServices.isEmpty() ? null : new LinkedHashMap<>(builder.webServices);
+		this.servletApplication = builder.servletApplication;
 		this.undertows = new ArrayList<>();
 		this.deploymentManagers = new ArrayList<>();
-		this.udpServer = serverConfiguration.udpConnector.address == null ?
-				null :
-				new UdpServerThread(serverConfiguration.udpConnector.port, serverConfiguration.udpConnector.address,
-						null);
+		this.identityManagerMap = builder.identityManagers == null ? null : new HashMap<>(builder.identityManagers);
+		this.udpServer = buildUdpServer(builder);
+		this.startedListeners = builder.startedListeners.isEmpty() ? null : new ArrayList<>(builder.startedListeners);
+		this.shutdownListeners =
+				builder.shutdownListeners.isEmpty() ? null : new ArrayList<>(builder.shutdownListeners);
+	}
+
+	private UdpServerThread buildUdpServer(final ServerBuilder builder) {
+		if (builder.datagramConsumers == null || builder.datagramConsumers.isEmpty())
+			return null;
+		InetSocketAddress socketAddress = new InetSocketAddress(builder.serverConfiguration.listenAddress,
+				builder.serverConfiguration.webServiceConnector.port);
+		return new UdpServerThread(socketAddress, null, null);
 	}
 
 	private synchronized void start(final Undertow undertow) {
@@ -90,6 +99,9 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 	}
 
 	public synchronized void stopAll() {
+
+		executeListener(shutdownListeners);
+
 		if (udpServer != null)
 			udpServer.shutdown();
 		for (DeploymentManager manager : deploymentManagers)
@@ -103,13 +115,15 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 			undertow.stop();
 	}
 
-	private final IdentityManager getIdentityManager(ServerConfiguration.TcpConnector connector,
+	private final IdentityManager getIdentityManager(ServerConfiguration.HttpConnector connector,
 			DeploymentInfo deploymentInfo) throws IOException {
+		if (identityManagerMap == null)
+			return null;
 		if (connector == null)
 			return null;
 		if (connector.realm == null)
 			return null;
-		IdentityManager identityManager = getIdentityManager(connector.realm);
+		IdentityManager identityManager = identityManagerMap.get(connector.realm);
 		if (identityManager == null)
 			return null;
 		deploymentInfo.setIdentityManager(identityManager).setLoginConfig(
@@ -117,7 +131,7 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		return identityManager;
 	}
 
-	private final void startServer(ServerConfiguration.TcpConnector connector, DeploymentInfo deploymentInfo)
+	private final void startHttpServer(ServerConfiguration.HttpConnector connector, DeploymentInfo deploymentInfo)
 			throws IOException, ServletException {
 		IdentityManager identityManager = getIdentityManager(connector, deploymentInfo);
 
@@ -142,7 +156,7 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 	 * @throws IOException      if any IO error occur
 	 * @throws ServletException if the servlet configuration failed
 	 */
-	final public void start(boolean shutdownHook)
+	final public GenericServer start(boolean shutdownHook)
 			throws IOException, ServletException, IllegalAccessException, InstantiationException {
 
 		java.util.logging.Logger.getLogger("").setLevel(Level.WARNING);
@@ -153,18 +167,16 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 			throw new IOException("The data directory path is not a directory: " + serverConfiguration.dataDirectory);
 		logger.info("Data directory sets to: " + serverConfiguration.dataDirectory);
 
-		ServletApplication servletApplication = load(services);
-
 		if (udpServer != null)
 			udpServer.checkStarted();
 
 		// Launch the servlet application if any
 		if (servletApplication != null)
-			startServer(serverConfiguration.webAppConnector, servletApplication.getDeploymentInfo());
+			startHttpServer(serverConfiguration.webAppConnector, servletApplication.getDeploymentInfo());
 
 		// Launch the jaxrs application if any
-		if (!services.isEmpty())
-			startServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo());
+		if (webServices != null && !webServices.isEmpty())
+			startHttpServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo());
 
 		if (shutdownHook) {
 			Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -173,6 +185,10 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 				}
 			});
 		}
+
+		executeListener(startedListeners);
+
+		return this;
 	}
 
 	private static HttpHandler addSecurity(HttpHandler handler, final IdentityManager identityManager, String realm) {
@@ -185,37 +201,24 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		return handler;
 	}
 
-	protected abstract ServletApplication load(Collection<Class<? extends ServiceInterface>> serviceClasses)
-			throws IOException;
-
-	/**
-	 * @return the hostname and port on which the web application can be
-	 * contacted
-	 */
-	public String getWebApplicationPublicAddress() {
-		return serverConfiguration.publicAddress + ':' + serverConfiguration.webAppConnector.port;
+	public Set<String> getServices() {
+		return webServices == null ? null : webServices.keySet();
 	}
 
-	/**
-	 * @return the hostname and port on which the web service can be contacted
-	 */
-	public String getWebServicePublicAddress() {
-		return serverConfiguration.publicAddress + ':' + serverConfiguration.webServiceConnector.port;
+	public interface Listener {
+
+		void accept(GenericServer server);
 	}
 
-	/**
-	 * @return the data directory
-	 */
-	public File getCurrentDataDir() {
-		return serverConfiguration.dataDirectory;
+	private void executeListener(final Collection<Listener> listeners) {
+		if (listeners == null)
+			return;
+		listeners.forEach(listener -> {
+			try {
+				listener.accept(this);
+			} catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			}
+		});
 	}
-
-	/**
-	 * @return the etc directory
-	 */
-	public File getCurrentEtcDir() {
-		return serverConfiguration.etcDirectory;
-	}
-
-	protected abstract IdentityManager getIdentityManager(String realm) throws IOException;
 }
