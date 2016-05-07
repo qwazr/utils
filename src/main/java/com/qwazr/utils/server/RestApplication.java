@@ -41,7 +41,7 @@ class RestApplication extends Application {
 		classes.add(JacksonJsonProvider.class);
 		classes.add(JsonMappingExceptionMapper.class);
 		if (GenericServer.INSTANCE != null && GenericServer.INSTANCE.webServices != null)
-			classes.addAll(GenericServer.INSTANCE.webServices.values());
+			classes.addAll(GenericServer.INSTANCE.webServices);
 		return classes;
 	}
 

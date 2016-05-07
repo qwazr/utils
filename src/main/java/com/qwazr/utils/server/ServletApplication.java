@@ -21,39 +21,23 @@ import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.api.SessionPersistenceManager;
 
-import java.util.List;
+import java.util.Collection;
 
-/**
- * Generic ServletApplication
- */
-public abstract class ServletApplication {
+class ServletApplication {
 
-	private final String appPath = "/";
-
-	public ServletApplication() {
-	}
-
-	protected abstract List<ServletInfo> getServletInfos();
-
-	protected abstract SessionPersistenceManager getSessionPersistenceManager();
-
-	final String getApplicationPath() {
-		return appPath;
-	}
-
-	final DeploymentInfo getDeploymentInfo() {
-		DeploymentInfo deploymentInfo = Servlets.deployment()
-				.setClassLoader(Thread.currentThread().getContextClassLoader()).setContextPath(appPath)
-				.setDefaultEncoding(java.nio.charset.Charset.defaultCharset().name())
-				.setDeploymentName(getClass().getName() + appPath);
-		final SessionPersistenceManager sessionPersistenceManager = getSessionPersistenceManager();
+	final static DeploymentInfo getDeploymentInfo(final Collection<ServletInfo> servletInfos,
+			final SessionPersistenceManager sessionPersistenceManager, final SessionListener sessionListener) {
+		DeploymentInfo deploymentInfo =
+				Servlets.deployment().setClassLoader(Thread.currentThread().getContextClassLoader()).setContextPath("/")
+						.setDefaultEncoding(java.nio.charset.Charset.defaultCharset().name())
+						.setDeploymentName(ServletApplication.class.getName());
 		if (sessionPersistenceManager != null)
 			deploymentInfo.setSessionPersistenceManager(sessionPersistenceManager);
-		List<ServletInfo> servletInfos = getServletInfos();
 		if (servletInfos != null)
 			deploymentInfo.addServlets(servletInfos);
-		if (this instanceof SessionListener)
-			deploymentInfo.addSessionListener((SessionListener) this);
+		if (sessionListener != null)
+			deploymentInfo.addSessionListener(sessionListener);
 		return deploymentInfo;
 	}
+
 }

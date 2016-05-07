@@ -20,7 +20,6 @@ import com.qwazr.utils.server.RemoteService;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
 
 /**
  * This class represents a connection to a set of servers
@@ -29,18 +28,16 @@ import java.util.concurrent.ExecutorService;
  */
 public abstract class JsonMultiClientAbstract<T> implements Iterable<T> {
 
-	protected final ExecutorService executor;
 	private final T[] clientsArray;
 	private final HashMap<String, T> clientsMap;
 
 	/**
 	 * Create a new multi client
 	 *
-	 * @param executor    an executor
 	 * @param clientArray an array of client connection
+	 * @param remotes
 	 */
-	protected JsonMultiClientAbstract(ExecutorService executor, T[] clientArray, RemoteService... remotes) {
-		this.executor = executor;
+	protected JsonMultiClientAbstract(T[] clientArray, RemoteService... remotes) {
 		clientsArray = clientArray;
 		clientsMap = new HashMap<>();
 		for (RemoteService remote : remotes)

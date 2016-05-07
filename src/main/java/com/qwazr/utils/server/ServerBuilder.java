@@ -16,10 +16,11 @@
 package com.qwazr.utils.server;
 
 import com.qwazr.utils.AnnotationsUtils;
-import io.undertow.security.idm.IdentityManager;
+import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.api.SessionPersistenceManager;
 
+import javax.ws.rs.Path;
 import java.net.DatagramPacket;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -30,24 +31,28 @@ public class ServerBuilder<T extends ServerConfiguration> {
 
 	final ExecutorService executorService;
 	final T serverConfiguration;
-	final Map<String, Class<? extends ServiceInterface>> webServices;
+	final Collection<Class<? extends ServiceInterface>> webServices;
+	final Collection<String> webServicePaths;
+	final Collection<String> webServiceNames;
 	final Collection<Consumer<DatagramPacket>> datagramConsumers;
-	ServletApplication servletApplication;
 	final Collection<ServletInfo> servletInfos;
 	SessionPersistenceManager sessionPersistenceManager;
-	final Map<String, IdentityManager> identityManagers;
+	SessionListener sessionListener;
+	GenericServer.IdentityManagerProvider identityManagerProvider;
 	final Collection<GenericServer.Listener> startedListeners;
 	final Collection<GenericServer.Listener> shutdownListeners;
 
 	public ServerBuilder(final T serverConfiguration, final ExecutorService executorService) {
 		this.executorService = executorService == null ? Executors.newCachedThreadPool() : executorService;
 		this.serverConfiguration = serverConfiguration;
-		webServices = new LinkedHashMap<>();
+		webServices = new LinkedHashSet<>();
+		webServicePaths = new LinkedHashSet<>();
+		webServiceNames = new LinkedHashSet<>();
 		datagramConsumers = new LinkedHashSet<>();
-		servletApplication = null;
 		servletInfos = new LinkedHashSet<>();
 		sessionPersistenceManager = null;
-		identityManagers = new LinkedHashMap<>();
+		identityManagerProvider = null;
+		sessionListener = null;
 		startedListeners = new LinkedHashSet<>();
 		shutdownListeners = new LinkedHashSet<>();
 	}
@@ -61,17 +66,17 @@ public class ServerBuilder<T extends ServerConfiguration> {
 	}
 
 	public void registerWebService(final Class<? extends ServiceInterface> webService) {
-		ServiceName serviceName = AnnotationsUtils.getFirstAnnotation(webService, ServiceName.class);
+		final ServiceName serviceName = AnnotationsUtils.getFirstAnnotation(webService, ServiceName.class);
 		Objects.requireNonNull(serviceName, "The ServiceName annotation is missing for " + webService);
-		webServices.put(serviceName.value(), webService);
+		webServices.add(webService);
+		webServiceNames.add(serviceName.value());
+		final Path path = AnnotationsUtils.getFirstAnnotation(webService, Path.class);
+		if (path != null && path.value() != null)
+			webServicePaths.add(path.value());
 	}
 
 	public void registerDatagramConsumer(final Consumer<DatagramPacket> datagramConsumer) {
 		this.datagramConsumers.add(datagramConsumer);
-	}
-
-	public void setServletApplication(final ServletApplication servletApplication) {
-		this.servletApplication = servletApplication;
 	}
 
 	public void registerServlet(final ServletInfo servlet) {
@@ -90,8 +95,12 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		this.sessionPersistenceManager = manager;
 	}
 
-	public void registerIdentityManager(final String realm, final IdentityManager manager) {
-		this.identityManagers.put(realm, manager);
+	public void setIdentityManagerProvider(final GenericServer.IdentityManagerProvider provider) {
+		this.identityManagerProvider = provider;
+	}
+
+	public void setSessionListenere(final SessionListener sessionListener) {
+		this.sessionListener = sessionListener;
 	}
 
 	public T getServerConfiguration() {

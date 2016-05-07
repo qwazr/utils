@@ -27,10 +27,9 @@ import io.undertow.security.handlers.SecurityInitialHandler;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.impl.BasicAuthenticationMechanism;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.Servlets;
-import io.undertow.servlet.api.DeploymentInfo;
-import io.undertow.servlet.api.DeploymentManager;
-import io.undertow.servlet.api.LoginConfig;
+import io.undertow.servlet.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +44,10 @@ public class GenericServer {
 
 	static volatile GenericServer INSTANCE = null;
 
-	final Map<String, Class<? extends ServiceInterface>> webServices;
+	final Collection<Class<? extends ServiceInterface>> webServices;
+	final Collection<String> webServiceNames;
+	final Collection<String> webServicePaths;
+	final private IdentityManagerProvider identityManagerProvider;
 
 	final private Collection<Listener> startedListeners;
 	final private Collection<Listener> shutdownListeners;
@@ -53,13 +55,13 @@ public class GenericServer {
 	final protected Collection<Undertow> undertows;
 	final protected Collection<DeploymentManager> deploymentManagers;
 
-	final private Map<String, IdentityManager> identityManagerMap;
-
 	final protected ExecutorService executorService;
 
 	final protected ServerConfiguration serverConfiguration;
 
-	final private ServletApplication servletApplication;
+	final private Collection<ServletInfo> servletInfos;
+	final private SessionPersistenceManager sessionPersistenceManager;
+	final private SessionListener sessionListener;
 
 	final protected UdpServerThread udpServer;
 
@@ -68,11 +70,15 @@ public class GenericServer {
 	public GenericServer(ServerBuilder builder) {
 		this.executorService = builder.executorService;
 		this.serverConfiguration = builder.serverConfiguration;
-		this.webServices = builder.webServices.isEmpty() ? null : new LinkedHashMap<>(builder.webServices);
-		this.servletApplication = builder.servletApplication;
+		this.webServices = builder.webServices.isEmpty() ? null : new ArrayList<>(builder.webServices);
+		this.webServiceNames = builder.webServiceNames.isEmpty() ? null : new ArrayList<>(builder.webServiceNames);
+		this.webServicePaths = builder.webServicePaths.isEmpty() ? null : new ArrayList<>(builder.webServicePaths);
 		this.undertows = new ArrayList<>();
 		this.deploymentManagers = new ArrayList<>();
-		this.identityManagerMap = builder.identityManagers == null ? null : new HashMap<>(builder.identityManagers);
+		this.identityManagerProvider = builder.identityManagerProvider;
+		this.servletInfos = builder.servletInfos.isEmpty() ? null : new ArrayList<>(builder.servletInfos);
+		this.sessionPersistenceManager = builder.sessionPersistenceManager;
+		this.sessionListener = builder.sessionListener;
 		this.udpServer = buildUdpServer(builder);
 		this.startedListeners = builder.startedListeners.isEmpty() ? null : new ArrayList<>(builder.startedListeners);
 		this.shutdownListeners =
@@ -117,13 +123,13 @@ public class GenericServer {
 
 	private final IdentityManager getIdentityManager(ServerConfiguration.HttpConnector connector,
 			DeploymentInfo deploymentInfo) throws IOException {
-		if (identityManagerMap == null)
+		if (identityManagerProvider == null)
 			return null;
 		if (connector == null)
 			return null;
 		if (connector.realm == null)
 			return null;
-		IdentityManager identityManager = identityManagerMap.get(connector.realm);
+		IdentityManager identityManager = identityManagerProvider.getIdentityManager(connector.realm);
 		if (identityManager == null)
 			return null;
 		deploymentInfo.setIdentityManager(identityManager).setLoginConfig(
@@ -171,8 +177,9 @@ public class GenericServer {
 			udpServer.checkStarted();
 
 		// Launch the servlet application if any
-		if (servletApplication != null)
-			startHttpServer(serverConfiguration.webAppConnector, servletApplication.getDeploymentInfo());
+		if (servletInfos != null && !servletInfos.isEmpty())
+			startHttpServer(serverConfiguration.webAppConnector,
+					ServletApplication.getDeploymentInfo(servletInfos, sessionPersistenceManager, sessionListener));
 
 		// Launch the jaxrs application if any
 		if (webServices != null && !webServices.isEmpty())
@@ -201,8 +208,12 @@ public class GenericServer {
 		return handler;
 	}
 
-	public Set<String> getServices() {
-		return webServices == null ? null : webServices.keySet();
+	public Collection<String> getServiceNames() {
+		return webServiceNames;
+	}
+
+	public Collection<String> getServicePaths() {
+		return webServicePaths;
 	}
 
 	public interface Listener {
@@ -220,5 +231,11 @@ public class GenericServer {
 				logger.error(e.getMessage(), e);
 			}
 		});
+	}
+
+	public interface IdentityManagerProvider {
+
+		IdentityManager getIdentityManager(String realm) throws IOException;
+
 	}
 }
