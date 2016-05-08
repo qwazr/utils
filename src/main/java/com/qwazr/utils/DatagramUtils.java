@@ -115,18 +115,4 @@ public class DatagramUtils {
 		send(SerializationUtils.getBytes(object, bufferSize), addresses);
 	}
 
-	/**
-	 * Build an InetSocketAddress from the form {host}:{port}.
-	 * If only the {host} is given, the provided defaultPort is used
-	 *
-	 * @param address     a formatted address: {host}:{port}
-	 * @param defaultPort the default port to use
-	 * @return
-	 */
-	public static InetSocketAddress buildInetSocketAddress(final String address, final int defaultPort) {
-		Objects.requireNonNull(address, "The address is null");
-		String[] parts = StringUtils.split(address, ':');
-		final int port = parts.length > 1 ? Integer.parseInt(parts[1]) : defaultPort;
-		return new InetSocketAddress(parts[0], port);
-	}
 }
