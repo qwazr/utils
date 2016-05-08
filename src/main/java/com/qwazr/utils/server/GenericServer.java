@@ -65,9 +65,9 @@ public class GenericServer {
 
 	final protected UdpServerThread udpServer;
 
-	private static final Logger logger = LoggerFactory.getLogger(GenericServer.class);
+	static final private Logger logger = LoggerFactory.getLogger(GenericServer.class);
 
-	public GenericServer(ServerBuilder builder) {
+	GenericServer(ServerBuilder builder) {
 		this.executorService = builder.executorService;
 		this.serverConfiguration = builder.serverConfiguration;
 		this.webServices = builder.webServices.isEmpty() ? null : new ArrayList<>(builder.webServices);
@@ -85,12 +85,12 @@ public class GenericServer {
 				builder.shutdownListeners.isEmpty() ? null : new ArrayList<>(builder.shutdownListeners);
 	}
 
-	private UdpServerThread buildUdpServer(final ServerBuilder builder) {
-		if (builder.datagramConsumers == null || builder.datagramConsumers.isEmpty())
+	private static UdpServerThread buildUdpServer(final ServerBuilder builder) {
+		if (builder.packetListeners == null || builder.packetListeners.isEmpty())
 			return null;
-		InetSocketAddress socketAddress = new InetSocketAddress(builder.serverConfiguration.listenAddress,
+		final InetSocketAddress socketAddress = new InetSocketAddress(builder.serverConfiguration.listenAddress,
 				builder.serverConfiguration.webServiceConnector.port);
-		return new UdpServerThread(socketAddress, null, null);
+		return new UdpServerThread(socketAddress, null, null, builder.packetListeners);
 	}
 
 	private synchronized void start(final Undertow undertow) {

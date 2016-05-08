@@ -20,9 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.function.Consumer;
 
 /**
@@ -36,30 +34,21 @@ public class UdpServerThread extends Thread {
 	public final static String DEFAULT_MULTICAST = "239.255.90.91";
 
 	private final int dataBufferSize;
-	private final Collection<Consumer<DatagramPacket>> datagramConsumers;
+	private final PacketListener[] packetListeners;
 
 	private volatile Collection<Consumer<DatagramPacket>> datagramConsumersCache;
 	private final InetSocketAddress socketAddress;
 	private final InetAddress multicastAddress;
 
 	public UdpServerThread(final InetSocketAddress socketAddress, final InetAddress multicastAddress,
-			Integer dataBufferSize) {
+			Integer dataBufferSize, Collection<PacketListener> packetListeners) {
 		super();
 		setName("UDP Server");
 		setDaemon(true);
-		this.datagramConsumers = new HashSet<>();
 		this.dataBufferSize = dataBufferSize == null ? DEFAULT_BUFFER_SIZE : dataBufferSize;
 		this.socketAddress = socketAddress;
 		this.multicastAddress = multicastAddress;
-		register(null); // To create an initial empty cache array
-	}
-
-	public void register(Consumer<DatagramPacket> datagramConsumer) {
-		synchronized (datagramConsumers) {
-			if (datagramConsumer != null)
-				datagramConsumers.add(datagramConsumer);
-			datagramConsumersCache = new ArrayList<>(datagramConsumers);
-		}
+		this.packetListeners = packetListeners.toArray(new PacketListener[packetListeners.size()]);
 	}
 
 	@Override
@@ -75,13 +64,13 @@ public class UdpServerThread extends Thread {
 				final byte[] dataBuffer = new byte[dataBufferSize];
 				final DatagramPacket datagramPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
 				socket.receive(datagramPacket);
-				datagramConsumersCache.forEach(datagramConsumer -> {
+				for (PacketListener packetListener : packetListeners) {
 					try {
-						datagramConsumer.accept(datagramPacket);
+						packetListener.acceptPacket(datagramPacket);
 					} catch (Exception e) {
 						logger.warn(e.getMessage(), e);
 					}
-				});
+				}
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -104,5 +93,10 @@ public class UdpServerThread extends Thread {
 		if (isInterrupted())
 			return;
 		this.interrupt();
+	}
+
+	public interface PacketListener {
+
+		void acceptPacket(final DatagramPacket packet) throws Exception;
 	}
 }

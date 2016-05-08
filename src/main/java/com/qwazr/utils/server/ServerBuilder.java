@@ -21,11 +21,11 @@ import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.api.SessionPersistenceManager;
 
 import javax.ws.rs.Path;
-import java.net.DatagramPacket;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
 public class ServerBuilder<T extends ServerConfiguration> {
 
@@ -34,7 +34,7 @@ public class ServerBuilder<T extends ServerConfiguration> {
 	final Collection<Class<? extends ServiceInterface>> webServices;
 	final Collection<String> webServicePaths;
 	final Collection<String> webServiceNames;
-	final Collection<Consumer<DatagramPacket>> datagramConsumers;
+	final Collection<UdpServerThread.PacketListener> packetListeners;
 	final Collection<ServletInfo> servletInfos;
 	SessionPersistenceManager sessionPersistenceManager;
 	SessionListener sessionListener;
@@ -48,7 +48,7 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		webServices = new LinkedHashSet<>();
 		webServicePaths = new LinkedHashSet<>();
 		webServiceNames = new LinkedHashSet<>();
-		datagramConsumers = new LinkedHashSet<>();
+		packetListeners = new LinkedHashSet<>();
 		servletInfos = new LinkedHashSet<>();
 		sessionPersistenceManager = null;
 		identityManagerProvider = null;
@@ -75,8 +75,8 @@ public class ServerBuilder<T extends ServerConfiguration> {
 			webServicePaths.add(path.value());
 	}
 
-	public void registerDatagramConsumer(final Consumer<DatagramPacket> datagramConsumer) {
-		this.datagramConsumers.add(datagramConsumer);
+	public void registerPacketListener(final UdpServerThread.PacketListener packetListener) {
+		this.packetListeners.add(packetListener);
 	}
 
 	public void registerServlet(final ServletInfo servlet) {
@@ -109,5 +109,12 @@ public class ServerBuilder<T extends ServerConfiguration> {
 
 	public ExecutorService getExecutorService() {
 		return executorService;
+	}
+
+	public synchronized GenericServer build() {
+		if (GenericServer.INSTANCE != null)
+			throw new RuntimeException("The server has already been created (only one server per runtime)");
+		GenericServer.INSTANCE = new GenericServer(this);
+		return GenericServer.INSTANCE;
 	}
 }

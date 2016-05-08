@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * Generic RestApplication
  */
-class RestApplication extends Application {
+public class RestApplication extends Application {
 
 	@Override
 	final public Set<Class<?>> getClasses() {
