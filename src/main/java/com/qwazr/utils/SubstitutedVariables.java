@@ -29,7 +29,7 @@ public class SubstitutedVariables {
 	public SubstitutedVariables(String prefix, String suffix) {
 		this.prefix = prefix == null ? StringUtils.EMPTY : prefix;
 		this.suffix = suffix == null ? StringUtils.EMPTY : suffix;
-		variables = new HashMap<String, String>();
+		variables = new HashMap<>();
 		updateSubstituteList();
 	}
 
@@ -113,6 +113,11 @@ public class SubstitutedVariables {
 		propertiesVariables = new SubstitutedVariables("${", "}");
 		propertiesVariables.putAll(System.getProperties());
 		return propertiesVariables;
+	}
+
+	public static String propertyAndEnvironmentSubstitute(String source) {
+		source = getPropertiesVariables().substitute(source);
+		return getEnvironmentVariables().substitute(source);
 	}
 
 }

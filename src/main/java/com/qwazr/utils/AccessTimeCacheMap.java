@@ -44,20 +44,13 @@ public class AccessTimeCacheMap<K, V> {
 	}
 
 	public V getOrCreate(K key, Supplier<V> supplier) {
-		AccessTimeCacheEntry<V> entry;
-		long nextExpirationTime = System.currentTimeMillis() + msTimeOut;
-		rwl.r.lock();
-		try {
-			V value = getSynchronizedValue(key, nextExpirationTime);
-			if (value != null)
-				return value;
-		} finally {
-			rwl.r.unlock();
-		}
-		entry = new AccessTimeCacheEntry(nextExpirationTime);
+		final long nextExpirationTime = System.currentTimeMillis() + msTimeOut;
+		final V val = rwl.read(() -> getSynchronizedValue(key, nextExpirationTime));
+		if (val != null)
+			return val;
+		final AccessTimeCacheEntry<V> entry = new AccessTimeCacheEntry(nextExpirationTime);
 		synchronized (entry) {
-			rwl.w.lock();
-			try {
+			return rwl.write(() -> {
 				V value = getSynchronizedValue(key, nextExpirationTime);
 				if (value != null)
 					return value;
@@ -65,32 +58,23 @@ public class AccessTimeCacheMap<K, V> {
 				size = entryMap.size();
 				entry.setValue(supplier);
 				return entry.value;
-			} finally {
-				rwl.w.unlock();
-			}
+			});
 		}
 	}
 
 	public V remove(K key) {
-		rwl.r.lock();
-		try {
-			V value = getSynchronizedValue(key, 0);
-			if (value == null)
-				return null;
-		} finally {
-			rwl.r.unlock();
-		}
-		rwl.w.lock();
-		try {
-			V value = getSynchronizedValue(key, 0);
+		final V val = rwl.read(() -> getSynchronizedValue(key, 0));
+		if (val == null)
+			return null;
+
+		return rwl.write(() -> {
+			final V value = getSynchronizedValue(key, 0);
 			if (value == null)
 				return null;
 			entryMap.remove(key);
 			size = entryMap.size();
 			return value;
-		} finally {
-			rwl.w.lock();
-		}
+		});
 	}
 
 	public int size() {

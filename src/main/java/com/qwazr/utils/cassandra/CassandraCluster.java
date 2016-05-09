@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class CassandraCluster implements Closeable {
 
@@ -59,7 +60,7 @@ public class CassandraCluster implements Closeable {
 		this.poolTimeoutMs = poolTimeoutMs;
 		this.poolConnections = poolConnections;
 		this.hosts = hosts;
-		sessions = new LinkedHashMap<String, CassandraSession>();
+		sessions = new LinkedHashMap<>();
 	}
 
 	@Override
@@ -77,26 +78,20 @@ public class CassandraCluster implements Closeable {
 
 	@Override
 	public void close() throws IOException {
-		rwl.w.lock();
-		try {
+		rwl.write(() -> {
 			rootSession = null;
 			sessions.clear();
 			closeNoLock();
-		} finally {
-			rwl.w.unlock();
-		}
+		});
 	}
 
 	private void checkCluster() {
-		rwl.r.lock();
-		try {
-			if (cluster != null && !cluster.isClosed())
-				return;
-		} finally {
-			rwl.r.unlock();
-		}
-		rwl.w.lock();
-		try {
+
+		if (rwl.read(() -> cluster != null && !cluster.isClosed()))
+			return;
+
+
+		rwl.write(() -> {
 			if (cluster != null && !cluster.isClosed())
 				return;
 			Builder builder = Cluster.builder();
@@ -122,87 +117,44 @@ public class CassandraCluster implements Closeable {
 			logger.info("New Cluster " + hosts);
 			rootSession = null;
 			sessions.clear();
-		} finally {
-			rwl.w.unlock();
-		}
+		});
 	}
 
 	public CassandraSession getSession() {
 		checkCluster();
-		rwl.r.lock();
-		try {
-			if (rootSession != null)
-				return rootSession;
-		} finally {
-			rwl.r.unlock();
-		}
-		rwl.w.lock();
-		try {
-			if (rootSession != null)
-				return rootSession;
-			rootSession = new CassandraSession(cluster);
-			return rootSession;
-		} finally {
-			rwl.w.unlock();
-		}
+		return rwl.readOrWrite(() -> rootSession, () -> new CassandraSession(cluster));
 	}
 
-	public CassandraSession getSession(String keySpace) {
+	public CassandraSession getSession(final String keySpace) {
 		if (keySpace == null)
 			return getSession();
 		checkCluster();
-		keySpace = keySpace.intern();
-		rwl.r.lock();
-		try {
-			CassandraSession session = sessions.get(keySpace);
-			if (session != null)
-				return session;
-		} finally {
-			rwl.r.unlock();
-		}
-		rwl.w.lock();
-		try {
-			CassandraSession session = sessions.get(keySpace);
-			if (session != null)
-				return session;
-			session = new CassandraSession(cluster, keySpace);
+		final String fKeySpace = keySpace.intern();
+
+		return rwl.readOrWrite(() -> sessions.get(fKeySpace), () -> {
+			CassandraSession session = new CassandraSession(cluster, keySpace);
 			sessions.put(keySpace, session);
 			return session;
-		} finally {
-			rwl.w.unlock();
-		}
+		});
 	}
 
 	public void expireUnusedSince(int minutes) {
-		rwl.r.lock();
-		try {
+
+		rwl.read(() -> {
 			long time = System.currentTimeMillis() - (minutes * 60 * 1000);
 			for (CassandraSession session : sessions.values())
 				if (session.getLastUse() < time)
 					IOUtils.closeQuietly(session);
-		} finally {
-			rwl.r.unlock();
-		}
-		rwl.w.lock();
-		try {
-			List<String> keys = new ArrayList<String>();
-			for (Map.Entry<String, CassandraSession> entry : sessions.entrySet())
-				if (entry.getValue().isClosed())
-					keys.add(entry.getKey());
-			for (String key : keys)
-				sessions.remove(key);
-		} finally {
-			rwl.w.unlock();
-		}
+		});
+		rwl.write(() -> {
+			List<String> keys = sessions.entrySet().stream().filter(entry -> entry.getValue().isClosed())
+					.map(Map.Entry::getKey).collect(Collectors.toList());
+			keys.forEach(key -> sessions.remove(key));
+		});
 	}
 
 	public int getSessionCount() {
-		rwl.r.lock();
-		try {
-			return sessions.size();
-		} finally {
-			rwl.r.unlock();
-		}
+		return rwl.read(() -> sessions.size());
 	}
 
 }

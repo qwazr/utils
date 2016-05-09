@@ -58,21 +58,14 @@ abstract class TrackedAbstract<T> implements TrackedInterface {
 	@Override
 	final public void check() {
 
-		rwl.r.lock();
-		try {
-			if (getChanges() == null)
-				return;
-		} finally {
-			rwl.r.unlock();
-		}
-		rwl.w.lock();
-		try {
+		if (rwl.read(() -> getChanges()) == null)
+			return;
+
+		rwl.write(() -> {
 			final T changes = getChanges();
 			if (changes != null)
 				apply(changes);
-		} finally {
-			rwl.w.unlock();
-		}
+		});
 	}
 
 	final public File getFile() {
