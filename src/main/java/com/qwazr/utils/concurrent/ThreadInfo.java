@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.utils.threads;
+package com.qwazr.utils.concurrent;
 
+import com.qwazr.utils.ExceptionUtils;
+
+import javax.naming.NamingException;
 import java.lang.Thread.State;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.naming.NamingException;
-
-import com.qwazr.utils.ExceptionUtils;
 
 public class ThreadInfo {
 

@@ -15,11 +15,9 @@
  */
 package com.qwazr.utils;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
 
 final public class LockUtils {
 
@@ -127,7 +125,7 @@ final public class LockUtils {
 		}
 
 		final public <V, E extends Exception> V readOrWriteEx(final ExceptionCallable<V, E> read,
-				final ExceptionCallable<V, E> write) throws E {
+				final ExceptionCallable<V, E> write) throws Exception {
 			V result = readEx(read);
 			if (result != null)
 				return result;

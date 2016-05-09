@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.utils.threads;
+package com.qwazr.utils.concurrent;
 
 import java.util.Collection;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ThreadUtils {
 
@@ -68,70 +67,46 @@ public class ThreadUtils {
 		return true;
 	}
 
-	public static abstract class CallableExceptionCatcher<T> implements Callable<T> {
-
-		protected Exception exception = null;
-
-		public void checkException() throws Exception {
-			if (exception != null)
-				throw exception;
-		}
-	}
-
-	public static abstract class FunctionExceptionCatcher<T> extends CallableExceptionCatcher<T> {
-
-		private T result = null;
-
-		public abstract T execute() throws Exception;
-
-		@Override
-		final public T call() throws Exception {
+	public static <T> void parallel(Collection<T> collection, ParallelConsumer<T> consumer) throws Exception {
+		AtomicReference<Exception> exceptionRef = new AtomicReference<>();
+		collection.parallelStream().forEach(item -> {
 			try {
-				return result = execute();
+				consumer.accept(item);
 			} catch (Exception e) {
-				exception = e;
-				throw e;
+				exceptionRef.compareAndSet(null, e);
 			}
-		}
-
-		public T getResult() {
-			return result;
-		}
+		});
+		Exception exception = exceptionRef.get();
+		if (exception == null)
+			return;
+		throw exceptionRef.get();
 	}
 
-	public static abstract class ProcedureExceptionCatcher extends CallableExceptionCatcher<Object> {
+	public interface ParallelConsumer<T> {
 
-		public abstract void execute() throws Exception;
+		void accept(T t) throws Exception;
 
-		@Override
-		final public Object call() throws Exception {
+	}
+
+	public static void parallel(Collection<? extends ParallelRunnable> runnables) throws Exception {
+		AtomicReference<Exception> exceptionRef = new AtomicReference<>();
+		runnables.parallelStream().forEach(runnable -> {
 			try {
-				execute();
-				return null;
+				runnable.run();
 			} catch (Exception e) {
-				exception = e;
-				throw e;
+				exceptionRef.compareAndSet(null, e);
 			}
-		}
+		});
+		Exception exception = exceptionRef.get();
+		if (exception == null)
+			return;
+		throw exceptionRef.get();
 	}
 
-	public static <T> void invokeAndJoin(ExecutorService executor,
-			Collection<? extends CallableExceptionCatcher<T>> callables) throws Exception {
-		executor.invokeAll(callables);
-		checkException(callables);
-	}
+	public interface ParallelRunnable {
 
-	public static <T> void checkException(Collection<? extends CallableExceptionCatcher<T>> callables)
-			throws Exception {
-		for (CallableExceptionCatcher<?> callable : callables)
-			callable.checkException();
-	}
+		void run() throws Exception;
 
-	public static <T> T getFirstResult(Collection<? extends FunctionExceptionCatcher<T>> callables) {
-		for (FunctionExceptionCatcher<T> callable : callables)
-			if (callable.getResult() != null)
-				return callable.getResult();
-		return null;
 	}
 
 }
