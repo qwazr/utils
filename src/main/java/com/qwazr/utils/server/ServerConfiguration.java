@@ -171,7 +171,10 @@ public class ServerConfiguration {
 	}
 
 	final protected String getPropertyOrEnv(PrefixEnum prefix, Enum<?> key, String defaultValue) {
-		return getProperty(prefix, key, getEnv(prefix, key, defaultValue));
+		String value = getProperty(prefix, key, null);
+		if (value != null)
+			return value;
+		return getEnv(prefix, key, defaultValue);
 	}
 
 	final public static String getKey(PrefixEnum prefix, Enum<?> key) {
