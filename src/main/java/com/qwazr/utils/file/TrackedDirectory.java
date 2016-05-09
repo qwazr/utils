@@ -17,7 +17,9 @@ package com.qwazr.utils.file;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -26,20 +28,20 @@ public class TrackedDirectory extends TrackedAbstract<TrackedDirectory.Directory
 	private volatile Map<File, Long> trackedFiles;
 	private final FileFilter fileFilter;
 
-	public TrackedDirectory(File directory, FileFilter fileFilter) {
+	TrackedDirectory(final File directory, final FileFilter fileFilter) {
 		super(directory);
 		this.fileFilter = fileFilter;
 		this.trackedFiles = null;
 	}
 
 	@Override
-	final protected void apply(DirectoryChanges status) {
+	final protected void apply(final DirectoryChanges status) {
 		trackedFiles = status.trackedFiles;
 		if (status.changes != null)
 			status.changes.forEach((file, change) -> notify(change.reason, file));
 	}
 
-	final private boolean isChanges(File[] files) {
+	final private boolean isChanges(final File[] files) {
 		final int newFileCount = files == null ? 0 : files.length;
 		final int oldFileCount = trackedFiles == null ? 0 : trackedFiles.size();
 		if (newFileCount != oldFileCount)
@@ -107,9 +109,10 @@ public class TrackedDirectory extends TrackedAbstract<TrackedDirectory.Directory
 		final private Map<File, Long> trackedFiles;
 		final private Map<File, TrackedFile.FileChange> changes;
 
-		private DirectoryChanges(Map<File, Long> trackedFiles, Map<File, TrackedFile.FileChange> changes) {
+		private DirectoryChanges(final Map<File, Long> trackedFiles, final Map<File, TrackedFile.FileChange> changes) {
 			this.trackedFiles = trackedFiles;
 			this.changes = changes;
 		}
 	}
+
 }

@@ -22,6 +22,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class ServerConfiguration {
 
@@ -118,7 +121,7 @@ public class ServerConfiguration {
 	/**
 	 * The configuration directory
 	 */
-	public final File etcDirectory;
+	public final Collection<File> etcDirectories;
 
 	final HttpConnector webServiceConnector;
 
@@ -129,7 +132,7 @@ public class ServerConfiguration {
 	public ServerConfiguration() {
 
 		dataDirectory = buildDataDir(getPropertyOrEnv(null, VariablesEnum.QWAZR_DATA));
-		etcDirectory = buildEtcDir(dataDirectory, getPropertyOrEnv(null, VariablesEnum.QWAZR_ETC_DIR));
+		etcDirectories = buildEtcDirectories(dataDirectory, getPropertyOrEnv(null, VariablesEnum.QWAZR_ETC_DIR));
 
 		webAppConnector = new HttpConnector(PrefixEnum.WEBAPP, 9090);
 		webServiceConnector = new HttpConnector(PrefixEnum.WEBSERVICE, 9091);
@@ -155,10 +158,16 @@ public class ServerConfiguration {
 		return new File(System.getProperty("user.dir"));
 	}
 
-	private static File buildEtcDir(File dataDirectory, String path) {
-		if (!StringUtils.isEmpty(path))
-			return new File(path);
-		return new File(dataDirectory, "etc");
+	private static List<File> buildEtcDirectories(final File dataDirectory, final String paths) {
+		final List<File> files = new ArrayList<>();
+		if (StringUtils.isEmpty(paths)) {
+			files.add(new File(dataDirectory, "etc"));
+			return files;
+		}
+		String[] parts = StringUtils.split(paths, File.pathSeparatorChar);
+		for (String path : parts)
+			files.add(new File(path));
+		return files;
 	}
 
 	final protected Integer getPropertyOrEnvInt(PrefixEnum prefix, Enum<?> key, Integer defaultValue) {

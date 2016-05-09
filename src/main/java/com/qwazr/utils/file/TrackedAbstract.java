@@ -27,25 +27,25 @@ abstract class TrackedAbstract<T> implements TrackedInterface {
 	private final Set<FileChangeConsumer> consumerSet;
 	protected final File trackedFile;
 
-	public TrackedAbstract(File trackedFile) {
+	public TrackedAbstract(final File trackedFile) {
 		this.rwl = new LockUtils.ReadWriteLock();
-		this.consumerSet = new LinkedHashSet<FileChangeConsumer>();
+		this.consumerSet = new LinkedHashSet<>();
 		this.trackedFile = trackedFile;
 	}
 
-	final public void register(FileChangeConsumer consumer) {
+	final public void register(final FileChangeConsumer consumer) {
 		synchronized (consumerSet) {
 			consumerSet.add(consumer);
 		}
 	}
 
-	final public void unregister(FileChangeConsumer consumer) {
+	final public void unregister(final FileChangeConsumer consumer) {
 		synchronized (consumerSet) {
 			consumerSet.remove(consumer);
 		}
 	}
 
-	protected void notify(ChangeReason reason, File file) {
+	protected void notify(final ChangeReason reason, final File file) {
 		synchronized (consumerSet) {
 			consumerSet.forEach((consumer) -> consumer.accept(reason, file));
 		}

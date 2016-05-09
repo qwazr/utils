@@ -15,10 +15,18 @@
  */
 package com.qwazr.utils.file;
 
+import org.apache.commons.io.filefilter.FileFileFilter;
+
 import java.io.File;
+import java.io.FileFilter;
+import java.util.Collection;
 import java.util.function.BiConsumer;
 
 public interface TrackedInterface {
+
+	void register(final FileChangeConsumer consumer);
+
+	void unregister(final FileChangeConsumer consumer);
 
 	void check();
 
@@ -28,5 +36,16 @@ public interface TrackedInterface {
 
 	interface FileChangeConsumer extends BiConsumer<ChangeReason, File> {
 	}
-	
+
+	static TrackedInterface build(final Collection<File> directories, final FileFilter fileFilter) {
+		if (directories == null || directories.isEmpty())
+			return null;
+		if (directories.size() == 1)
+			return new TrackedDirectory(directories.iterator().next(), fileFilter);
+		return new TrackedDirectories(directories, fileFilter);
+	}
+
+	static TrackedInterface build(final File directory, final FileFilter fileFilter) {
+		return new TrackedDirectory(directory, fileFilter);
+	}
 }
