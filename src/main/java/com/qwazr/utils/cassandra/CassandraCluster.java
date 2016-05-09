@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,8 +89,7 @@ public class CassandraCluster implements Closeable {
 		if (rwl.read(() -> cluster != null && !cluster.isClosed()))
 			return;
 
-
-		rwl.write(() -> {
+		rwl.writeEx(() -> {
 			if (cluster != null && !cluster.isClosed())
 				return;
 			Builder builder = Cluster.builder();
@@ -147,8 +145,9 @@ public class CassandraCluster implements Closeable {
 					IOUtils.closeQuietly(session);
 		});
 		rwl.write(() -> {
-			List<String> keys = sessions.entrySet().stream().filter(entry -> entry.getValue().isClosed())
-					.map(Map.Entry::getKey).collect(Collectors.toList());
+			List<String> keys =
+					sessions.entrySet().stream().filter(entry -> entry.getValue().isClosed()).map(Map.Entry::getKey)
+							.collect(Collectors.toList());
 			keys.forEach(key -> sessions.remove(key));
 		});
 	}

@@ -150,8 +150,12 @@ final public class LockUtils {
 	}
 
 	public static class InsideLockException extends RuntimeException {
+
+		public final Exception exception;
+
 		InsideLockException(Exception cause) {
 			super(cause);
+			this.exception = cause;
 		}
 	}
 }

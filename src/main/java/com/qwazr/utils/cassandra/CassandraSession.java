@@ -84,16 +84,22 @@ public class CassandraSession implements Closeable {
 		if (s != null)
 			return s;
 
-		return rwl.write(() -> {
-			if (session != null && !session.isClosed())
+		try {
+			return rwl.writeEx(() -> {
+				if (session != null && !session.isClosed())
+					return session;
+				if (cluster == null || cluster.isClosed())
+					throw new DriverException("The cluster is closed");
+				if (logger.isDebugEnabled())
+					logger.debug("Create session " + keySpace == null ? StringUtils.EMPTY : keySpace);
+				session = keySpace == null ? cluster.connect() : cluster.connect(keySpace);
 				return session;
-			if (cluster == null || cluster.isClosed())
-				throw new DriverException("The cluster is closed");
-			if (logger.isDebugEnabled())
-				logger.debug("Create session " + keySpace == null ? StringUtils.EMPTY : keySpace);
-			session = keySpace == null ? cluster.connect() : cluster.connect(keySpace);
-			return session;
-		});
+			});
+		} catch (LockUtils.InsideLockException e) {
+			if (e.exception instanceof RuntimeException)
+				throw (RuntimeException) e.exception;
+			throw e;
+		}
 	}
 
 	private SimpleStatement getStatement(final String cql, final Integer fetchSize, final Object... values) {
