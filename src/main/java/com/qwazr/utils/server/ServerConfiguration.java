@@ -16,10 +16,16 @@
 package com.qwazr.utils.server;
 
 import com.qwazr.utils.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class ServerConfiguration {
+
+	static final Logger logger = LoggerFactory.getLogger(ServerConfiguration.class);
 
 	public enum PrefixEnum {
 
@@ -129,8 +135,15 @@ public class ServerConfiguration {
 		webServiceConnector = new HttpConnector(PrefixEnum.WEBSERVICE, 9091);
 		udpConnector = new UdpConnector(9091);
 
-		listenAddress = getPropertyOrEnv(null, VariablesEnum.LISTEN_ADDR, "localhost");
-		publicAddress = getPropertyOrEnv(null, VariablesEnum.PUBLIC_ADDR, listenAddress);
+		String defaultAddress;
+		try {
+			defaultAddress = InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException e) {
+			logger.warn("Cannot extract the address of the localhost.", e);
+			defaultAddress = "localhost";
+		}
+		listenAddress = getPropertyOrEnv(null, VariablesEnum.LISTEN_ADDR, defaultAddress);
+		publicAddress = getPropertyOrEnv(null, VariablesEnum.PUBLIC_ADDR, defaultAddress);
 
 		webApplicationPublicAddress = publicAddress + ':' + webAppConnector.port;
 		webServicePublicAddress = publicAddress + ':' + webServiceConnector.port;
