@@ -25,6 +25,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ServerConfiguration {
 
@@ -158,16 +159,16 @@ public class ServerConfiguration {
 		return new File(System.getProperty("user.dir"));
 	}
 
-	private static List<File> buildEtcDirectories(final File dataDirectory, final String paths) {
-		final List<File> files = new ArrayList<>();
-		if (StringUtils.isEmpty(paths)) {
-			files.add(new File(dataDirectory, "etc"));
-			return files;
+	private static ArrayList<File> buildEtcDirectories(final File dataDirectory, final String paths) {
+		final ArrayList<File> etcDirectories = new ArrayList<>();
+		if (paths != null && !paths.isEmpty()) {
+			final String[] parts = StringUtils.split(paths, File.pathSeparatorChar);
+			for (String path : parts)
+				etcDirectories.add(new File(path));
 		}
-		String[] parts = StringUtils.split(paths, File.pathSeparatorChar);
-		for (String path : parts)
-			files.add(new File(path));
-		return files;
+		if (etcDirectories.isEmpty())
+			etcDirectories.add(new File(dataDirectory, "etc"));
+		return etcDirectories;
 	}
 
 	final protected Integer getPropertyOrEnvInt(PrefixEnum prefix, Enum<?> key, Integer defaultValue) {
