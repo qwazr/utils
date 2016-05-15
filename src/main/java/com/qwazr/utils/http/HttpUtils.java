@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils.http;
 
+import com.qwazr.utils.CharsetUtils;
 import com.qwazr.utils.StringUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -33,15 +34,12 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.TrustStrategy;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -113,7 +111,7 @@ public class HttpUtils {
 		Header header = entity.getContentEncoding();
 		String encoding = header == null ? null : header.getValue();
 		if (encoding == null)
-			return IOUtils.toString(entity.getContent());
+			return IOUtils.toString(entity.getContent(), CharsetUtils.CharsetUTF8);
 		else
 			return IOUtils.toString(entity.getContent(), encoding);
 	}
@@ -131,16 +129,12 @@ public class HttpUtils {
 
 		final HttpClientBuilder unsecureHttpClientBuilder = HttpClientBuilder.create();
 
-		SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
-			public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-				return true;
-			}
-		}).build();
+		SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, (arg0, arg1) -> true).build();
 
 		unsecureHttpClientBuilder.setSSLContext(sslContext);
 
-		SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext,
-				NoopHostnameVerifier.INSTANCE);
+		SSLConnectionSocketFactory sslSocketFactory =
+				new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
 		Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
 				.register("http", PlainConnectionSocketFactory.getSocketFactory()).register("https", sslSocketFactory)
 				.build();

@@ -16,45 +16,32 @@
 package com.qwazr.utils;
 
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
-import jdk.nashorn.internal.objects.NativeJava;
-
-import java.io.Reader;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.security.ProtectionDomain;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
+import java.io.Reader;
+import java.security.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class ScriptUtils  {
+public class ScriptUtils {
 
 	public static class RestrictedAccessControlContext {
 		public static final AccessControlContext INSTANCE;
 
 		static {
-			INSTANCE = new AccessControlContext(
-					new ProtectionDomain[]{new ProtectionDomain(null, null)});
+			INSTANCE = new AccessControlContext(new ProtectionDomain[] { new ProtectionDomain(null, null) });
 		}
 	}
 
-	public static void evalScript(final ScriptEngine scriptEngine,
-								  final AccessControlContext controlContext, final Reader reader,
-								  final Bindings bindings) throws ScriptException,
-			PrivilegedActionException {
-		AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-			@Override
-			public Object run() throws ScriptException {
-				scriptEngine.eval(reader, bindings);
-				return null;
-			}
+	public static void evalScript(final ScriptEngine scriptEngine, final AccessControlContext controlContext,
+			final Reader reader, final Bindings bindings) throws ScriptException, PrivilegedActionException {
+		AccessController.doPrivileged((PrivilegedExceptionAction<Object>) () -> {
+			scriptEngine.eval(reader, bindings);
+			return null;
 		}, controlContext);
 	}
 
@@ -64,7 +51,7 @@ public class ScriptUtils  {
 		if (som.isArray())
 			throw new ScriptException("The JS object is an array");
 
-		Map<String, T> map = new LinkedHashMap<String, T>();
+		Map<String, T> map = new LinkedHashMap<>();
 		if (som.isEmpty())
 			return map;
 		som.forEach((s, o) -> map.put(s, ((ScriptObjectMirror) o).to(type)));
@@ -91,8 +78,7 @@ public class ScriptUtils  {
 		som.values().forEach(o -> collection.add(o.toString()));
 	}
 
-	public static void fillStringMap(ScriptObjectMirror som, Map<String, String> map)
-			throws ScriptException {
+	public static void fillStringMap(ScriptObjectMirror som, Map<String, String> map) throws ScriptException {
 		if (som == null)
 			return;
 		som.forEach((s, o) -> map.put(s, o.toString()));

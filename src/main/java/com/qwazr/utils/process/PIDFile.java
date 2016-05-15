@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2016 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.Charset;
 
 public class PIDFile {
 
@@ -51,7 +52,7 @@ public class PIDFile {
 	public PIDFile savePidToFile() throws IOException {
 		FileOutputStream fos = new FileOutputStream(pidFile);
 		try {
-			IOUtils.write(pid.toString(), fos);
+			IOUtils.write(pid.toString(), fos, Charset.defaultCharset());
 			return this;
 		} finally {
 			fos.close();
@@ -68,7 +69,6 @@ public class PIDFile {
 			pidFile.deleteOnExit();
 		return this;
 	}
-
 
 	/**
 	 * Define the location of the PID File using:

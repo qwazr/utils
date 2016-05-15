@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils.http;
 
+import com.qwazr.utils.CharsetUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -42,7 +43,7 @@ public class HttpResponseEntityException extends HttpResponseException {
 		String ct = null;
 		if (entity != null) {
 			try {
-				cm = IOUtils.toString(entity.getContent());
+				cm = IOUtils.toString(entity.getContent(), CharsetUtils.CharsetUTF8);
 				Header header = entity.getContentType();
 				if (header != null)
 					ct = header.getValue();
