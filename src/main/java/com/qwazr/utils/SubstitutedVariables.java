@@ -95,24 +95,32 @@ public class SubstitutedVariables {
 		}
 	}
 
-	private static SubstitutedVariables environmentVariables = null;
+	private static volatile SubstitutedVariables environmentVariables = null;
 
-	public static synchronized SubstitutedVariables getEnvironmentVariables() {
+	public static SubstitutedVariables getEnvironmentVariables() {
 		if (environmentVariables != null)
 			return environmentVariables;
-		environmentVariables = new SubstitutedVariables("${", "}");
-		environmentVariables.putAll(System.getenv());
-		return environmentVariables;
+		synchronized (SubstitutedVariables.class) {
+			if (environmentVariables != null)
+				return environmentVariables;
+			environmentVariables = new SubstitutedVariables("${", "}");
+			environmentVariables.putAll(System.getenv());
+			return environmentVariables;
+		}
 	}
 
-	private static SubstitutedVariables propertiesVariables = null;
+	private static volatile SubstitutedVariables propertiesVariables = null;
 
-	public static synchronized SubstitutedVariables getPropertiesVariables() {
+	public static SubstitutedVariables getPropertiesVariables() {
 		if (propertiesVariables != null)
 			return propertiesVariables;
-		propertiesVariables = new SubstitutedVariables("${", "}");
-		propertiesVariables.putAll(System.getProperties());
-		return propertiesVariables;
+		synchronized (SubstitutedVariables.class) {
+			if (propertiesVariables != null)
+				return propertiesVariables;
+			propertiesVariables = new SubstitutedVariables("${", "}");
+			propertiesVariables.putAll(System.getProperties());
+			return propertiesVariables;
+		}
 	}
 
 	public static String propertyAndEnvironmentSubstitute(String source) {
