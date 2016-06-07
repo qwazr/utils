@@ -27,6 +27,7 @@ import io.undertow.security.handlers.SecurityInitialHandler;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.impl.BasicAuthenticationMechanism;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
@@ -65,6 +66,8 @@ public class GenericServer {
 	final private Collection<ServletInfo> servletInfos;
 	final private SessionPersistenceManager sessionPersistenceManager;
 	final private SessionListener sessionListener;
+	final private LogReceiver servletLogReceiver;
+	final private LogReceiver restLogReceiver;
 
 	final protected UdpServerThread udpServer;
 
@@ -82,6 +85,8 @@ public class GenericServer {
 		this.servletInfos = builder.servletInfos.isEmpty() ? null : new ArrayList<>(builder.servletInfos);
 		this.sessionPersistenceManager = builder.sessionPersistenceManager;
 		this.sessionListener = builder.sessionListener;
+		this.servletLogReceiver = builder.servletLogReceiver;
+		this.restLogReceiver = builder.restLogReceiver;
 		this.udpServer = buildUdpServer(builder);
 		this.startedListeners = builder.startedListeners.isEmpty() ? null : new ArrayList<>(builder.startedListeners);
 		this.shutdownListeners =
@@ -101,8 +106,11 @@ public class GenericServer {
 		undertows.add(undertow);
 	}
 
-	private synchronized HttpHandler start(final DeploymentManager manager) throws ServletException {
+	private synchronized HttpHandler start(final DeploymentManager manager, final LogReceiver logReceiver)
+			throws ServletException {
 		HttpHandler handler = manager.start();
+		if (logReceiver != null)
+			handler = logReceiver.build(handler);
 		deploymentManagers.add(manager);
 		return handler;
 	}
@@ -140,14 +148,15 @@ public class GenericServer {
 		return identityManager;
 	}
 
-	private final void startHttpServer(ServerConfiguration.HttpConnector connector, DeploymentInfo deploymentInfo)
+	private final void startHttpServer(ServerConfiguration.HttpConnector connector, DeploymentInfo deploymentInfo,
+			LogReceiver logReceiver)
 			throws IOException, ServletException {
 		IdentityManager identityManager = getIdentityManager(connector, deploymentInfo);
 
 		DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
 
-		HttpHandler httpHandler = start(manager);
+		HttpHandler httpHandler = start(manager, logReceiver);
 
 		if (identityManager != null)
 			httpHandler = addSecurity(httpHandler, identityManager, serverConfiguration.webAppConnector.realm);
@@ -182,11 +191,13 @@ public class GenericServer {
 		// Launch the servlet application if any
 		if (servletInfos != null && !servletInfos.isEmpty())
 			startHttpServer(serverConfiguration.webAppConnector,
-					ServletApplication.getDeploymentInfo(servletInfos, sessionPersistenceManager, sessionListener));
+					ServletApplication.getDeploymentInfo(servletInfos, sessionPersistenceManager, sessionListener),
+					servletLogReceiver);
 
 		// Launch the jaxrs application if any
 		if (webServices != null && !webServices.isEmpty())
-			startHttpServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo());
+			startHttpServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo(),
+					restLogReceiver);
 
 		if (shutdownHook) {
 			Runtime.getRuntime().addShutdownHook(new Thread() {

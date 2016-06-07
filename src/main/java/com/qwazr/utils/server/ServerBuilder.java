@@ -16,9 +16,11 @@
 package com.qwazr.utils.server;
 
 import com.qwazr.utils.AnnotationsUtils;
+import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.api.SessionPersistenceManager;
+import org.slf4j.Logger;
 
 import javax.ws.rs.Path;
 import java.util.Collection;
@@ -38,6 +40,8 @@ public class ServerBuilder<T extends ServerConfiguration> {
 	final Collection<ServletInfo> servletInfos;
 	SessionPersistenceManager sessionPersistenceManager;
 	SessionListener sessionListener;
+	LogReceiver restLogReceiver;
+	LogReceiver servletLogReceiver;
 	GenericServer.IdentityManagerProvider identityManagerProvider;
 	final Collection<GenericServer.Listener> startedListeners;
 	final Collection<GenericServer.Listener> shutdownListeners;
@@ -53,6 +57,8 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		sessionPersistenceManager = null;
 		identityManagerProvider = null;
 		sessionListener = null;
+		restLogReceiver = null;
+		servletLogReceiver = null;
 		startedListeners = new LinkedHashSet<>();
 		shutdownListeners = new LinkedHashSet<>();
 	}
@@ -101,6 +107,14 @@ public class ServerBuilder<T extends ServerConfiguration> {
 
 	public void setSessionListenere(final SessionListener sessionListener) {
 		this.sessionListener = sessionListener;
+	}
+
+	public void setServletLogReceiver(final Logger logger, final String logFormat) {
+		this.servletLogReceiver = new LogReceiver(logger, logFormat);
+	}
+
+	public void setRestLogReceiver(final Logger logger, final String logFormat) {
+		this.restLogReceiver = new LogReceiver(logger, logFormat);
 	}
 
 	public T getServerConfiguration() {

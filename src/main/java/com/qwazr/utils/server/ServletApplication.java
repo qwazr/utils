@@ -31,6 +31,7 @@ class ServletApplication {
 				Servlets.deployment().setClassLoader(Thread.currentThread().getContextClassLoader()).setContextPath("/")
 						.setDefaultEncoding(java.nio.charset.Charset.defaultCharset().name())
 						.setDeploymentName(ServletApplication.class.getName());
+
 		if (sessionPersistenceManager != null)
 			deploymentInfo.setSessionPersistenceManager(sessionPersistenceManager);
 		if (servletInfos != null)
@@ -39,5 +40,7 @@ class ServletApplication {
 			deploymentInfo.addSessionListener(sessionListener);
 		return deploymentInfo;
 	}
+
+
 
 }
