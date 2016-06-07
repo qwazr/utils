@@ -15,8 +15,6 @@
  */
 package com.qwazr.utils.file;
 
-import org.apache.commons.io.filefilter.FileFileFilter;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Collection;

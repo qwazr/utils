@@ -17,11 +17,8 @@ package com.qwazr.utils.file;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 public class TrackedDirectory extends TrackedAbstract<TrackedDirectory.DirectoryChanges> {
 
@@ -71,12 +68,9 @@ public class TrackedDirectory extends TrackedAbstract<TrackedDirectory.Directory
 				changes.put(file, new TrackedFile.FileChange(ChangeReason.UPDATED, newLastModified));
 		}
 		if (trackedFiles != null)
-			trackedFiles.forEach(new BiConsumer<File, Long>() {
-				@Override
-				public void accept(File file, Long aLong) {
-					if (!newTrackedFiles.containsKey(file))
-						new TrackedFile.FileChange(ChangeReason.DELETED, null);
-				}
+			trackedFiles.forEach((file, aLong) -> {
+				if (!newTrackedFiles.containsKey(file))
+					new TrackedFile.FileChange(ChangeReason.DELETED, null);
 			});
 	}
 
