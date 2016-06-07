@@ -65,8 +65,8 @@ public class GenericServer {
 	final private Collection<ServletInfo> servletInfos;
 	final private SessionPersistenceManager sessionPersistenceManager;
 	final private SessionListener sessionListener;
-	final private LogReceiver servletLogReceiver;
-	final private LogReceiver restLogReceiver;
+	final private Logger servletAccessLogger;
+	final private Logger restAccessLogger;
 
 	final protected UdpServerThread udpServer;
 
@@ -84,8 +84,8 @@ public class GenericServer {
 		this.servletInfos = builder.servletInfos.isEmpty() ? null : new ArrayList<>(builder.servletInfos);
 		this.sessionPersistenceManager = builder.sessionPersistenceManager;
 		this.sessionListener = builder.sessionListener;
-		this.servletLogReceiver = builder.servletLogReceiver;
-		this.restLogReceiver = builder.restLogReceiver;
+		this.servletAccessLogger = builder.servletAccessLogger;
+		this.restAccessLogger = builder.restAccessLogger;
 		this.udpServer = buildUdpServer(builder);
 		this.startedListeners = builder.startedListeners.isEmpty() ? null : new ArrayList<>(builder.startedListeners);
 		this.shutdownListeners =
@@ -105,11 +105,11 @@ public class GenericServer {
 		undertows.add(undertow);
 	}
 
-	private synchronized HttpHandler start(final DeploymentManager manager, final LogReceiver logReceiver)
+	private synchronized HttpHandler start(final DeploymentManager manager, final Logger accessLogger)
 			throws ServletException {
 		HttpHandler handler = manager.start();
-		if (logReceiver != null)
-			handler = logReceiver.build(handler);
+		if (accessLogger != null)
+			handler = new LogHandler(handler, accessLogger);
 		deploymentManagers.add(manager);
 		return handler;
 	}
@@ -148,13 +148,13 @@ public class GenericServer {
 	}
 
 	private final void startHttpServer(ServerConfiguration.HttpConnector connector, DeploymentInfo deploymentInfo,
-			LogReceiver logReceiver) throws IOException, ServletException {
+			Logger accessLogger) throws IOException, ServletException {
 		IdentityManager identityManager = getIdentityManager(connector, deploymentInfo);
 
 		DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
 
-		HttpHandler httpHandler = start(manager, logReceiver);
+		HttpHandler httpHandler = start(manager, accessLogger);
 
 		if (identityManager != null)
 			httpHandler = addSecurity(httpHandler, identityManager, serverConfiguration.webAppConnector.realm);
@@ -190,12 +190,12 @@ public class GenericServer {
 		if (servletInfos != null && !servletInfos.isEmpty())
 			startHttpServer(serverConfiguration.webAppConnector,
 					ServletApplication.getDeploymentInfo(servletInfos, sessionPersistenceManager, sessionListener),
-					servletLogReceiver);
+					servletAccessLogger);
 
 		// Launch the jaxrs application if any
 		if (webServices != null && !webServices.isEmpty())
 			startHttpServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo(),
-					restLogReceiver);
+					restAccessLogger);
 
 		if (shutdownHook) {
 			Runtime.getRuntime().addShutdownHook(new Thread() {

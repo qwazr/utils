@@ -16,7 +16,6 @@
 package com.qwazr.utils.server;
 
 import com.qwazr.utils.AnnotationsUtils;
-import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.api.SessionPersistenceManager;
@@ -40,8 +39,8 @@ public class ServerBuilder<T extends ServerConfiguration> {
 	final Collection<ServletInfo> servletInfos;
 	SessionPersistenceManager sessionPersistenceManager;
 	SessionListener sessionListener;
-	LogReceiver restLogReceiver;
-	LogReceiver servletLogReceiver;
+	Logger servletAccessLogger;
+	Logger restAccessLogger;
 	GenericServer.IdentityManagerProvider identityManagerProvider;
 	final Collection<GenericServer.Listener> startedListeners;
 	final Collection<GenericServer.Listener> shutdownListeners;
@@ -57,8 +56,8 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		sessionPersistenceManager = null;
 		identityManagerProvider = null;
 		sessionListener = null;
-		restLogReceiver = null;
-		servletLogReceiver = null;
+		servletAccessLogger = null;
+		restAccessLogger = null;
 		startedListeners = new LinkedHashSet<>();
 		shutdownListeners = new LinkedHashSet<>();
 	}
@@ -105,16 +104,16 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		this.identityManagerProvider = provider;
 	}
 
-	public void setSessionListenere(final SessionListener sessionListener) {
+	public void setSessionListener(final SessionListener sessionListener) {
 		this.sessionListener = sessionListener;
 	}
 
-	public void setServletLogReceiver(final Logger logger, final String logFormat) {
-		this.servletLogReceiver = new LogReceiver(logger, logFormat);
+	public void setServletAccessLogger(final Logger logger) {
+		this.servletAccessLogger = logger;
 	}
 
-	public void setRestLogReceiver(final Logger logger, final String logFormat) {
-		this.restLogReceiver = new LogReceiver(logger, logFormat);
+	public void setRestAccessLogger(final Logger logger) {
+		this.restAccessLogger = logger;
 	}
 
 	public T getServerConfiguration() {
