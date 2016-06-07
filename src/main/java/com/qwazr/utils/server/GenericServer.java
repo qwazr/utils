@@ -27,7 +27,6 @@ import io.undertow.security.handlers.SecurityInitialHandler;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.impl.BasicAuthenticationMechanism;
 import io.undertow.server.HttpHandler;
-import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
@@ -149,8 +148,7 @@ public class GenericServer {
 	}
 
 	private final void startHttpServer(ServerConfiguration.HttpConnector connector, DeploymentInfo deploymentInfo,
-			LogReceiver logReceiver)
-			throws IOException, ServletException {
+			LogReceiver logReceiver) throws IOException, ServletException {
 		IdentityManager identityManager = getIdentityManager(connector, deploymentInfo);
 
 		DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
