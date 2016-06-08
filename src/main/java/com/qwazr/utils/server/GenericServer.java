@@ -63,6 +63,7 @@ public class GenericServer {
 	final protected ServerConfiguration serverConfiguration;
 
 	final private Collection<ServletInfo> servletInfos;
+	final private Collection<ListenerInfo> listenerInfos;
 	final private SessionPersistenceManager sessionPersistenceManager;
 	final private SessionListener sessionListener;
 	final private Logger servletAccessLogger;
@@ -82,6 +83,7 @@ public class GenericServer {
 		this.deploymentManagers = new ArrayList<>();
 		this.identityManagerProvider = builder.identityManagerProvider;
 		this.servletInfos = builder.servletInfos.isEmpty() ? null : new ArrayList<>(builder.servletInfos);
+		this.listenerInfos = builder.listenerInfos.isEmpty() ? null : new ArrayList<>(builder.listenerInfos);
 		this.sessionPersistenceManager = builder.sessionPersistenceManager;
 		this.sessionListener = builder.sessionListener;
 		this.servletAccessLogger = builder.servletAccessLogger;
@@ -189,7 +191,8 @@ public class GenericServer {
 		// Launch the servlet application if any
 		if (servletInfos != null && !servletInfos.isEmpty())
 			startHttpServer(serverConfiguration.webAppConnector,
-					ServletApplication.getDeploymentInfo(servletInfos, sessionPersistenceManager, sessionListener),
+					ServletApplication
+							.getDeploymentInfo(servletInfos, listenerInfos, sessionPersistenceManager, sessionListener),
 					servletAccessLogger);
 
 		// Launch the jaxrs application if any

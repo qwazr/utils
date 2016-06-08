@@ -18,6 +18,7 @@ package com.qwazr.utils.server;
 import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
+import io.undertow.servlet.api.ListenerInfo;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.api.SessionPersistenceManager;
 
@@ -26,7 +27,8 @@ import java.util.Collection;
 class ServletApplication {
 
 	final static DeploymentInfo getDeploymentInfo(final Collection<ServletInfo> servletInfos,
-			final SessionPersistenceManager sessionPersistenceManager, final SessionListener sessionListener) {
+			final Collection<ListenerInfo> listenersInfos, final SessionPersistenceManager sessionPersistenceManager,
+			final SessionListener sessionListener) {
 		DeploymentInfo deploymentInfo =
 				Servlets.deployment().setClassLoader(Thread.currentThread().getContextClassLoader()).setContextPath("/")
 						.setDefaultEncoding(java.nio.charset.Charset.defaultCharset().name())
@@ -36,11 +38,12 @@ class ServletApplication {
 			deploymentInfo.setSessionPersistenceManager(sessionPersistenceManager);
 		if (servletInfos != null)
 			deploymentInfo.addServlets(servletInfos);
+		if (listenersInfos != null)
+			deploymentInfo.addListeners(listenersInfos);
 		if (sessionListener != null)
 			deploymentInfo.addSessionListener(sessionListener);
 		return deploymentInfo;
 	}
-
 
 
 }

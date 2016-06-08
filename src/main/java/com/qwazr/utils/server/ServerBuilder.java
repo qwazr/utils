@@ -17,6 +17,7 @@ package com.qwazr.utils.server;
 
 import com.qwazr.utils.AnnotationsUtils;
 import io.undertow.server.session.SessionListener;
+import io.undertow.servlet.api.ListenerInfo;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.api.SessionPersistenceManager;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ public class ServerBuilder<T extends ServerConfiguration> {
 	final Collection<String> webServiceNames;
 	final Collection<UdpServerThread.PacketListener> packetListeners;
 	final Collection<ServletInfo> servletInfos;
+	final Collection<ListenerInfo> listenerInfos;
 	SessionPersistenceManager sessionPersistenceManager;
 	SessionListener sessionListener;
 	Logger servletAccessLogger;
@@ -53,6 +55,7 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		webServiceNames = new LinkedHashSet<>();
 		packetListeners = new LinkedHashSet<>();
 		servletInfos = new LinkedHashSet<>();
+		listenerInfos = new LinkedHashSet<>();
 		sessionPersistenceManager = null;
 		identityManagerProvider = null;
 		sessionListener = null;
@@ -86,6 +89,10 @@ public class ServerBuilder<T extends ServerConfiguration> {
 
 	public void registerServlet(final ServletInfo servlet) {
 		this.servletInfos.add(servlet);
+	}
+
+	public void registerListener(final ListenerInfo servlet) {
+		this.listenerInfos.add(servlet);
 	}
 
 	public void registerStartedListener(final GenericServer.Listener listener) {
