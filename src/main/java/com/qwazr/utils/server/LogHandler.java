@@ -80,6 +80,7 @@ public class LogHandler implements HttpHandler {
 				MDC.put("sc-bytes", Long.toString(exchange.getResponseBytesSent()));
 
 				logger.info(StringUtils.EMPTY);
+				MDC.clear();
 			} finally {
 				nextListener.proceed();
 			}
@@ -104,6 +105,14 @@ public class LogHandler implements HttpHandler {
 		sb.append(value);
 	}
 
+	private static void span3(final StringBuilder sb, final int value) {
+		if (value < 10)
+			sb.append("00");
+		else if (value < 100)
+			sb.append('0');
+		sb.append(value);
+	}
+
 	private static String getDate(final Calendar calendar) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(calendar.get(Calendar.YEAR));
@@ -122,7 +131,7 @@ public class LogHandler implements HttpHandler {
 		sb.append(':');
 		span2(sb, calendar.get(Calendar.SECOND));
 		sb.append('.');
-		sb.append(calendar.get(Calendar.MILLISECOND));
+		span3(sb, calendar.get(Calendar.MILLISECOND));
 		return sb.toString();
 	}
 }
