@@ -20,6 +20,7 @@ import java.io.FileFilter;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class TrackedDirectories implements TrackedInterface {
 
@@ -43,6 +44,7 @@ public class TrackedDirectories implements TrackedInterface {
 
 	@Override
 	final public void check() {
-		trackers.forEach(TrackedAbstract::check);
+		trackers.forEach(TrackedDirectory::check);
 	}
+
 }

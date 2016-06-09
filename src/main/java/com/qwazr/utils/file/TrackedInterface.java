@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.Collection;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public interface TrackedInterface {
 
@@ -29,7 +30,7 @@ public interface TrackedInterface {
 	void check();
 
 	enum ChangeReason {
-		DELETED, UPDATED;
+		DELETED, UPDATED
 	}
 
 	interface FileChangeConsumer extends BiConsumer<ChangeReason, File> {

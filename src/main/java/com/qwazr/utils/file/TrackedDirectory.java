@@ -17,96 +17,81 @@ package com.qwazr.utils.file;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
-public class TrackedDirectory extends TrackedAbstract<TrackedDirectory.DirectoryChanges> {
+public class TrackedDirectory implements TrackedInterface {
 
-	private volatile Map<File, Long> trackedFiles;
+	private final Set<FileChangeConsumer> consumerSet;
+	private final Map<File, TrackedFile> trackedFiles;
 	private final FileFilter fileFilter;
+	private final File trackedDirectory;
 
 	TrackedDirectory(final File directory, final FileFilter fileFilter) {
-		super(directory);
+		this.consumerSet = new LinkedHashSet<>();
 		this.fileFilter = fileFilter;
-		this.trackedFiles = null;
+		this.trackedFiles = new LinkedHashMap<>();
+		this.trackedDirectory = directory;
 	}
 
 	@Override
-	final protected void apply(final DirectoryChanges status) {
-		trackedFiles = status.trackedFiles;
-		if (status.changes != null)
-			status.changes.forEach((file, change) -> notify(change.reason, file));
-	}
-
-	final private boolean isChanges(final File[] files) {
-		final int newFileCount = files == null ? 0 : files.length;
-		final int oldFileCount = trackedFiles == null ? 0 : trackedFiles.size();
-		if (newFileCount != oldFileCount)
-			return true;
-		if (oldFileCount == 0)
-			return false;
-		for (File file : files) {
-			Long lastModified = trackedFiles.get(file);
-			if (lastModified == null || file.lastModified() != lastModified)
-				return true;
+	final public void register(final FileChangeConsumer consumer) {
+		synchronized (consumerSet) {
+			if (consumerSet.contains(consumer))
+				return;
+			consumerSet.add(consumer);
+			trackedFiles.forEach((file, trackedFile) -> trackedFile.register(consumer));
 		}
-		return false;
 	}
 
-	final private void buildAllDelete(Map<File, TrackedFile.FileChange> changes) {
-		trackedFiles
-				.forEach((file, aLong) -> changes.put(file, new TrackedFile.FileChange(ChangeReason.DELETED, null)));
-	}
-
-	final private void buildChanges(File[] files, final Map<File, Long> newTrackedFiles,
-			Map<File, TrackedFile.FileChange> changes) {
-		for (File file : files) {
-			final long newLastModified = file.lastModified();
-			newTrackedFiles.put(file, newLastModified);
-			Long lastModified = trackedFiles == null ? null : trackedFiles.get(file);
-			if (lastModified == null || lastModified != newLastModified)
-				changes.put(file, new TrackedFile.FileChange(ChangeReason.UPDATED, newLastModified));
+	final public void unregister(final FileChangeConsumer consumer) {
+		synchronized (consumerSet) {
+			if (!consumerSet.contains(consumer))
+				return;
+			trackedFiles.forEach((file, trackedFile) -> trackedFile.unregister(consumer));
+			consumerSet.remove(consumer);
 		}
-		if (trackedFiles != null)
-			trackedFiles.forEach((file, aLong) -> {
-				if (!newTrackedFiles.containsKey(file))
-					new TrackedFile.FileChange(ChangeReason.DELETED, null);
-			});
 	}
 
 	@Override
-	final protected DirectoryChanges getChanges() {
-		final File[] files;
-		if (trackedFile.exists() && trackedFile.isDirectory())
-			files = trackedFile.listFiles(fileFilter);
-		else
-			files = null;
-		if (!isChanges(files))
-			return null;
-
-		final Map<File, Long> newTrackedFiles;
-		final Map<File, TrackedFile.FileChange> changes = new HashMap<>();
-
-		if (files == null || files.length == 0) {
-			newTrackedFiles = null;
-			buildAllDelete(changes);
-		} else {
-			newTrackedFiles = new HashMap<>();
-			buildChanges(files, newTrackedFiles, changes);
+	final public void check() {
+		synchronized (consumerSet) {
+			final File[] files;
+			if (trackedDirectory.exists() && trackedDirectory.isDirectory())
+				files = trackedDirectory.listFiles(fileFilter);
+			else
+				files = null;
+			if (files == null || files.length == 0)
+				doEmptyDirectory();
+			else
+				doDirectory(files);
 		}
-
-		return new DirectoryChanges(newTrackedFiles, changes);
 	}
 
-	static final class DirectoryChanges {
+	private void doEmptyDirectory() {
+		trackedFiles.forEach((file, trackedFile) -> trackedFile.check());
+		trackedFiles.clear();
+	}
 
-		final private Map<File, Long> trackedFiles;
-		final private Map<File, TrackedFile.FileChange> changes;
-
-		private DirectoryChanges(final Map<File, Long> trackedFiles, final Map<File, TrackedFile.FileChange> changes) {
-			this.trackedFiles = trackedFiles;
-			this.changes = changes;
+	private void doDirectory(File[] files) {
+		final Map<File, TrackedFile> toDelete = new LinkedHashMap<>(trackedFiles);
+		for (File file : files) {
+			TrackedFile trackedFile = trackedFiles.get(file);
+			if (trackedFile == null) {
+				final TrackedFile finalTrackedFile;
+				finalTrackedFile = trackedFile = new TrackedFile(file);
+				trackedFiles.put(file, trackedFile);
+				consumerSet.forEach(consumer -> finalTrackedFile.register(consumer));
+			}
+			trackedFile.check();
+			toDelete.remove(file);
 		}
+		toDelete.forEach((file, trackedFile) -> {
+			trackedFile.check();
+			trackedFiles.remove(file);
+		});
 	}
 
 }

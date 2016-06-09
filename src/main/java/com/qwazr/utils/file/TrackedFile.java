@@ -16,45 +16,63 @@
 package com.qwazr.utils.file;
 
 import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class TrackedFile extends TrackedAbstract<TrackedFile.FileChange> {
+public class TrackedFile implements TrackedInterface {
 
-	private volatile Long lastModified;
+	private final Map<FileChangeConsumer, AtomicLong> consumerMap;
+	private final File trackedFile;
 
 	public TrackedFile(File file) {
-		super(file);
-		this.lastModified = null;
+		this.consumerMap = new LinkedHashMap<>();
+		this.trackedFile = file;
 	}
 
 	@Override
-	final protected void apply(FileChange change) {
-		lastModified = change.lastModified;
-		notify(change.reason, trackedFile);
+	final public void register(final FileChangeConsumer consumer) {
+		synchronized (consumerMap) {
+			if (consumerMap.containsKey(consumer))
+				return;
+			consumerMap.put(consumer, new AtomicLong(0));
+		}
 	}
 
 	@Override
-	final protected FileChange getChanges() {
-		if (trackedFile.exists()) {
-			final Long newLastModified = trackedFile.lastModified();
-			if (newLastModified == lastModified)
-				return null;
-			return new FileChange(ChangeReason.UPDATED, newLastModified);
-		} else {
-			if (lastModified == null)
-				return null;
-			return new FileChange(ChangeReason.DELETED, null);
+	final public void unregister(final FileChangeConsumer consumer) {
+		synchronized (consumerMap) {
+			consumerMap.remove(consumer);
 		}
 	}
 
-	final static class FileChange {
-
-		final ChangeReason reason;
-		final Long lastModified;
-
-		FileChange(ChangeReason reason, Long lastModified) {
-			this.reason = reason;
-			this.lastModified = lastModified;
+	@Override
+	final public void check() {
+		synchronized (consumerMap) {
+			if (trackedFile.exists())
+				doExists();
+			else
+				doNotExists();
 		}
+	}
+
+	private void doNotExists() {
+		consumerMap.forEach((consumer, lastModified) -> {
+			if (lastModified.get() == 0)
+				return;
+			lastModified.set(0);
+			consumer.accept(ChangeReason.DELETED, trackedFile);
+		});
+	}
+
+	private void doExists() {
+		final long newLastModified = trackedFile.lastModified();
+		consumerMap.forEach((consumer, lastModified) -> {
+			if (lastModified.get() == newLastModified)
+				return;
+			lastModified.set(newLastModified);
+			consumer.accept(ChangeReason.UPDATED, trackedFile);
+		});
 	}
 
 }
