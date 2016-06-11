@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+ * Copyright 2015-2016 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.qwazr.utils.server;
 
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.json.JsonExceptionReponse;
+import org.slf4j.Logger;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -33,7 +34,7 @@ public class ServerException extends RuntimeException {
 	private final int statusCode;
 	private final String message;
 
-	public ServerException(Status status, String message, Exception exception) {
+	public ServerException(final Status status, String message, final Exception exception) {
 		super(message, exception);
 		if (status == null && exception != null && exception instanceof WebApplicationException) {
 			WebApplicationException wae = (WebApplicationException) exception;
@@ -49,23 +50,23 @@ public class ServerException extends RuntimeException {
 		this.message = message;
 	}
 
-	public ServerException(Status status) {
+	public ServerException(final Status status) {
 		this(status, status.getReasonPhrase(), null);
 	}
 
-	public ServerException(Status status, String message) {
+	public ServerException(final Status status, final String message) {
 		this(status, message, null);
 	}
 
-	public ServerException(String message, Exception exception) {
+	public ServerException(final String message, final Exception exception) {
 		this(null, message, exception);
 	}
 
-	public ServerException(String message) {
+	public ServerException(final String message) {
 		this(null, message, null);
 	}
 
-	public ServerException(Exception exception) {
+	public ServerException(final Exception exception) {
 		this(null, null, exception);
 	}
 
@@ -73,8 +74,26 @@ public class ServerException extends RuntimeException {
 		return statusCode;
 	}
 
+	final public ServerException warnIfCause(final Logger logger) {
+		final Throwable cause = getCause();
+		if (cause == null)
+			return this;
+		if (logger.isWarnEnabled())
+			logger.warn(getMessage(), cause);
+		return this;
+	}
+
+	final public ServerException errorIfCause(final Logger logger) {
+		final Throwable cause = getCause();
+		if (cause == null)
+			return this;
+		if (logger.isErrorEnabled())
+			logger.error(getMessage(), cause);
+		return this;
+	}
+
 	@Override
-	public String getMessage() {
+	final public String getMessage() {
 		if (message != null)
 			return message;
 		return super.getMessage();
@@ -97,7 +116,7 @@ public class ServerException extends RuntimeException {
 		return new WebApplicationException(this, getJsonResponse());
 	}
 
-	public static ServerException getServerException(Exception e) {
+	public static ServerException getServerException(final Exception e) {
 		if (e instanceof ServerException)
 			return (ServerException) e;
 		if (e instanceof WebApplicationException) {
@@ -108,7 +127,7 @@ public class ServerException extends RuntimeException {
 		return new ServerException(e);
 	}
 
-	private static WebApplicationException checkCompatible(Exception e, MediaType expectedType) {
+	private static WebApplicationException checkCompatible(final Exception e, final MediaType expectedType) {
 		if (!(e instanceof WebApplicationException))
 			return null;
 		WebApplicationException wae = (WebApplicationException) e;
@@ -125,18 +144,18 @@ public class ServerException extends RuntimeException {
 		return wae;
 	}
 
-	public static WebApplicationException getTextException(Exception e) {
+	public static WebApplicationException getTextException(final Logger logger, final Exception e) {
 		WebApplicationException wae = checkCompatible(e, MediaType.TEXT_PLAIN_TYPE);
 		if (wae != null)
 			return wae;
-		return getServerException(e).getTextException();
+		return getServerException(e).warnIfCause(logger).getTextException();
 	}
 
-	public static WebApplicationException getJsonException(Exception e) {
+	public static WebApplicationException getJsonException(final Logger logger, final Exception e) {
 		WebApplicationException wae = checkCompatible(e, MediaType.APPLICATION_JSON_TYPE);
 		if (wae != null)
 			return wae;
-		return getServerException(e).getJsonException();
+		return getServerException(e).warnIfCause(logger).getJsonException();
 	}
 
 }
