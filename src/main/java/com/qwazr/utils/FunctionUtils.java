@@ -17,15 +17,21 @@ package com.qwazr.utils;
 
 public class FunctionUtils {
 
-	public interface IntConsumerEx {
+	public interface IntConsumerEx<E extends Exception> {
 
-		<E extends Exception> void accept(int value) throws E;
+		void accept(int value) throws E;
 
 	}
 
-	public interface ConsumerEx<T> {
+	public interface ConsumerEx<T, E extends Exception> {
 
-		<E extends Exception> void accept(T t) throws E;
+		void accept(T t) throws E;
+
+	}
+
+	public interface BiConsumerEx<K, V, E extends Exception> {
+
+		void accept(K k, V v) throws E;
 
 	}
 }

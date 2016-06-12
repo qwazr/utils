@@ -21,7 +21,6 @@ import com.ibm.icu.text.CharsetMatch;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 
@@ -31,18 +30,14 @@ public class CharsetUtils {
 		CharsetDetector detector = new CharsetDetector();
 		detector.setText(inputStream);
 		CharsetMatch match = detector.detect();
-		if (match == null)
-			return null;
-		return match.getName();
+		return match == null ? null : match.getName();
 	}
 
 	public final static String charsetDetector(byte[] bytes) {
 		CharsetDetector detector = new CharsetDetector();
 		detector.setText(bytes);
 		CharsetMatch match = detector.detect();
-		if (match == null)
-			return null;
-		return match.getName();
+		return match == null ? null : match.getName();
 	}
 
 	public final static Charset CharsetUTF8 = Charset.forName("UTF-8");
@@ -65,7 +60,7 @@ public class CharsetUtils {
 		return new String(bytes, CharsetUTF8);
 	}
 
-	public final static String decodeUtf8(ByteBuffer bytes) throws CharacterCodingException {
+	public final static String decodeUtf8(ByteBuffer bytes) throws IOException {
 		if (bytes == null)
 			return null;
 		return new String(CharsetUTF8.newDecoder().decode(bytes).array());
