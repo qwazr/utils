@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2016 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,8 @@ package com.qwazr.utils;
 import org.apache.commons.io.IOCase;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Stack;
 
 /**
@@ -99,7 +101,7 @@ public class WildcardMatcher {
 						}
 						int repeat = caseSensitivity.checkIndexOf(name, textIdx + 1, wcs[wcsIdx]);
 						if (repeat >= 0) {
-							backtrack.push(new int[]{wcsIdx, repeat});
+							backtrack.push(new int[] { wcsIdx, repeat });
 						}
 					} else {
 						// matching from current position
@@ -150,7 +152,7 @@ public class WildcardMatcher {
 		// package level so a unit test may run on this
 
 		if (text.indexOf('?') == -1 && text.indexOf('*') == -1) {
-			return new String[]{text};
+			return new String[] { text };
 		}
 
 		char[] array = text.toCharArray();
@@ -164,8 +166,7 @@ public class WildcardMatcher {
 				}
 				if (array[i] == '?') {
 					list.add("?");
-				} else if (list.isEmpty() ||
-						i > 0 && list.get(list.size() - 1).equals("*") == false) {
+				} else if (list.isEmpty() || i > 0 && list.get(list.size() - 1).equals("*") == false) {
 					list.add("*");
 				}
 			} else {
@@ -179,7 +180,23 @@ public class WildcardMatcher {
 		return list.toArray(new String[list.size()]);
 	}
 
-	public static void main(String[] args) {
-		System.out.println(new WildcardMatcher("http://*.qwazr*").match("http://www.qwazr.com"));
+	public final static List<WildcardMatcher> getList(final Collection<String> patternList) {
+		if (patternList == null || patternList.isEmpty())
+			return null;
+		final List<WildcardMatcher> matcherList = new ArrayList<>(patternList.size());
+		for (String pattern : patternList)
+			matcherList.add(new WildcardMatcher(pattern));
+		return matcherList;
 	}
+
+	public final static boolean anyMatch(final String value, final List<WildcardMatcher> matcherList) {
+		for (WildcardMatcher matcher : matcherList) {
+			synchronized (matcher) {
+				if (matcher.match(value))
+					return true;
+			}
+		}
+		return false;
+	}
+
 }

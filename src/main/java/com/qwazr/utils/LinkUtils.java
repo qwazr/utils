@@ -110,16 +110,6 @@ public class LinkUtils {
 		return newEncodedURI(u).toURL();
 	}
 
-	public static void main(String[] args) throws MalformedURLException, UnsupportedEncodingException {
-		System.out.println(lastPart("/my+folder/"));
-		System.out.println(lastPart("my folder/"));
-		System.out.println(lastPart("my folder/my+sub-folder/"));
-		System.out.println(lastPart("/my+file.png"));
-		System.out.println(lastPart("my+file.png"));
-		System.out.println(lastPart("my+folder/my+sub-folder/my+file.png"));
-		System.out.println(UTF8_URL_Encode("outlook:INBOX/~TEST TEST"));
-	}
-
 	public final static MultivaluedMap<String, String> getQueryParameters(final String queryString) {
 		if (queryString == null || queryString.isEmpty())
 			return null;
@@ -143,4 +133,5 @@ public class LinkUtils {
 			return null;
 		}
 	}
+
 }

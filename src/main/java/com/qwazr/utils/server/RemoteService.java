@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.qwazr.utils.LinkUtils;
 import com.qwazr.utils.StringUtils;
+import com.qwazr.utils.UBuilder;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 
@@ -351,5 +352,29 @@ public class RemoteService {
 	 */
 	public static RemoteService[] build(final Collection<String> remoteServiceURLs) throws URISyntaxException {
 		return fromBuilders(builders(remoteServiceURLs));
+	}
+
+	/**
+	 * Helper for URL building. The URL is built by concatening the url
+	 * parameters given in the constructor and an array of pathes.
+	 *
+	 * @param remote the remoteservice
+	 * @param paths  An array of path
+	 */
+	public static UBuilder getNewUBuilder(final RemoteService remote, final String... paths) {
+		final UBuilder builder = new UBuilder();
+		StringBuilder sb = new StringBuilder();
+		if (remote.path != null)
+			sb.append(remote.path);
+		if (paths != null)
+			for (String path : paths)
+				if (path != null)
+					sb.append(path);
+		builder.setScheme(remote.scheme == null ? "http" : remote.scheme)
+				.setHost(remote.host == null ? "localhost" : remote.host)
+				.setPort(remote.port == null ? 9091 : remote.port);
+		if (sb.length() > 0)
+			builder.setPath(sb.toString());
+		return builder;
 	}
 }

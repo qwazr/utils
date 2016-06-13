@@ -26,7 +26,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.auth.Credentials;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +34,6 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 public abstract class JsonClientAbstract implements JsonClientInterface {
 
@@ -168,94 +165,4 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		}
 	}
 
-	final public class UBuilder extends URIBuilder {
-
-		/**
-		 * Helper for URL building. The URL is built by concatening the url
-		 * parameters given in the constructor and an array of pathes.
-		 *
-		 * @param paths An array of path
-		 */
-		public UBuilder(final String... paths) {
-			StringBuilder sb = new StringBuilder();
-			if (remote.path != null)
-				sb.append(remote.path);
-			if (paths != null)
-				for (String path : paths)
-					if (path != null)
-						sb.append(path);
-			setScheme(remote.scheme == null ? "http" : remote.scheme)
-					.setHost(remote.host == null ? "localhost" : remote.host)
-					.setPort(remote.port == null ? 9091 : remote.port);
-			if (sb.length() > 0)
-				setPath(sb.toString());
-		}
-
-		/**
-		 * Add the query parameters if the object parameter is not null
-		 *
-		 * @param param  the name of the parameter
-		 * @param object an optional value
-		 * @return the current UBuilder
-		 */
-		final public UBuilder setParameterObject(final String param, final Object object) {
-			if (object == null)
-				return this;
-			super.setParameter(param, object.toString());
-			return this;
-		}
-
-		/**
-		 * Add the query parameter. If the value is null nothing is added.
-		 *
-		 * @param param the name of the parameter
-		 * @param value an optional value
-		 * @return the current UBuilder
-		 */
-		@Override
-		final public UBuilder setParameter(final String param, final String value) {
-			if (value == null)
-				return this;
-			super.setParameter(param, value);
-			return this;
-		}
-
-		final public UBuilder setParameter(final String param, final Enum value) {
-			if (value == null)
-				return this;
-			super.setParameter(param, value.name());
-			return this;
-		}
-
-		final public UBuilder setParameter(final String param, final Number value) {
-			if (value == null)
-				return this;
-			super.setParameter(param, value.toString());
-			return this;
-		}
-
-		/**
-		 * Set common parameters for QWAZR services
-		 *
-		 * @param local     an optional local parameter (can be null)
-		 * @param group     an optional group parameter (can be null)
-		 * @param msTimeout an optional timeout parameter in milliseconds (can be null)
-		 * @return the current UBuilder
-		 */
-		final public UBuilder setParameters(final Boolean local, final String group, final Integer msTimeout) {
-			setParameterObject("local", local);
-			setParameterObject("group", group);
-			setParameterObject("timeout", msTimeout);
-			return this;
-		}
-
-		final public URI build() {
-			try {
-				return super.build();
-			} catch (URISyntaxException e) {
-				throw new WebApplicationException(e.getMessage(), e, Status.INTERNAL_SERVER_ERROR);
-			}
-		}
-
-	}
 }
