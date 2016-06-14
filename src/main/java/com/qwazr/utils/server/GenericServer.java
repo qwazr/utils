@@ -36,10 +36,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 
@@ -63,6 +60,7 @@ public class GenericServer {
 	final protected ServerConfiguration serverConfiguration;
 
 	final private Collection<ServletInfo> servletInfos;
+	final private Map<String, FilterInfo> filterInfos;
 	final private Collection<ListenerInfo> listenerInfos;
 	final private SessionPersistenceManager sessionPersistenceManager;
 	final private SessionListener sessionListener;
@@ -83,6 +81,7 @@ public class GenericServer {
 		this.deploymentManagers = new ArrayList<>();
 		this.identityManagerProvider = builder.identityManagerProvider;
 		this.servletInfos = builder.servletInfos.isEmpty() ? null : new ArrayList<>(builder.servletInfos);
+		this.filterInfos = builder.filterInfos.isEmpty() ? null : new LinkedHashMap(builder.filterInfos);
 		this.listenerInfos = builder.listenerInfos.isEmpty() ? null : new ArrayList<>(builder.listenerInfos);
 		this.sessionPersistenceManager = builder.sessionPersistenceManager;
 		this.sessionListener = builder.sessionListener;
@@ -190,10 +189,9 @@ public class GenericServer {
 
 		// Launch the servlet application if any
 		if (servletInfos != null && !servletInfos.isEmpty())
-			startHttpServer(serverConfiguration.webAppConnector,
-					ServletApplication
-							.getDeploymentInfo(servletInfos, listenerInfos, sessionPersistenceManager, sessionListener),
-					servletAccessLogger);
+			startHttpServer(serverConfiguration.webAppConnector, ServletApplication
+					.getDeploymentInfo(servletInfos, filterInfos, listenerInfos, sessionPersistenceManager,
+							sessionListener), servletAccessLogger);
 
 		// Launch the jaxrs application if any
 		if (webServices != null && !webServices.isEmpty())

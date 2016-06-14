@@ -15,6 +15,8 @@
  */
 package com.qwazr.utils;
 
+import java.util.Map;
+
 public class FunctionUtils {
 
 	public interface IntConsumerEx<E extends Exception> {
@@ -33,5 +35,11 @@ public class FunctionUtils {
 
 		void accept(K k, V v) throws E;
 
+	}
+
+	public final static <K, V, E extends Exception> void forEach(Map<K, V> map, BiConsumerEx<K, V, E> consumer)
+			throws E {
+		for (Map.Entry<K, V> entry : map.entrySet())
+			consumer.accept(entry.getKey(), entry.getValue());
 	}
 }

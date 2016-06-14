@@ -17,6 +17,7 @@ package com.qwazr.utils.server;
 
 import com.qwazr.utils.AnnotationsUtils;
 import io.undertow.server.session.SessionListener;
+import io.undertow.servlet.api.FilterInfo;
 import io.undertow.servlet.api.ListenerInfo;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.api.SessionPersistenceManager;
@@ -25,6 +26,8 @@ import org.slf4j.Logger;
 import javax.ws.rs.Path;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,6 +41,7 @@ public class ServerBuilder<T extends ServerConfiguration> {
 	final Collection<String> webServiceNames;
 	final Collection<UdpServerThread.PacketListener> packetListeners;
 	final Collection<ServletInfo> servletInfos;
+	final Map<String, FilterInfo> filterInfos;
 	final Collection<ListenerInfo> listenerInfos;
 	SessionPersistenceManager sessionPersistenceManager;
 	SessionListener sessionListener;
@@ -55,6 +59,7 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		webServiceNames = new LinkedHashSet<>();
 		packetListeners = new LinkedHashSet<>();
 		servletInfos = new LinkedHashSet<>();
+		filterInfos = new LinkedHashMap<>();
 		listenerInfos = new LinkedHashSet<>();
 		sessionPersistenceManager = null;
 		identityManagerProvider = null;
@@ -89,6 +94,10 @@ public class ServerBuilder<T extends ServerConfiguration> {
 
 	public void registerServlet(final ServletInfo servlet) {
 		this.servletInfos.add(servlet);
+	}
+
+	public void registerFilter(final String path, final FilterInfo filter) {
+		this.filterInfos.put(path, filter);
 	}
 
 	public void registerListener(final ListenerInfo servlet) {
@@ -137,4 +146,5 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		GenericServer.INSTANCE = new GenericServer(this);
 		return GenericServer.INSTANCE;
 	}
+
 }
