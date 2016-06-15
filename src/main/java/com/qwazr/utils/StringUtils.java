@@ -204,10 +204,8 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		if (text == null)
 			return 0;
 		int i = 0;
-		StringReader sr = new StringReader(text);
-		try {
-			BufferedReader br = new BufferedReader(sr);
-			try {
+		try (StringReader sr = new StringReader(text)) {
+			try (BufferedReader br = new BufferedReader(sr)) {
 				String line;
 				while ((line = br.readLine()) != null) {
 					if (!collectEmptyLines && line.length() == 0)
@@ -215,11 +213,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 					lineCollector.add(line);
 					i++;
 				}
-			} finally {
-				IOUtils.closeQuietly(br);
 			}
-		} finally {
-			IOUtils.closeQuietly(sr);
 		}
 		return i;
 	}
