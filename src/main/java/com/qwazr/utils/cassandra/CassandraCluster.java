@@ -120,7 +120,7 @@ public class CassandraCluster implements Closeable {
 
 	public CassandraSession getSession() {
 		checkCluster();
-		return rwl.readOrWrite(() -> rootSession, () -> new CassandraSession(cluster));
+		return rwl.readOrWrite(() -> rootSession, () -> rootSession = new CassandraSession(cluster));
 	}
 
 	public CassandraSession getSession(final String keySpace) {
