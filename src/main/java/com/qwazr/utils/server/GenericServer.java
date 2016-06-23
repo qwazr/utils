@@ -26,15 +26,19 @@ import io.undertow.security.handlers.AuthenticationMechanismsHandler;
 import io.undertow.security.handlers.SecurityInitialHandler;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.impl.BasicAuthenticationMechanism;
+import io.undertow.server.ConnectorStatistics;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
+import org.glassfish.hk2.api.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.*;
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -48,6 +52,7 @@ public class GenericServer {
 	final Collection<String> webServiceNames;
 	final Collection<String> webServicePaths;
 	final private IdentityManagerProvider identityManagerProvider;
+	final private Collection<ConnectorStatisticsMXBean> connectorsStatistics;
 
 	final private Collection<Listener> startedListeners;
 	final private Collection<Listener> shutdownListeners;
@@ -91,6 +96,7 @@ public class GenericServer {
 		this.startedListeners = builder.startedListeners.isEmpty() ? null : new ArrayList<>(builder.startedListeners);
 		this.shutdownListeners =
 				builder.shutdownListeners.isEmpty() ? null : new ArrayList<>(builder.shutdownListeners);
+		this.connectorsStatistics = new ArrayList<>();
 	}
 
 	private static UdpServerThread buildUdpServer(final ServerBuilder builder) {
@@ -110,7 +116,7 @@ public class GenericServer {
 			throws ServletException {
 		HttpHandler handler = manager.start();
 		if (accessLogger != null)
-			handler = new LogHandler(handler, accessLogger);
+			handler = new LogMetricsHandler(handler, accessLogger);
 		deploymentManagers.add(manager);
 		return handler;
 	}
@@ -128,8 +134,7 @@ public class GenericServer {
 				if (logger.isWarnEnabled())
 					logger.warn("Cannot stop the manager: " + e.getMessage(), e);
 			}
-		for (Undertow undertow : undertows)
-			undertow.stop();
+		undertows.forEach(Undertow::stop);
 	}
 
 	private final IdentityManager getIdentityManager(ServerConfiguration.HttpConnector connector,
@@ -148,14 +153,16 @@ public class GenericServer {
 		return identityManager;
 	}
 
-	private final void startHttpServer(ServerConfiguration.HttpConnector connector, DeploymentInfo deploymentInfo,
-			Logger accessLogger) throws IOException, ServletException {
+	private void startHttpServer(ServerConfiguration.HttpConnector connector, DeploymentInfo deploymentInfo,
+			Logger accessLogger) throws IOException, ServletException, OperationsException, MBeanException {
 		IdentityManager identityManager = getIdentityManager(connector, deploymentInfo);
 
 		DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
 
 		HttpHandler httpHandler = start(manager, accessLogger);
+		final LogMetricsHandler logMetricsHandler =
+				httpHandler instanceof LogMetricsHandler ? (LogMetricsHandler) httpHandler : null;
 
 		if (identityManager != null)
 			httpHandler = addSecurity(httpHandler, identityManager, serverConfiguration.webAppConnector.realm);
@@ -163,9 +170,19 @@ public class GenericServer {
 		logger.info("Start the connector " + serverConfiguration.listenAddress + ":" + connector.port);
 
 		Builder servletBuilder = Undertow.builder().addHttpListener(connector.port, serverConfiguration.listenAddress)
-				.setServerOption(UndertowOptions.ENABLE_STATISTICS, true)
 				.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(httpHandler);
 		start(servletBuilder.build());
+
+		// Register MBeans
+		final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+		final Hashtable<String, String> props = new Hashtable<>();
+		props.put("type", "connector");
+		props.put("host", serverConfiguration.listenAddress);
+		props.put("port", Integer.toString(connector.port));
+		final ObjectName name = new ObjectName("com.qwazr.server", props);
+		final ConnectorStatisticsMXBean statistics = new ConnectorStatisticsMXBeanImpl(logMetricsHandler);
+		mbs.registerMBean(statistics, name);
+		connectorsStatistics.add(statistics);
 	}
 
 	/**
@@ -175,7 +192,7 @@ public class GenericServer {
 	 * @throws ServletException if the servlet configuration failed
 	 */
 	final public GenericServer start(boolean shutdownHook)
-			throws IOException, ServletException, IllegalAccessException, InstantiationException {
+			throws IOException, ServletException, ReflectiveOperationException, OperationsException, MBeanException {
 
 		java.util.logging.Logger.getLogger("").setLevel(Level.WARNING);
 
@@ -208,7 +225,6 @@ public class GenericServer {
 		}
 
 		executeListener(startedListeners);
-
 		return this;
 	}
 
@@ -220,6 +236,10 @@ public class GenericServer {
 		handler = new AuthenticationMechanismsHandler(handler, mechanisms);
 		handler = new SecurityInitialHandler(AuthenticationMode.PRO_ACTIVE, identityManager, handler);
 		return handler;
+	}
+
+	public Collection<ConnectorStatisticsMXBean> getConnectorsStatistics() {
+		return connectorsStatistics;
 	}
 
 	public Collection<String> getServiceNames() {
