@@ -112,13 +112,12 @@ public class GenericServer {
 		undertows.add(undertow);
 	}
 
-	private synchronized HttpHandler start(final DeploymentManager manager, final Logger accessLogger)
+	private synchronized LogMetricsHandler start(final DeploymentManager manager, final Logger accessLogger)
 			throws ServletException {
-		HttpHandler handler = manager.start();
-		if (accessLogger != null)
-			handler = new LogMetricsHandler(handler, accessLogger);
+		final HttpHandler httpHandler = manager.start();
+		final LogMetricsHandler logMetricsHandler = new LogMetricsHandler(httpHandler, accessLogger);
 		deploymentManagers.add(manager);
-		return handler;
+		return logMetricsHandler;
 	}
 
 	public synchronized void stopAll() {
@@ -160,10 +159,8 @@ public class GenericServer {
 		DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
 
-		HttpHandler httpHandler = start(manager, accessLogger);
-		final LogMetricsHandler logMetricsHandler =
-				httpHandler instanceof LogMetricsHandler ? (LogMetricsHandler) httpHandler : null;
-
+		final LogMetricsHandler logMetricsHandler = start(manager, accessLogger);
+		HttpHandler httpHandler = logMetricsHandler;
 		if (identityManager != null)
 			httpHandler = addSecurity(httpHandler, identityManager, serverConfiguration.webAppConnector.realm);
 
@@ -180,9 +177,8 @@ public class GenericServer {
 		props.put("host", serverConfiguration.listenAddress);
 		props.put("port", Integer.toString(connector.port));
 		final ObjectName name = new ObjectName("com.qwazr.server", props);
-		final ConnectorStatisticsMXBean statistics = new ConnectorStatisticsMXBeanImpl(logMetricsHandler);
-		mbs.registerMBean(statistics, name);
-		connectorsStatistics.add(statistics);
+		mbs.registerMBean(logMetricsHandler, name);
+		connectorsStatistics.add(logMetricsHandler);
 	}
 
 	/**

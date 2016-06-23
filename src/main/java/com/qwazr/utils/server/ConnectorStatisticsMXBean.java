@@ -18,4 +18,8 @@ package com.qwazr.utils.server;
 public interface ConnectorStatisticsMXBean {
 
 	int getActiveCount();
+
+	int getMaxActiveCount();
+
+	void reset();
 }

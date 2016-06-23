@@ -31,28 +31,47 @@ import java.security.Principal;
 import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class LogMetricsHandler implements HttpHandler {
+public class LogMetricsHandler implements HttpHandler, ConnectorStatisticsMXBean {
 
 	private final HttpHandler next;
 	private final Logger logger;
 	public final AtomicInteger active;
+	public final AtomicInteger maxActive;
 
 	public LogMetricsHandler(final HttpHandler next, final Logger logger) {
 		this.next = next;
 		this.logger = logger;
 		active = new AtomicInteger();
+		maxActive = new AtomicInteger();
 	}
 
 	@Override
 	final public void handleRequest(final HttpServerExchange exchange) throws Exception {
 		if (logger != null)
 			exchange.addExchangeCompleteListener(new CompletionListener());
-		active.incrementAndGet();
+		final int act = active.incrementAndGet();
+		if (act > maxActive.get())
+			maxActive.set(act);
 		try {
 			next.handleRequest(exchange);
 		} finally {
 			active.decrementAndGet();
 		}
+	}
+
+	@Override
+	final public int getActiveCount() {
+		return active.get();
+	}
+
+	@Override
+	final public int getMaxActiveCount() {
+		return maxActive.get();
+	}
+
+	@Override
+	final public void reset() {
+		maxActive.set(0);
 	}
 
 	private class CompletionListener implements ExchangeCompletionListener {
