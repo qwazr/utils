@@ -163,6 +163,7 @@ public class GenericServer {
 		logger.info("Start the connector " + serverConfiguration.listenAddress + ":" + connector.port);
 
 		Builder servletBuilder = Undertow.builder().addHttpListener(connector.port, serverConfiguration.listenAddress)
+				.setServerOption(UndertowOptions.ENABLE_STATISTICS, true)
 				.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(httpHandler);
 		start(servletBuilder.build());
 	}
