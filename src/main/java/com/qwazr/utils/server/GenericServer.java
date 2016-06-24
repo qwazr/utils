@@ -154,7 +154,8 @@ public class GenericServer {
 
 		HttpHandler httpHandler = manager.start();
 		final LogMetricsHandler logMetricsHandler =
-				new LogMetricsHandler(httpHandler, accessLogger, serverConfiguration.listenAddress, connector.port);
+				new LogMetricsHandler(httpHandler, accessLogger, serverConfiguration.listenAddress, connector.port,
+						jmxName);
 		deploymentManagers.add(manager);
 		httpHandler = logMetricsHandler;
 		if (identityManager != null)
@@ -200,12 +201,12 @@ public class GenericServer {
 		if (servletInfos != null && !servletInfos.isEmpty())
 			startHttpServer(serverConfiguration.webAppConnector, ServletApplication
 					.getDeploymentInfo(servletInfos, filterInfos, listenerInfos, sessionPersistenceManager,
-							sessionListener), servletAccessLogger, "servlet");
+							sessionListener), servletAccessLogger, ServerConfiguration.PrefixEnum.WEBAPP.name());
 
 		// Launch the jaxrs application if any
 		if (webServices != null && !webServices.isEmpty())
 			startHttpServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo(),
-					restAccessLogger, "rest");
+					restAccessLogger, ServerConfiguration.PrefixEnum.WEBSERVICE.name());
 
 		if (shutdownHook) {
 			Runtime.getRuntime().addShutdownHook(new Thread() {

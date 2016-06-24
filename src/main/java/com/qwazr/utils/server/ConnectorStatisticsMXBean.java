@@ -18,8 +18,10 @@ package com.qwazr.utils.server;
 public interface ConnectorStatisticsMXBean {
 
 	String getAddress();
-	
+
 	int getPort();
+
+	String getName();
 
 	int getActiveCount();
 

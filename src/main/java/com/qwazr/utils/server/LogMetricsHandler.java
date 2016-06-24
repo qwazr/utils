@@ -35,18 +35,21 @@ public class LogMetricsHandler implements HttpHandler, ConnectorStatisticsMXBean
 
 	private final String address;
 	private final int port;
+	private final String name;
 	private final HttpHandler next;
 	private final Logger logger;
 	public final AtomicInteger active;
 	public final AtomicInteger maxActive;
 
-	LogMetricsHandler(final HttpHandler next, final Logger logger, final String address, final int port) {
+	LogMetricsHandler(final HttpHandler next, final Logger logger, final String address, final int port,
+			final String name) {
 		this.next = next;
 		this.logger = logger;
 		this.active = new AtomicInteger();
 		this.maxActive = new AtomicInteger();
 		this.address = address;
 		this.port = port;
+		this.name = name;
 	}
 
 	@Override
@@ -81,6 +84,11 @@ public class LogMetricsHandler implements HttpHandler, ConnectorStatisticsMXBean
 	@Override
 	final public int getPort() {
 		return this.port;
+	}
+
+	@Override
+	final public String getName() {
+		return this.name;
 	}
 
 	@Override
