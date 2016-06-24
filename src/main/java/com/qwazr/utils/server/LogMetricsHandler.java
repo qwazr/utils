@@ -33,16 +33,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class LogMetricsHandler implements HttpHandler, ConnectorStatisticsMXBean {
 
+	private final String address;
+	private final int port;
 	private final HttpHandler next;
 	private final Logger logger;
 	public final AtomicInteger active;
 	public final AtomicInteger maxActive;
 
-	public LogMetricsHandler(final HttpHandler next, final Logger logger) {
+	LogMetricsHandler(final HttpHandler next, final Logger logger, final String address, final int port) {
 		this.next = next;
 		this.logger = logger;
-		active = new AtomicInteger();
-		maxActive = new AtomicInteger();
+		this.active = new AtomicInteger();
+		this.maxActive = new AtomicInteger();
+		this.address = address;
+		this.port = port;
 	}
 
 	@Override
@@ -67,6 +71,16 @@ public class LogMetricsHandler implements HttpHandler, ConnectorStatisticsMXBean
 	@Override
 	final public int getMaxActiveCount() {
 		return maxActive.get();
+	}
+
+	@Override
+	final public String getAddress() {
+		return this.address;
+	}
+
+	@Override
+	final public int getPort() {
+		return this.port;
 	}
 
 	@Override

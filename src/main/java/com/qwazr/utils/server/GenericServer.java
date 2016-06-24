@@ -76,7 +76,7 @@ public class GenericServer {
 
 	static final private Logger logger = LoggerFactory.getLogger(GenericServer.class);
 
-	GenericServer(ServerBuilder builder) {
+	GenericServer(final ServerBuilder builder) {
 		this.executorService = builder.executorService;
 		this.serverConfiguration = builder.serverConfiguration;
 		this.webServices = builder.webServices.isEmpty() ? null : new ArrayList<>(builder.webServices);
@@ -112,14 +112,6 @@ public class GenericServer {
 		undertows.add(undertow);
 	}
 
-	private synchronized LogMetricsHandler start(final DeploymentManager manager, final Logger accessLogger)
-			throws ServletException {
-		final HttpHandler httpHandler = manager.start();
-		final LogMetricsHandler logMetricsHandler = new LogMetricsHandler(httpHandler, accessLogger);
-		deploymentManagers.add(manager);
-		return logMetricsHandler;
-	}
-
 	public synchronized void stopAll() {
 
 		executeListener(shutdownListeners);
@@ -152,15 +144,19 @@ public class GenericServer {
 		return identityManager;
 	}
 
-	private void startHttpServer(ServerConfiguration.HttpConnector connector, DeploymentInfo deploymentInfo,
-			Logger accessLogger) throws IOException, ServletException, OperationsException, MBeanException {
+	private void startHttpServer(final ServerConfiguration.HttpConnector connector, final DeploymentInfo deploymentInfo,
+			final Logger accessLogger, final String jmxName)
+			throws IOException, ServletException, OperationsException, MBeanException {
 		IdentityManager identityManager = getIdentityManager(connector, deploymentInfo);
 
 		DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
 
-		final LogMetricsHandler logMetricsHandler = start(manager, accessLogger);
-		HttpHandler httpHandler = logMetricsHandler;
+		HttpHandler httpHandler = manager.start();
+		final LogMetricsHandler logMetricsHandler =
+				new LogMetricsHandler(httpHandler, accessLogger, serverConfiguration.listenAddress, connector.port);
+		deploymentManagers.add(manager);
+		httpHandler = logMetricsHandler;
 		if (identityManager != null)
 			httpHandler = addSecurity(httpHandler, identityManager, serverConfiguration.webAppConnector.realm);
 
@@ -174,8 +170,7 @@ public class GenericServer {
 		final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 		final Hashtable<String, String> props = new Hashtable<>();
 		props.put("type", "connector");
-		props.put("host", serverConfiguration.listenAddress);
-		props.put("port", Integer.toString(connector.port));
+		props.put("name", jmxName);
 		final ObjectName name = new ObjectName("com.qwazr.server", props);
 		mbs.registerMBean(logMetricsHandler, name);
 		connectorsStatistics.add(logMetricsHandler);
@@ -205,12 +200,12 @@ public class GenericServer {
 		if (servletInfos != null && !servletInfos.isEmpty())
 			startHttpServer(serverConfiguration.webAppConnector, ServletApplication
 					.getDeploymentInfo(servletInfos, filterInfos, listenerInfos, sessionPersistenceManager,
-							sessionListener), servletAccessLogger);
+							sessionListener), servletAccessLogger, "servlet");
 
 		// Launch the jaxrs application if any
 		if (webServices != null && !webServices.isEmpty())
 			startHttpServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo(),
-					restAccessLogger);
+					restAccessLogger, "rest");
 
 		if (shutdownHook) {
 			Runtime.getRuntime().addShutdownHook(new Thread() {

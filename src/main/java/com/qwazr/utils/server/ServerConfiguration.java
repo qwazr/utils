@@ -95,6 +95,7 @@ public class ServerConfiguration {
 
 		final String authType;
 
+
 		private HttpConnector(PrefixEnum prefix, int defaultPort) {
 			port = getPropertyOrEnvInt(prefix, VariablesEnum.PORT, defaultPort);
 			realm = getPropertyOrEnv(prefix, VariablesEnum.REALM);
