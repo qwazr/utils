@@ -26,16 +26,17 @@ import io.undertow.security.handlers.AuthenticationMechanismsHandler;
 import io.undertow.security.handlers.SecurityInitialHandler;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.impl.BasicAuthenticationMechanism;
-import io.undertow.server.ConnectorStatistics;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
-import org.glassfish.hk2.api.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.*;
+import javax.management.MBeanException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.management.OperationsException;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -220,11 +221,12 @@ public class GenericServer {
 		return this;
 	}
 
-	private static HttpHandler addSecurity(HttpHandler handler, final IdentityManager identityManager, String realm) {
+	private static HttpHandler addSecurity(HttpHandler handler, final IdentityManager identityManager,
+			final String realm) {
 		handler = new AuthenticationCallHandler(handler);
 		handler = new AuthenticationConstraintHandler(handler);
 		final List<AuthenticationMechanism> mechanisms =
-				Collections.<AuthenticationMechanism>singletonList(new BasicAuthenticationMechanism(realm));
+				Collections.singletonList(new BasicAuthenticationMechanism(realm));
 		handler = new AuthenticationMechanismsHandler(handler, mechanisms);
 		handler = new SecurityInitialHandler(AuthenticationMode.PRO_ACTIVE, identityManager, handler);
 		return handler;
