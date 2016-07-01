@@ -209,9 +209,9 @@ public class GenericServer {
 		// Launch the servlet application if any
 		if (servletInfos != null && !servletInfos.isEmpty())
 			startHttpServer(serverConfiguration.webAppConnector, ServletApplication
-					.getDeploymentInfo(servletInfos, securityContraints, filterInfos, listenerInfos,
-							sessionPersistenceManager,
-							sessionListener), servletAccessLogger, ServerConfiguration.PrefixEnum.WEBAPP.name());
+							.getDeploymentInfo(servletInfos, securityContraints, filterInfos, listenerInfos,
+									sessionPersistenceManager, sessionListener), servletAccessLogger,
+					ServerConfiguration.PrefixEnum.WEBAPP.name());
 
 		// Launch the jaxrs application if any
 		if (webServices != null && !webServices.isEmpty())
