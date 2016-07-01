@@ -66,6 +66,7 @@ public class GenericServer {
 	final protected ServerConfiguration serverConfiguration;
 
 	final private Collection<ServletInfo> servletInfos;
+	final private Collection<String> securityContraints;
 	final private Map<String, FilterInfo> filterInfos;
 	final private Collection<ListenerInfo> listenerInfos;
 	final private SessionPersistenceManager sessionPersistenceManager;
@@ -87,6 +88,8 @@ public class GenericServer {
 		this.deploymentManagers = new ArrayList<>();
 		this.identityManagerProvider = builder.identityManagerProvider;
 		this.servletInfos = builder.servletInfos.isEmpty() ? null : new ArrayList<>(builder.servletInfos);
+		this.securityContraints =
+				builder.securityConstraints.isEmpty() ? null : new LinkedHashSet<>(builder.securityConstraints);
 		this.filterInfos = builder.filterInfos.isEmpty() ? null : new LinkedHashMap(builder.filterInfos);
 		this.listenerInfos = builder.listenerInfos.isEmpty() ? null : new ArrayList<>(builder.listenerInfos);
 		this.sessionPersistenceManager = builder.sessionPersistenceManager;
@@ -129,28 +132,33 @@ public class GenericServer {
 		undertows.forEach(Undertow::stop);
 	}
 
-	private final IdentityManager getIdentityManager(ServerConfiguration.HttpConnector connector,
-			DeploymentInfo deploymentInfo) throws IOException {
+	private final IdentityManager setIdentityManager(final ServerConfiguration.HttpConnector connector,
+			final DeploymentInfo deploymentInfo) throws IOException {
 		if (identityManagerProvider == null)
 			return null;
 		if (connector == null)
 			return null;
 		if (connector.realm == null)
 			return null;
-		IdentityManager identityManager = identityManagerProvider.getIdentityManager(connector.realm);
+		final IdentityManager identityManager = identityManagerProvider.getIdentityManager(connector.realm);
 		if (identityManager == null)
 			return null;
-		deploymentInfo.setIdentityManager(identityManager).setLoginConfig(
-				new LoginConfig(connector.authType == null ? "BASIC" : connector.authType, connector.realm));
+		deploymentInfo.setIdentityManager(identityManager);
+		final LoginConfig loginConfig;
+		if (connector.authType == null)
+			loginConfig = Servlets.loginConfig("BASIC", connector.realm);
+		else
+			loginConfig = Servlets.loginConfig(connector.authType, connector.realm);
+		deploymentInfo.setLoginConfig(loginConfig);
 		return identityManager;
 	}
 
 	private void startHttpServer(final ServerConfiguration.HttpConnector connector, final DeploymentInfo deploymentInfo,
 			final Logger accessLogger, final String jmxName)
 			throws IOException, ServletException, OperationsException, MBeanException {
-		IdentityManager identityManager = getIdentityManager(connector, deploymentInfo);
+		setIdentityManager(connector, deploymentInfo);
 
-		DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
+		final DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
 
 		HttpHandler httpHandler = manager.start();
@@ -159,8 +167,8 @@ public class GenericServer {
 						jmxName);
 		deploymentManagers.add(manager);
 		httpHandler = logMetricsHandler;
-		if (identityManager != null)
-			httpHandler = addSecurity(httpHandler, identityManager, serverConfiguration.webAppConnector.realm);
+		//if (identityManager != null)
+		//	httpHandler = addSecurity(httpHandler, identityManager, connector.realm);
 
 		logger.info("Start the connector " + serverConfiguration.listenAddress + ":" + connector.port);
 
@@ -201,7 +209,8 @@ public class GenericServer {
 		// Launch the servlet application if any
 		if (servletInfos != null && !servletInfos.isEmpty())
 			startHttpServer(serverConfiguration.webAppConnector, ServletApplication
-					.getDeploymentInfo(servletInfos, filterInfos, listenerInfos, sessionPersistenceManager,
+					.getDeploymentInfo(servletInfos, securityContraints, filterInfos, listenerInfos,
+							sessionPersistenceManager,
 							sessionListener), servletAccessLogger, ServerConfiguration.PrefixEnum.WEBAPP.name());
 
 		// Launch the jaxrs application if any
@@ -221,6 +230,7 @@ public class GenericServer {
 		return this;
 	}
 
+	/*
 	private static HttpHandler addSecurity(HttpHandler handler, final IdentityManager identityManager,
 			final String realm) {
 		handler = new AuthenticationCallHandler(handler);
@@ -231,6 +241,7 @@ public class GenericServer {
 		handler = new SecurityInitialHandler(AuthenticationMode.PRO_ACTIVE, identityManager, handler);
 		return handler;
 	}
+	*/
 
 	public Collection<ConnectorStatisticsMXBean> getConnectorsStatistics() {
 		return connectorsStatistics;

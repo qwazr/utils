@@ -17,6 +17,7 @@ package com.qwazr.utils.server;
 
 import com.qwazr.utils.AnnotationsUtils;
 import io.undertow.server.session.SessionListener;
+import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.FilterInfo;
 import io.undertow.servlet.api.ListenerInfo;
 import io.undertow.servlet.api.ServletInfo;
@@ -43,6 +44,8 @@ public class ServerBuilder<T extends ServerConfiguration> {
 	final Collection<ServletInfo> servletInfos;
 	final Map<String, FilterInfo> filterInfos;
 	final Collection<ListenerInfo> listenerInfos;
+	final Collection<String> securityConstraints;
+
 	SessionPersistenceManager sessionPersistenceManager;
 	SessionListener sessionListener;
 	Logger servletAccessLogger;
@@ -59,6 +62,7 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		webServiceNames = new LinkedHashSet<>();
 		packetListeners = new LinkedHashSet<>();
 		servletInfos = new LinkedHashSet<>();
+		securityConstraints = new LinkedHashSet<>();
 		filterInfos = new LinkedHashMap<>();
 		listenerInfos = new LinkedHashSet<>();
 		sessionPersistenceManager = null;
@@ -134,6 +138,10 @@ public class ServerBuilder<T extends ServerConfiguration> {
 
 	public T getServerConfiguration() {
 		return serverConfiguration;
+	}
+
+	public void addSecurityConstraint(String urlPath) {
+		securityConstraints.add(urlPath);
 	}
 
 	public ExecutorService getExecutorService() {

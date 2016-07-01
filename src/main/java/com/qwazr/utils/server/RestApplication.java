@@ -21,6 +21,7 @@ import com.qwazr.utils.json.JsonMappingExceptionMapper;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.ServletInfo;
+import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 import javax.ws.rs.core.Application;
@@ -36,7 +37,7 @@ public class RestApplication extends Application {
 
 	@Override
 	final public Set<Class<?>> getClasses() {
-		Set<Class<?>> classes = new HashSet<>();
+		final Set<Class<?>> classes = new HashSet<>();
 		classes.add(JacksonConfig.class);
 		classes.add(JacksonJsonProvider.class);
 		classes.add(JsonMappingExceptionMapper.class);
@@ -46,14 +47,12 @@ public class RestApplication extends Application {
 	}
 
 	final static DeploymentInfo getDeploymentInfo() {
-		DeploymentInfo deploymentInfo =
+		final DeploymentInfo deploymentInfo =
 				Servlets.deployment().setClassLoader(RestApplication.class.getClassLoader()).setContextPath("/")
 						.setDeploymentName("REST");
-		List<ServletInfo> servletInfos = new ArrayList<>();
-		servletInfos.add(new ServletInfo("REST", ServletContainer.class)
+		deploymentInfo.addServlets(new ServletInfo("REST", ServletContainer.class)
 				.addInitParam("javax.ws.rs.Application", RestApplication.class.getName()).setAsyncSupported(true)
 				.addMapping("/*"));
-		deploymentInfo.addServlets(servletInfos);
 		return deploymentInfo;
 	}
 

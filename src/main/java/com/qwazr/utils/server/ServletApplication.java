@@ -22,14 +22,16 @@ import io.undertow.servlet.api.*;
 import javax.servlet.DispatcherType;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 class ServletApplication {
 
 	final static DeploymentInfo getDeploymentInfo(final Collection<ServletInfo> servletInfos,
+			final Collection<String> securityContraints,
 			final Map<String, FilterInfo> filterInfos, final Collection<ListenerInfo> listenersInfos,
 			final SessionPersistenceManager sessionPersistenceManager, final SessionListener sessionListener) {
 
-		DeploymentInfo deploymentInfo =
+		final DeploymentInfo deploymentInfo =
 				Servlets.deployment().setClassLoader(Thread.currentThread().getContextClassLoader()).setContextPath("/")
 						.setDefaultEncoding("UTF-8").setDeploymentName(ServletApplication.class.getName());
 
@@ -42,6 +44,12 @@ class ServletApplication {
 				deploymentInfo.addFilter(filterInfo);
 				deploymentInfo.addFilterUrlMapping(filterInfo.getName(), path, DispatcherType.REQUEST);
 			});
+		}
+		if (securityContraints != null && !securityContraints.isEmpty()) {
+			final SecurityConstraint securityConstraint = Servlets.securityConstraint()
+					.addWebResourceCollection(Servlets.webResourceCollection().addUrlPatterns(securityContraints));
+			deploymentInfo.addSecurityConstraint(
+					securityConstraint.setEmptyRoleSemantic(SecurityInfo.EmptyRoleSemantic.AUTHENTICATE));
 		}
 		if (listenersInfos != null)
 			deploymentInfo.addListeners(listenersInfos);
