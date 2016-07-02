@@ -122,21 +122,19 @@ public class GenericServer {
 		undertows.forEach(Undertow::stop);
 	}
 
-	private final void setSecurity(final ServerConfiguration.HttpConnector connector,
-			final DeploymentInfo deploymentInfo) throws IOException {
+	private final IdentityManager getIdentityManager(final ServerConfiguration.HttpConnector connector)
+			throws IOException {
 		if (identityManagerProvider == null || connector == null || connector.realm == null)
-			return;
-		final IdentityManager identityManager = identityManagerProvider.getIdentityManager(connector.realm);
-		if (identityManager == null)
-			return;
-		deploymentInfo.setIdentityManager(identityManager);
-		deploymentInfo.setLoginConfig(Servlets.loginConfig("BASIC", connector.realm));
+			return null;
+		return identityManagerProvider.getIdentityManager(connector.realm);
 	}
 
 	private void startHttpServer(final ServerConfiguration.HttpConnector connector, final DeploymentInfo deploymentInfo,
 			final Logger accessLogger, final String jmxName)
 			throws IOException, ServletException, OperationsException, MBeanException {
-		setSecurity(connector, deploymentInfo);
+
+		if (deploymentInfo.getIdentityManager() != null)
+			deploymentInfo.setLoginConfig(Servlets.loginConfig("BASIC", connector.realm));
 
 		final DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
@@ -150,8 +148,10 @@ public class GenericServer {
 
 		logger.info("Start the connector " + serverConfiguration.listenAddress + ":" + connector.port);
 
-		Builder servletBuilder = Undertow.builder().addHttpListener(connector.port, serverConfiguration.listenAddress)
-				.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(httpHandler);
+		Builder servletBuilder = Undertow.builder()
+				.addHttpListener(connector.port, serverConfiguration.listenAddress)
+				.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000)
+				.setHandler(httpHandler);
 		start(servletBuilder.build());
 
 		// Register MBeans
@@ -185,15 +185,20 @@ public class GenericServer {
 			udpServer.checkStarted();
 
 		// Launch the servlet application if any
-		if (servletInfos != null && !servletInfos.isEmpty())
-			startHttpServer(serverConfiguration.webAppConnector, ServletApplication
-					.getDeploymentInfo(servletInfos, filterInfos, listenerInfos, sessionPersistenceManager,
-							sessionListener), servletAccessLogger, ServerConfiguration.PrefixEnum.WEBAPP.name());
+		if (servletInfos != null && !servletInfos.isEmpty()) {
+			final IdentityManager identityManager = getIdentityManager(serverConfiguration.webAppConnector);
+			startHttpServer(serverConfiguration.webAppConnector,
+					ServletApplication.getDeploymentInfo(servletInfos, identityManager, filterInfos, listenerInfos,
+							sessionPersistenceManager, sessionListener), servletAccessLogger,
+					ServerConfiguration.PrefixEnum.WEBAPP.name());
+		}
 
 		// Launch the jaxrs application if any
-		if (webServices != null && !webServices.isEmpty())
-			startHttpServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo(),
+		if (webServices != null && !webServices.isEmpty()) {
+			final IdentityManager identityManager = getIdentityManager(serverConfiguration.webServiceConnector);
+			startHttpServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo(identityManager),
 					restAccessLogger, ServerConfiguration.PrefixEnum.WEBSERVICE.name());
+		}
 
 		if (shutdownHook) {
 			Runtime.getRuntime().addShutdownHook(new Thread() {

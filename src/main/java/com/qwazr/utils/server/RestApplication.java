@@ -18,6 +18,7 @@ package com.qwazr.utils.server;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.qwazr.utils.json.JacksonConfig;
 import com.qwazr.utils.json.JsonMappingExceptionMapper;
+import io.undertow.security.idm.IdentityManager;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.SecurityInfo;
@@ -40,13 +41,14 @@ public class RestApplication extends Application {
 		classes.add(JacksonConfig.class);
 		classes.add(JacksonJsonProvider.class);
 		classes.add(JsonMappingExceptionMapper.class);
-		if (GenericServer.INSTANCE != null && GenericServer.INSTANCE.webServices != null)
-			classes.addAll(GenericServer.INSTANCE.webServices);
+		if (GenericServer.INSTANCE != null)
+			if (GenericServer.INSTANCE.webServices != null)
+				classes.addAll(GenericServer.INSTANCE.webServices);
 		classes.add(RolesAllowedDynamicFeature.class);
 		return classes;
 	}
 
-	final static DeploymentInfo getDeploymentInfo() {
+	final static DeploymentInfo getDeploymentInfo(final IdentityManager identityManager) {
 		final DeploymentInfo deploymentInfo = Servlets.deployment()
 				.setClassLoader(RestApplication.class.getClassLoader())
 				.setContextPath("/")
@@ -54,9 +56,12 @@ public class RestApplication extends Application {
 		deploymentInfo.addServlets(
 				new ServletInfo("REST", ServletContainer.class).addInitParam("javax.ws.rs.Application",
 						RestApplication.class.getName()).setAsyncSupported(true).addMapping("/*"));
-		deploymentInfo.addSecurityConstraint(Servlets.securityConstraint()
-				.setEmptyRoleSemantic(SecurityInfo.EmptyRoleSemantic.AUTHENTICATE)
-				.addWebResourceCollection(Servlets.webResourceCollection().addUrlPattern("/*")));
+		if (identityManager != null) {
+			deploymentInfo.setIdentityManager(identityManager);
+			deploymentInfo.addSecurityConstraint(Servlets.securityConstraint()
+					.setEmptyRoleSemantic(SecurityInfo.EmptyRoleSemantic.AUTHENTICATE)
+					.addWebResourceCollection(Servlets.webResourceCollection().addUrlPattern("/*")));
+		}
 		return deploymentInfo;
 	}
 

@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils.server;
 
+import io.undertow.security.idm.IdentityManager;
 import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
@@ -26,8 +27,9 @@ import java.util.Map;
 class ServletApplication {
 
 	final static DeploymentInfo getDeploymentInfo(final Collection<SecurableServletInfo> servletInfos,
-			final Map<String, FilterInfo> filterInfos, final Collection<ListenerInfo> listenersInfos,
-			final SessionPersistenceManager sessionPersistenceManager, final SessionListener sessionListener) {
+			final IdentityManager identityManager, final Map<String, FilterInfo> filterInfos,
+			final Collection<ListenerInfo> listenersInfos, final SessionPersistenceManager sessionPersistenceManager,
+			final SessionListener sessionListener) {
 
 		final DeploymentInfo deploymentInfo = Servlets.deployment()
 				.setClassLoader(Thread.currentThread().getContextClassLoader())
@@ -37,10 +39,14 @@ class ServletApplication {
 
 		if (sessionPersistenceManager != null)
 			deploymentInfo.setSessionPersistenceManager(sessionPersistenceManager);
+
+		if (identityManager != null)
+			deploymentInfo.setIdentityManager(identityManager);
+
 		if (servletInfos != null)
 			servletInfos.forEach(securableServletInfo -> {
 				deploymentInfo.addServlet(securableServletInfo);
-				if (securableServletInfo.secure)
+				if (securableServletInfo.secure && identityManager != null)
 					deploymentInfo.addSecurityConstraint(Servlets.securityConstraint()
 							.setEmptyRoleSemantic(SecurityInfo.EmptyRoleSemantic.AUTHENTICATE)
 							.addWebResourceCollection(Servlets.webResourceCollection()
