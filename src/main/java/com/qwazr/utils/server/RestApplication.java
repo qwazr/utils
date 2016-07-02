@@ -20,14 +20,13 @@ import com.qwazr.utils.json.JacksonConfig;
 import com.qwazr.utils.json.JsonMappingExceptionMapper;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
+import io.undertow.servlet.api.SecurityInfo;
 import io.undertow.servlet.api.ServletInfo;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 import javax.ws.rs.core.Application;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -37,22 +36,27 @@ public class RestApplication extends Application {
 
 	@Override
 	final public Set<Class<?>> getClasses() {
-		final Set<Class<?>> classes = new HashSet<>();
+		final Set<Class<?>> classes = new LinkedHashSet<>();
 		classes.add(JacksonConfig.class);
 		classes.add(JacksonJsonProvider.class);
 		classes.add(JsonMappingExceptionMapper.class);
 		if (GenericServer.INSTANCE != null && GenericServer.INSTANCE.webServices != null)
 			classes.addAll(GenericServer.INSTANCE.webServices);
+		classes.add(RolesAllowedDynamicFeature.class);
 		return classes;
 	}
 
 	final static DeploymentInfo getDeploymentInfo() {
-		final DeploymentInfo deploymentInfo =
-				Servlets.deployment().setClassLoader(RestApplication.class.getClassLoader()).setContextPath("/")
-						.setDeploymentName("REST");
-		deploymentInfo.addServlets(new ServletInfo("REST", ServletContainer.class)
-				.addInitParam("javax.ws.rs.Application", RestApplication.class.getName()).setAsyncSupported(true)
-				.addMapping("/*"));
+		final DeploymentInfo deploymentInfo = Servlets.deployment()
+				.setClassLoader(RestApplication.class.getClassLoader())
+				.setContextPath("/")
+				.setDeploymentName("REST");
+		deploymentInfo.addServlets(
+				new ServletInfo("REST", ServletContainer.class).addInitParam("javax.ws.rs.Application",
+						RestApplication.class.getName()).setAsyncSupported(true).addMapping("/*"));
+		deploymentInfo.addSecurityConstraint(Servlets.securityConstraint()
+				.setEmptyRoleSemantic(SecurityInfo.EmptyRoleSemantic.AUTHENTICATE)
+				.addWebResourceCollection(Servlets.webResourceCollection().addUrlPattern("/*")));
 		return deploymentInfo;
 	}
 

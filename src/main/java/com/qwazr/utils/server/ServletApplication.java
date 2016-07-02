@@ -22,34 +22,35 @@ import io.undertow.servlet.api.*;
 import javax.servlet.DispatcherType;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 class ServletApplication {
 
-	final static DeploymentInfo getDeploymentInfo(final Collection<ServletInfo> servletInfos,
-			final Collection<String> securityContraints,
+	final static DeploymentInfo getDeploymentInfo(final Collection<SecurableServletInfo> servletInfos,
 			final Map<String, FilterInfo> filterInfos, final Collection<ListenerInfo> listenersInfos,
 			final SessionPersistenceManager sessionPersistenceManager, final SessionListener sessionListener) {
 
-		final DeploymentInfo deploymentInfo =
-				Servlets.deployment().setClassLoader(Thread.currentThread().getContextClassLoader()).setContextPath("/")
-						.setDefaultEncoding("UTF-8").setDeploymentName(ServletApplication.class.getName());
+		final DeploymentInfo deploymentInfo = Servlets.deployment()
+				.setClassLoader(Thread.currentThread().getContextClassLoader())
+				.setContextPath("/")
+				.setDefaultEncoding("UTF-8")
+				.setDeploymentName(ServletApplication.class.getName());
 
 		if (sessionPersistenceManager != null)
 			deploymentInfo.setSessionPersistenceManager(sessionPersistenceManager);
 		if (servletInfos != null)
-			deploymentInfo.addServlets(servletInfos);
+			servletInfos.forEach(securableServletInfo -> {
+				deploymentInfo.addServlet(securableServletInfo);
+				if (securableServletInfo.secure)
+					deploymentInfo.addSecurityConstraint(Servlets.securityConstraint()
+							.setEmptyRoleSemantic(SecurityInfo.EmptyRoleSemantic.AUTHENTICATE)
+							.addWebResourceCollection(Servlets.webResourceCollection()
+									.addUrlPatterns(securableServletInfo.getMappings())));
+			});
 		if (filterInfos != null) {
 			filterInfos.forEach((path, filterInfo) -> {
 				deploymentInfo.addFilter(filterInfo);
 				deploymentInfo.addFilterUrlMapping(filterInfo.getName(), path, DispatcherType.REQUEST);
 			});
-		}
-		if (securityContraints != null && !securityContraints.isEmpty()) {
-			final SecurityConstraint securityConstraint = Servlets.securityConstraint()
-					.addWebResourceCollection(Servlets.webResourceCollection().addUrlPatterns(securityContraints));
-			deploymentInfo.addSecurityConstraint(
-					securityConstraint.setEmptyRoleSemantic(SecurityInfo.EmptyRoleSemantic.AUTHENTICATE));
 		}
 		if (listenersInfos != null)
 			deploymentInfo.addListeners(listenersInfos);
