@@ -99,8 +99,8 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		this.filterInfos.put(path, filter);
 	}
 
-	public void registerListener(final ListenerInfo servlet) {
-		this.listenerInfos.add(servlet);
+	public void registerListener(final ListenerInfo listener) {
+		this.listenerInfos.add(listener);
 	}
 
 	public void registerStartedListener(final GenericServer.Listener listener) {
