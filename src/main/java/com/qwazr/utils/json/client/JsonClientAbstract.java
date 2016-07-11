@@ -54,7 +54,6 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		this.remote = remote;
 		final Credentials credentials = remote.getCredentials();
 		this.executor = credentials == null ? Executor.newInstance() : Executor.newInstance().auth(credentials);
-
 	}
 
 	private void setBodyString(final Request request, final Object bodyObject) throws JsonProcessingException {
