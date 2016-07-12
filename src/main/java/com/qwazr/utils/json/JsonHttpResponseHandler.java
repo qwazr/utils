@@ -28,12 +28,12 @@ public class JsonHttpResponseHandler {
 
 	public static class JsonTreeResponse extends HttpResponseHandler<JsonNode> {
 
-		public JsonTreeResponse(ContentType expectedContentType, int... expectedCodes) {
+		public JsonTreeResponse(final ContentType expectedContentType, final int... expectedCodes) {
 			super(expectedContentType, expectedCodes);
 		}
 
 		@Override
-		public JsonNode handleResponse(HttpResponse response) throws IOException {
+		final public JsonNode handleResponse(final HttpResponse response) throws IOException {
 			super.handleResponse(response);
 			return JsonMapper.MAPPER.readTree(httpEntity.getContent());
 		}
@@ -43,13 +43,14 @@ public class JsonHttpResponseHandler {
 
 		private final Class<T> jsonClass;
 
-		public JsonValueResponse(ContentType expectedContentType, Class<T> jsonClass, int... expectedCodes) {
+		public JsonValueResponse(final ContentType expectedContentType, final Class<T> jsonClass,
+				final int... expectedCodes) {
 			super(expectedContentType, expectedCodes);
 			this.jsonClass = jsonClass;
 		}
 
 		@Override
-		public T handleResponse(HttpResponse response) throws IOException {
+		final public T handleResponse(final HttpResponse response) throws IOException {
 			super.handleResponse(response);
 			return JsonMapper.MAPPER.readValue(httpEntity.getContent(), jsonClass);
 		}
@@ -59,14 +60,14 @@ public class JsonHttpResponseHandler {
 
 		private final TypeReference<T> typeReference;
 
-		public JsonValueTypeRefResponse(ContentType expectedContentType, TypeReference<T> typeReference,
-						int... expectedCodes) {
+		public JsonValueTypeRefResponse(final ContentType expectedContentType, final TypeReference<T> typeReference,
+				final int... expectedCodes) {
 			super(expectedContentType, expectedCodes);
 			this.typeReference = typeReference;
 		}
 
 		@Override
-		public T handleResponse(HttpResponse response) throws IOException {
+		final public T handleResponse(final HttpResponse response) throws IOException {
 			super.handleResponse(response);
 			return JsonMapper.MAPPER.readValue(httpEntity.getContent(), typeReference);
 		}

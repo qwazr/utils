@@ -23,12 +23,15 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLInitializationException;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -53,7 +56,8 @@ public class HttpUtils {
 	 * @return the returned code
 	 * @throws ClientProtocolException if the response is empty or the status line is empty
 	 */
-	public static Integer checkStatusCodes(HttpResponse response, int... expectedCodes) throws ClientProtocolException {
+	public static Integer checkStatusCodes(final HttpResponse response, final int... expectedCodes)
+			throws ClientProtocolException {
 		if (response == null)
 			throw new ClientProtocolException("No response");
 		StatusLine statusLine = response.getStatusLine();
@@ -78,7 +82,7 @@ public class HttpUtils {
 	 * @return the entity from the response body
 	 * @throws ClientProtocolException if the response does not contains any entity
 	 */
-	public static HttpEntity checkIsEntity(HttpResponse response, ContentType expectedContentType)
+	public static HttpEntity checkIsEntity(final HttpResponse response, final ContentType expectedContentType)
 			throws ClientProtocolException {
 		if (response == null)
 			throw new ClientProtocolException("No response");
@@ -105,7 +109,8 @@ public class HttpUtils {
 	 * @throws IllegalStateException if the ob
 	 * @throws IOException           if any I/O error occurs
 	 */
-	public static String checkTextPlainEntity(HttpResponse response, int... expectedCodes) throws IOException {
+	public static String checkTextPlainEntity(final HttpResponse response, final int... expectedCodes)
+			throws IOException {
 		HttpUtils.checkStatusCodes(response, expectedCodes);
 		HttpEntity entity = HttpUtils.checkIsEntity(response, ContentType.TEXT_PLAIN);
 		Header header = entity.getContentEncoding();
@@ -150,7 +155,7 @@ public class HttpUtils {
 	 * @param headerContent The header value
 	 * @return a map with all parameters
 	 */
-	public static Map<String, String> getHeaderParameters(String headerContent) {
+	public static Map<String, String> getHeaderParameters(final String headerContent) {
 		if (headerContent == null)
 			return null;
 		final String[] params = StringUtils.split(headerContent, ';');
@@ -178,7 +183,7 @@ public class HttpUtils {
 	 * @param paramName     the requested parameter
 	 * @return the parameter or null if it is not found
 	 */
-	public static String getHeaderParameter(String headerContent, String paramName) {
+	public static String getHeaderParameter(final String headerContent, final String paramName) {
 		if (headerContent == null)
 			return null;
 		Map<String, String> headerParams = getHeaderParameters(headerContent);
@@ -186,5 +191,40 @@ public class HttpUtils {
 			return null;
 		return headerParams.get(paramName.trim().toLowerCase());
 	}
+
+
+	public static final HttpClient HTTP_CLIENT;
+	public static final PoolingHttpClientConnectionManager CNX_MANAGER;
+
+	static {
+
+		LayeredConnectionSocketFactory ssl = null;
+		try {
+			ssl = SSLConnectionSocketFactory.getSystemSocketFactory();
+		} catch (final SSLInitializationException ex) {
+			final SSLContext sslcontext;
+			try {
+				sslcontext = SSLContext.getInstance(SSLConnectionSocketFactory.TLS);
+				sslcontext.init(null, null, null);
+				ssl = new SSLConnectionSocketFactory(sslcontext);
+			} catch (final SecurityException ignore) {
+			} catch (final KeyManagementException ignore) {
+			} catch (final NoSuchAlgorithmException ignore) {
+			}
+		}
+
+		final Registry<ConnectionSocketFactory> sfr = RegistryBuilder.<ConnectionSocketFactory>create()
+				.register("http", PlainConnectionSocketFactory.getSocketFactory())
+				.register("https", ssl != null ? ssl : SSLConnectionSocketFactory.getSocketFactory())
+				.build();
+
+		CNX_MANAGER = new PoolingHttpClientConnectionManager(sfr);
+		CNX_MANAGER.setDefaultMaxPerRoute(100);
+		CNX_MANAGER.setMaxTotal(200);
+		CNX_MANAGER.setValidateAfterInactivity(1000);
+
+		HTTP_CLIENT = HttpClientBuilder.create().setConnectionManager(CNX_MANAGER).build();
+	}
+
 
 }

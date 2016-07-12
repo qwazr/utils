@@ -15,10 +15,12 @@
  */
 package com.qwazr.utils.inputstream;
 
+import org.apache.commons.io.input.CountingInputStream;
+
 import java.io.IOException;
 import java.io.InputStream;
 
-final public class LimiterInputStream extends CounterInputStream {
+final public class LimiterInputStream extends CountingInputStream {
 
 	private final long sizeLimit;
 
@@ -40,13 +42,13 @@ final public class LimiterInputStream extends CounterInputStream {
 	final public int read(final byte b[], final int off, final int len) throws IOException {
 		final int c = super.read(b, off, len);
 		switch (c) {
-		case -1:
-			return -1;
-		case 0:
-			return 0;
-		default:
-			checkSizeLimit();
-			return c;
+			case -1:
+				return -1;
+			case 0:
+				return 0;
+			default:
+				checkSizeLimit();
+				return c;
 		}
 	}
 
@@ -58,7 +60,8 @@ final public class LimiterInputStream extends CounterInputStream {
 	}
 
 	private void checkSizeLimit() throws IOException {
-		if (count.get() > sizeLimit)
-			throw new SizeExceededException(count.get(), sizeLimit);
+		final long count = getByteCount();
+		if (count > sizeLimit)
+			throw new SizeExceededException(count, sizeLimit);
 	}
 }

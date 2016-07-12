@@ -18,9 +18,13 @@ package com.qwazr.utils.json.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.client.methods.HttpUriRequest;
 
+import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
+import java.io.InputStream;
 
 public interface JsonClientInterface {
 
@@ -71,12 +75,19 @@ public interface JsonClientInterface {
 	 * another object, it is serialized in JSON format.
 	 *
 	 * @param request    A preconfigured HTTP request
+	 * @param bodyObject The body of the request (payload)
 	 * @param msTimeOut  The time out in milliseconds. If null, the default value is
 	 *                   used
-	 * @param bodyObject The body of the request (payload)
 	 * @return the HTTP response
 	 * @throws IOException in case of any IO error
 	 */
 	HttpResponse execute(Request request, Object bodyObject, Integer msTimeOut) throws IOException;
+
+	/**
+	 * @param request
+	 * @param msTimeOut
+	 * @return
+	 */
+	HttpResponse execute(HttpUriRequest request, Integer msTimeOut) throws IOException;
 
 }

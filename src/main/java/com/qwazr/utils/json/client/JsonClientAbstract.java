@@ -19,14 +19,23 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.qwazr.utils.http.HttpResponseEntityException;
+import com.qwazr.utils.http.HttpUtils;
 import com.qwazr.utils.json.JsonHttpResponseHandler;
 import com.qwazr.utils.json.JsonMapper;
 import com.qwazr.utils.server.RemoteService;
 import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
+import org.apache.http.client.AuthCache;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.ContentType;
+import org.apache.http.impl.client.BasicAuthCache;
+import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,10 +59,22 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 
 	private final Executor executor;
 
-	protected JsonClientAbstract(RemoteService remote) {
+	final private AuthCache authCache;
+	final private BasicCredentialsProvider credentialsProvider;
+	final private BasicCookieStore cookieStore;
+
+	protected JsonClientAbstract(final RemoteService remote) {
 		this.remote = remote;
+
 		final Credentials credentials = remote.getCredentials();
-		this.executor = credentials == null ? Executor.newInstance() : Executor.newInstance().auth(credentials);
+		this.executor = credentials == null ? Executor.newInstance(HttpUtils.HTTP_CLIENT) :
+				Executor.newInstance(HttpUtils.HTTP_CLIENT).auth(credentials);
+
+		authCache = new BasicAuthCache();
+		credentialsProvider = new BasicCredentialsProvider();
+		if (credentials != null)
+			credentialsProvider.setCredentials(AuthScope.ANY, credentials);
+		cookieStore = new BasicCookieStore();
 	}
 
 	private void setBodyString(final Request request, final Object bodyObject) throws JsonProcessingException {
@@ -72,16 +93,21 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		request.connectTimeout(timeout).socketTimeout(timeout);
 	}
 
+	private void commonSet(final Request request, final Object bodyObject, final Integer msTimeOut)
+			throws JsonProcessingException {
+		if (logger.isDebugEnabled())
+			logger.debug(request.toString());
+		setBodyString(request, bodyObject);
+		setTimeOut(request, msTimeOut);
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	final public <T> T execute(final Request request, final Object bodyObject, final Integer msTimeOut,
 			final Class<T> jsonResultClass, final int... expectedCodes) throws IOException {
-		if (logger.isDebugEnabled())
-			logger.debug(request.toString());
-		setBodyString(request, bodyObject);
-		setTimeOut(request, msTimeOut);
+		commonSet(request, bodyObject, msTimeOut);
 		JsonHttpResponseHandler.JsonValueResponse<T> responseHandler =
 				new JsonHttpResponseHandler.JsonValueResponse<T>(ContentType.APPLICATION_JSON, jsonResultClass,
 						expectedCodes);
@@ -95,10 +121,7 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 	@Override
 	final public <T> T execute(final Request request, final Object bodyObject, final Integer msTimeOut,
 			final TypeReference<T> typeRef, final int... expectedCodes) throws IOException {
-		if (logger.isDebugEnabled())
-			logger.debug(request.toString());
-		setBodyString(request, bodyObject);
-		setTimeOut(request, msTimeOut);
+		commonSet(request, bodyObject, msTimeOut);
 		return executor.execute(request.addHeader("accept", ContentType.APPLICATION_JSON.toString())).handleResponse(
 				new JsonHttpResponseHandler.JsonValueTypeRefResponse<T>(ContentType.APPLICATION_JSON, typeRef,
 						expectedCodes));
@@ -110,10 +133,7 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 	@Override
 	final public JsonNode execute(final Request request, final Object bodyObject, final Integer msTimeOut,
 			final int... expectedCodes) throws IOException {
-		if (logger.isDebugEnabled())
-			logger.debug(request.toString());
-		setBodyString(request, bodyObject);
-		setTimeOut(request, msTimeOut);
+		commonSet(request, bodyObject, msTimeOut);
 		return executor.execute(request.addHeader("accept", ContentType.APPLICATION_JSON.toString())).handleResponse(
 				new JsonHttpResponseHandler.JsonTreeResponse(ContentType.APPLICATION_JSON, expectedCodes));
 	}
@@ -124,12 +144,32 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 	@Override
 	final public HttpResponse execute(final Request request, final Object bodyObject, final Integer msTimeOut)
 			throws IOException {
-		if (logger.isDebugEnabled())
-			logger.debug(request.toString());
-		setBodyString(request, bodyObject);
-		setTimeOut(request, msTimeOut);
+		commonSet(request, bodyObject, msTimeOut);
 		return executor.execute(request).returnResponse();
 	}
+
+	final private HttpClientContext getContext(final Integer msTimeOut) {
+		final HttpClientContext context = HttpClientContext.create();
+		context.setAttribute(HttpClientContext.CREDS_PROVIDER, credentialsProvider);
+		context.setAttribute(HttpClientContext.AUTH_CACHE, authCache);
+		context.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+		final RequestConfig.Builder requestConfig = RequestConfig.custom();
+		final int timeout = msTimeOut != null ? msTimeOut : remote.timeout != null ? remote.timeout : DEFAULT_TIMEOUT;
+		requestConfig.setSocketTimeout(timeout).setConnectTimeout(timeout);
+		context.setAttribute(HttpClientContext.REQUEST_CONFIG, requestConfig.build());
+		return context;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	final public HttpResponse execute(final HttpUriRequest request, final Integer msTimeOut) throws IOException {
+		if (logger.isDebugEnabled())
+			logger.debug(request.toString());
+		return HttpUtils.HTTP_CLIENT.execute(request, getContext(msTimeOut));
+	}
+
 
 	final public <T> T commonServiceRequest(final Request request, final Object body, final Integer msTimeOut,
 			final Class<T> objectClass, final int... expectedCodes) {
