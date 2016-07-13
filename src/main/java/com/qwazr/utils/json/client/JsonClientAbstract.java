@@ -18,35 +18,29 @@ package com.qwazr.utils.json.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.qwazr.utils.http.HttpResponseEntityException;
-import com.qwazr.utils.http.HttpUtils;
+import com.qwazr.utils.IOUtils;
+import com.qwazr.utils.http.*;
+import com.qwazr.utils.json.CloseableStreamingOutput;
 import com.qwazr.utils.json.JsonHttpResponseHandler;
 import com.qwazr.utils.json.JsonMapper;
 import com.qwazr.utils.server.RemoteService;
-import org.apache.http.HttpResponse;
+import com.qwazr.utils.server.ServerException;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.client.AuthCache;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.fluent.Executor;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.io.InputStream;
 
 public abstract class JsonClientAbstract implements JsonClientInterface {
-
-	private static final Logger logger = LoggerFactory.getLogger(JsonClientAbstract.class);
 
 	private final static int DEFAULT_TIMEOUT;
 
@@ -57,8 +51,6 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 
 	protected final RemoteService remote;
 
-	private final Executor executor;
-
 	final private AuthCache authCache;
 	final private BasicCredentialsProvider credentialsProvider;
 	final private BasicCookieStore cookieStore;
@@ -67,8 +59,6 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		this.remote = remote;
 
 		final Credentials credentials = remote.getCredentials();
-		this.executor = credentials == null ? Executor.newInstance(HttpUtils.HTTP_CLIENT) :
-				Executor.newInstance(HttpUtils.HTTP_CLIENT).auth(credentials);
 
 		authCache = new BasicAuthCache();
 		credentialsProvider = new BasicCredentialsProvider();
@@ -77,130 +67,147 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		cookieStore = new BasicCookieStore();
 	}
 
-	private void setBodyString(final Request request, final Object bodyObject) throws JsonProcessingException {
-		if (bodyObject == null)
-			return;
-		if (bodyObject instanceof String)
-			request.bodyString(bodyObject.toString(), ContentType.TEXT_PLAIN);
-		else if (bodyObject instanceof InputStream)
-			request.bodyStream((InputStream) bodyObject, ContentType.APPLICATION_OCTET_STREAM);
-		else
-			request.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject), ContentType.APPLICATION_JSON);
-	}
-
-	private void setTimeOut(final Request request, final Integer msTimeOut) {
-		final int timeout = msTimeOut != null ? msTimeOut : remote.timeout != null ? remote.timeout : DEFAULT_TIMEOUT;
-		request.connectTimeout(timeout).socketTimeout(timeout);
-	}
-
-	private void commonSet(final Request request, final Object bodyObject, final Integer msTimeOut)
-			throws JsonProcessingException {
-		if (logger.isDebugEnabled())
-			logger.debug(request.toString());
-		setBodyString(request, bodyObject);
-		setTimeOut(request, msTimeOut);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	final public <T> T execute(final Request request, final Object bodyObject, final Integer msTimeOut,
-			final Class<T> jsonResultClass, final int... expectedCodes) throws IOException {
-		commonSet(request, bodyObject, msTimeOut);
-		JsonHttpResponseHandler.JsonValueResponse<T> responseHandler =
-				new JsonHttpResponseHandler.JsonValueResponse<T>(ContentType.APPLICATION_JSON, jsonResultClass,
-						expectedCodes);
-		return executor.execute(request.addHeader("Accept", ContentType.APPLICATION_JSON.toString()))
-				.handleResponse(responseHandler);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	final public <T> T execute(final Request request, final Object bodyObject, final Integer msTimeOut,
-			final TypeReference<T> typeRef, final int... expectedCodes) throws IOException {
-		commonSet(request, bodyObject, msTimeOut);
-		return executor.execute(request.addHeader("accept", ContentType.APPLICATION_JSON.toString())).handleResponse(
-				new JsonHttpResponseHandler.JsonValueTypeRefResponse<T>(ContentType.APPLICATION_JSON, typeRef,
-						expectedCodes));
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	final public JsonNode execute(final Request request, final Object bodyObject, final Integer msTimeOut,
-			final int... expectedCodes) throws IOException {
-		commonSet(request, bodyObject, msTimeOut);
-		return executor.execute(request.addHeader("accept", ContentType.APPLICATION_JSON.toString())).handleResponse(
-				new JsonHttpResponseHandler.JsonTreeResponse(ContentType.APPLICATION_JSON, expectedCodes));
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	final public HttpResponse execute(final Request request, final Object bodyObject, final Integer msTimeOut)
-			throws IOException {
-		commonSet(request, bodyObject, msTimeOut);
-		return executor.execute(request).returnResponse();
-	}
-
-	final private HttpClientContext getContext(final Integer msTimeOut) {
+	private HttpClientContext getContext(final Integer msTimeOut) {
 		final HttpClientContext context = HttpClientContext.create();
-		context.setAttribute(HttpClientContext.CREDS_PROVIDER, credentialsProvider);
-		context.setAttribute(HttpClientContext.AUTH_CACHE, authCache);
-		context.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+		context.setCredentialsProvider(credentialsProvider);
+		context.setAuthCache(authCache);
+		context.setCookieStore(cookieStore);
 		final RequestConfig.Builder requestConfig = RequestConfig.custom();
 		final int timeout = msTimeOut != null ? msTimeOut : remote.timeout != null ? remote.timeout : DEFAULT_TIMEOUT;
-		requestConfig.setSocketTimeout(timeout).setConnectTimeout(timeout);
+		requestConfig.setSocketTimeout(timeout).setConnectTimeout(timeout).setConnectionRequestTimeout(timeout);
 		context.setAttribute(HttpClientContext.REQUEST_CONFIG, requestConfig.build());
 		return context;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
+	private void setBody(final HttpRequest request, final Object bodyObject)
+			throws JsonProcessingException {
+		if (bodyObject == null)
+			return;
+		HttpRequest.Entity requestEntity = (HttpRequest.Entity) request;
+		if (bodyObject instanceof String)
+			requestEntity.bodyString(bodyObject.toString(), ContentType.TEXT_PLAIN);
+		else if (bodyObject instanceof InputStream)
+			requestEntity.bodyStream((InputStream) bodyObject, ContentType.APPLICATION_OCTET_STREAM);
+		else
+			requestEntity
+					.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject), ContentType.APPLICATION_JSON);
+	}
+
+	private <T> T executeJsonEx(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
+			final Class<T> jsonResultClass, final ResponseValidator validator) throws IOException {
+		setBody(request, bodyObject);
+		JsonHttpResponseHandler.JsonValueResponse<T> responseHandler =
+				new JsonHttpResponseHandler.JsonValueResponse<T>(jsonResultClass, validator);
+		request.addHeader("Accept", ContentType.APPLICATION_JSON.toString());
+		return HttpClients.HTTP_CLIENT.execute(request.request, responseHandler, getContext(msTimeOut));
+	}
+
 	@Override
-	final public HttpResponse execute(final HttpUriRequest request, final Integer msTimeOut) throws IOException {
-		if (logger.isDebugEnabled())
-			logger.debug(request.toString());
-		return HttpUtils.HTTP_CLIENT.execute(request, getContext(msTimeOut));
-	}
-
-
-	final public <T> T commonServiceRequest(final Request request, final Object body, final Integer msTimeOut,
-			final Class<T> objectClass, final int... expectedCodes) {
+	final public <T> T executeJson(final HttpRequest request, final Object body, final Integer msTimeOut,
+			final Class<T> objectClass, final ResponseValidator validator) {
 		try {
-			return execute(request, body, msTimeOut, objectClass, expectedCodes);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
+			return executeJsonEx(request, body, msTimeOut, objectClass, validator);
 		} catch (IOException e) {
-			throw new WebApplicationException(e.getMessage(), e, Status.INTERNAL_SERVER_ERROR);
+			throw ServerException.getServerException(e).getJsonException();
 		}
 	}
 
-	final public <T> T commonServiceRequest(final Request request, final Object body, final Integer msTimeOut,
-			final TypeReference<T> typeRef, final int... expectedCodes) {
+	private final static String CONTENT_TYPE_JSON_UTF8 = ContentType.APPLICATION_JSON.toString();
+
+	private <T> T executeJsonEx(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
+			final TypeReference<T> typeRef, final ResponseValidator validator) throws IOException {
+		setBody(request, bodyObject);
+		return HttpClients.HTTP_CLIENT
+				.execute(request.addHeader("accept", CONTENT_TYPE_JSON_UTF8).request,
+						new JsonHttpResponseHandler.JsonValueTypeRefResponse<>(typeRef, validator),
+						getContext(msTimeOut));
+	}
+
+	@Override
+	final public <T> T executeJson(final HttpRequest request, final Object body, final Integer msTimeOut,
+			final TypeReference<T> typeRef, final ResponseValidator validator) {
 		try {
-			return execute(request, body, msTimeOut, typeRef, expectedCodes);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
+			return executeJsonEx(request, body, msTimeOut, typeRef, validator);
 		} catch (IOException e) {
-			throw new WebApplicationException(e.getMessage(), e, Status.INTERNAL_SERVER_ERROR);
+			throw ServerException.getServerException(e).getJsonException();
 		}
 	}
 
-	final public JsonNode commonServiceRequest(final Request request, final Object body, final Integer msTimeOut,
-			final int... expectedCodes) {
+	private JsonNode executeJsonNodeEx(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
+			final ResponseValidator validator) throws IOException {
+		setBody(request, bodyObject);
+		return HttpClients.HTTP_CLIENT
+				.execute(request.addHeader("accept", ContentType.APPLICATION_JSON.toString()).request,
+						new JsonHttpResponseHandler.JsonTreeResponse(validator), getContext(msTimeOut));
+	}
+
+	@Override
+	final public JsonNode executeJsonNode(final HttpRequest request, final Object body, final Integer msTimeOut,
+			final ResponseValidator validator) {
 		try {
-			return execute(request, body, msTimeOut, expectedCodes);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
+			return executeJsonNodeEx(request, body, msTimeOut, validator);
 		} catch (IOException e) {
-			throw new WebApplicationException(e.getMessage(), e, Status.INTERNAL_SERVER_ERROR);
+			throw ServerException.getServerException(e).getJsonException();
+		}
+	}
+
+	private Integer executeStatusCodeEx(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
+			final ResponseValidator validator) throws IOException {
+		setBody(request, bodyObject);
+		return HttpClients.HTTP_CLIENT
+				.execute(request.request, new CodeHttpResponseHandler(validator), getContext(msTimeOut));
+	}
+
+	@Override
+	final public Integer executeStatusCode(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
+			final ResponseValidator validator) {
+		try {
+			return executeStatusCodeEx(request, bodyObject, msTimeOut, validator);
+		} catch (IOException e) {
+			throw ServerException.getServerException(e).getTextException();
+		}
+	}
+
+
+	private String executeStringEx(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
+			final ResponseValidator validator) throws IOException {
+		setBody(request, bodyObject);
+		return HttpClients.HTTP_CLIENT.execute(request.request, new StringHttpResponseHandler(validator),
+				getContext(msTimeOut));
+	}
+
+	@Override
+	final public String executeString(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
+			final ResponseValidator validator) {
+		try {
+			return executeStringEx(request, bodyObject, msTimeOut, validator);
+		} catch (IOException e) {
+			throw ServerException.getServerException(e).getTextException();
+		}
+	}
+
+	private CloseableStreamingOutput executeStreamEx(final HttpRequest request, final Object bodyObject,
+			final Integer msTimeOut, final ResponseValidator validator) throws IOException {
+		setBody(request, bodyObject);
+		final CloseableHttpResponse response = HttpClients.HTTP_CLIENT.execute(request.request, getContext(msTimeOut));
+		if (validator != null) {
+			try {
+				validator.checkResponse(response.getStatusLine(), response.getEntity());
+			} catch (ClientProtocolException e) {
+				IOUtils.closeQuietly(response);
+				throw e;
+			}
+		}
+		return new CloseableStreamingOutput(response);
+	}
+
+	@Override
+	final public CloseableStreamingOutput executeStream(final HttpRequest request, final Object bodyObject,
+			final Integer msTimeOut, final ResponseValidator validator) {
+		try {
+			return executeStreamEx(request, bodyObject, msTimeOut, validator);
+		} catch (IOException e) {
+			throw ServerException.getServerException(e).getTextException();
 		}
 	}
 

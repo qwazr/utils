@@ -17,14 +17,9 @@ package com.qwazr.utils.json.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.methods.HttpUriRequest;
-
-import javax.ws.rs.core.UriBuilder;
-import java.io.IOException;
-import java.io.InputStream;
+import com.qwazr.utils.http.HttpRequest;
+import com.qwazr.utils.http.ResponseValidator;
+import com.qwazr.utils.json.CloseableStreamingOutput;
 
 public interface JsonClientInterface {
 
@@ -35,39 +30,48 @@ public interface JsonClientInterface {
 	 * @param bodyObject      an optional object for the body.
 	 * @param msTimeOut       an optional timeout in milliseconds
 	 * @param jsonResultClass The class of the returned object
-	 * @param expectedCodes   The expected HTTP status code(s)
+	 * @param validator       The response validator
 	 * @param <T>             The type of the returned object
 	 * @return An instance of the expected class
-	 * @throws IOException if any IO error occur
 	 */
-	<T> T execute(Request request, Object bodyObject, Integer msTimeOut, Class<T> jsonResultClass, int... expectedCodes)
-			throws IOException;
+	<T> T executeJson(HttpRequest request, Object bodyObject, Integer msTimeOut, Class<T> jsonResultClass,
+			ResponseValidator validator);
 
 	/**
 	 * Execute an HTTP request returning an objet of the expected type
 	 * reference.
 	 *
-	 * @param request       the HTTP request to execute
-	 * @param msTimeOut     an optional timeout in milliseconds
-	 * @param bodyObject    an optional object for the body
-	 * @param typeRef       the TypeRef of the returned object
-	 * @param expectedCodes The expected HTTP status code(s)
-	 * @param <T>           The type of the returned object
+	 * @param request    the HTTP request to execute
+	 * @param msTimeOut  an optional timeout in milliseconds
+	 * @param bodyObject an optional object for the body
+	 * @param typeRef    the TypeRef of the returned object
+	 * @param validator  The response validator
+	 * @param <T>        The type of the returned object
 	 * @return An instance of the expected type
-	 * @throws IOException in case of IO error
 	 */
-	<T> T execute(Request request, Object bodyObject, Integer msTimeOut, TypeReference<T> typeRef, int... expectedCodes)
-			throws IOException;
+	<T> T executeJson(HttpRequest request, Object bodyObject, Integer msTimeOut, TypeReference<T> typeRef,
+			ResponseValidator validator);
+
 
 	/**
-	 * @param request       the HTTP request to execute
-	 * @param bodyObject    an optional object for the body
-	 * @param msTimeOut     an optional timeout in milliseconds
-	 * @param expectedCodes The expected HTTP status code(s)
+	 * @param request    the HTTP request to execute
+	 * @param bodyObject an optional object for the body
+	 * @param msTimeOut  an optional timeout in milliseconds
+	 * @param validator  The response validator
 	 * @return a new JsonNode object
-	 * @throws IOException in case of IO error
 	 */
-	JsonNode execute(Request request, Object bodyObject, Integer msTimeOut, int... expectedCodes) throws IOException;
+	JsonNode executeJsonNode(HttpRequest request, Object bodyObject, Integer msTimeOut, ResponseValidator validator);
+
+
+	/**
+	 * @param request
+	 * @param bodyObject
+	 * @param msTimeOut
+	 * @param validator
+	 * @return
+	 */
+	Integer executeStatusCode(HttpRequest request, Object bodyObject, Integer msTimeOut, ResponseValidator validator);
+
 
 	/**
 	 * Execute an HTTP request. The bodyObject is sent as payload if it is not
@@ -78,16 +82,24 @@ public interface JsonClientInterface {
 	 * @param bodyObject The body of the request (payload)
 	 * @param msTimeOut  The time out in milliseconds. If null, the default value is
 	 *                   used
-	 * @return the HTTP response
-	 * @throws IOException in case of any IO error
+	 * @param validator  The response validator
+	 * @return the content of the HTTP entity in String Format
 	 */
-	HttpResponse execute(Request request, Object bodyObject, Integer msTimeOut) throws IOException;
+	String executeString(HttpRequest request, Object bodyObject, Integer msTimeOut, ResponseValidator validator);
 
 	/**
-	 * @param request
-	 * @param msTimeOut
-	 * @return
+	 * Execute an HTTP request. The bodyObject is sent as payload if it is not
+	 * null. If it is a String object, it is send as PLAIN/TEXT. If it is
+	 * another object, it is serialized in JSON format.
+	 *
+	 * @param request    A preconfigured HTTP request
+	 * @param bodyObject The body of the request (payload)
+	 * @param msTimeOut  The time out in milliseconds. If null, the default value is
+	 *                   used
+	 * @param validator  The response validator
+	 * @return the content of the HTTP entity in stream format
 	 */
-	HttpResponse execute(HttpUriRequest request, Integer msTimeOut) throws IOException;
+	CloseableStreamingOutput executeStream(HttpRequest request, Object bodyObject, Integer msTimeOut,
+			ResponseValidator validator);
 
 }

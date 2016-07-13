@@ -20,7 +20,6 @@ import com.qwazr.utils.MimeUtils;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.http.HttpResponse;
-import org.apache.http.entity.ContentType;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,16 +29,15 @@ public class DownloadHttpResponseHandler extends HttpResponseHandler<List<FileIt
 
 	private final File repository;
 
-	public DownloadHttpResponseHandler(final File repository, final ContentType expectedContentType,
-			final int... expectedCodes) {
-		super(expectedContentType, expectedCodes);
+	public DownloadHttpResponseHandler(final File repository, final ResponseValidator validator) {
+		super(validator);
 		this.repository = repository;
 	}
 
 	public List<FileItem> handleResponse(final HttpResponse response) throws IOException {
 		super.handleResponse(response);
 		try {
-			return new MimeUtils.StreamFileUpload(repository).parse(httpEntity);
+			return new MimeUtils.StreamFileUpload(repository).parse(entity);
 		} catch (FileUploadException e) {
 			throw new IOException(e);
 		}

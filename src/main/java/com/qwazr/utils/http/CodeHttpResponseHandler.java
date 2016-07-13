@@ -16,25 +16,23 @@
 
 package com.qwazr.utils.http;
 
-import com.qwazr.utils.CharsetUtils;
 import com.qwazr.utils.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 
-public class StringHttpResponseHandler extends HttpResponseHandler<String> {
+public class CodeHttpResponseHandler extends HttpResponseHandler<Integer> {
 
-	public StringHttpResponseHandler(final ResponseValidator validator) {
+	public CodeHttpResponseHandler(final ResponseValidator validator) {
 		super(validator);
 	}
 
 	@Override
-	final public String handleResponse(final HttpResponse response) throws IOException {
+	final public Integer handleResponse(final HttpResponse response) throws IOException {
 		try {
 			super.handleResponse(response);
-			return EntityUtils.toString(entity, CharsetUtils.CharsetUTF8);
+			return response.getStatusLine().getStatusCode();
 		} finally {
 			IOUtils.close((CloseableHttpResponse) response);
 		}

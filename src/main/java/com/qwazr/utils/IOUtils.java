@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils;
 
+import org.apache.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +94,12 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		} finally {
 			close(fw, pw);
 		}
+	}
+
+	public static final void closeObject(final Object response) {
+		if (response == null || !(response instanceof Closeable))
+			return;
+		close((Closeable) response);
 	}
 
 	public interface CloseableContext extends Closeable {

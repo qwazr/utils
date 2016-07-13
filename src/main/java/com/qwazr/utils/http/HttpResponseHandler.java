@@ -20,43 +20,28 @@ import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
-import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
 
 public abstract class HttpResponseHandler<T> implements ResponseHandler<T> {
 
-	private final ContentType expectedContentType;
-	private final int[] expectedCodes;
-	protected HttpEntity httpEntity;
+	private final ResponseValidator validator;
+	protected HttpEntity entity;
 	protected StatusLine statusLine;
 
-	public HttpResponseHandler(ContentType expectedContentType, int... expectedCodes) {
-		this.expectedContentType = expectedContentType;
-		this.expectedCodes = expectedCodes;
+	public HttpResponseHandler(final ResponseValidator validator) {
+		this.validator = validator;
 	}
 
 	@Override
-	public T handleResponse(HttpResponse response) throws IOException {
-		httpEntity = response.getEntity();
+	public T handleResponse(final HttpResponse response) throws IOException {
+		if (response == null)
+			throw new ClientProtocolException("No response");
+		entity = response.getEntity();
 		statusLine = response.getStatusLine();
-		if (expectedCodes != null && expectedCodes.length > 0)
-			HttpUtils.checkStatusCodes(response, expectedCodes);
-		if (expectedContentType != null)
-			HttpUtils.checkIsEntity(response, expectedContentType);
+		if (validator != null)
+			validator.check(statusLine, entity);
 		return null;
-	}
-
-	public Integer getStatusCode() {
-		if (statusLine == null)
-			return null;
-		return statusLine.getStatusCode();
-	}
-
-	public ContentType getContentType() {
-		if (httpEntity == null)
-			return null;
-		return ContentType.get(httpEntity);
 	}
 
 }

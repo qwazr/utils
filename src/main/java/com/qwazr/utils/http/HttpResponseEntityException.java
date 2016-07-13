@@ -19,7 +19,6 @@ import com.qwazr.utils.CharsetUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpResponseException;
 
@@ -36,9 +35,8 @@ public class HttpResponseEntityException extends HttpResponseException {
 	private final String contentType;
 	private final String contentMessage;
 
-	public HttpResponseEntityException(HttpResponse response, String message) {
-		super(getStatusCode(response.getStatusLine()), message);
-		HttpEntity entity = response.getEntity();
+	public HttpResponseEntityException(final StatusLine statusLine, final HttpEntity entity, String message) {
+		super(getStatusCode(statusLine), message);
 		String cm = null;
 		String ct = null;
 		if (entity != null) {
