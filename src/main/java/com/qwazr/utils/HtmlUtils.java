@@ -15,15 +15,8 @@
  */
 package com.qwazr.utils;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.text.WordUtils;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -122,22 +115,6 @@ public class HtmlUtils {
 		sb.insert(0, '…');
 		sb.insert(0, frags[0]);
 		return sb.toString();
-	}
-
-	public static void main(String args[]) throws IOException {
-		if (args != null && args.length == 2) {
-			List<String> lines = FileUtils.readLines(new File(args[0]), CharsetUtils.CharsetUTF8);
-			FileWriter fw = new FileWriter(new File(args[1]));
-			PrintWriter pw = new PrintWriter(fw);
-			for (String line : lines)
-				pw.println(StringEscapeUtils.unescapeHtml4(line));
-			pw.close();
-			fw.close();
-		}
-		String text = "file://&shy;Users/ekeller/Moteur/infotoday_enterprisesearchsourcebook08/Open_on_Windows.exe";
-		System.out.println(htmlWrap(text, 20));
-		System.out.println(htmlWrapReduce(text, 20, 80));
-		String url = "file://Users/ekeller/Moteur/infotoday_enterprisesearchsourcebook08/Open_on_Windows.exe?test=2";
 	}
 
 }
