@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+ * Copyright 2015-2016 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,35 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.qwazr.utils.http;
 
-import org.apache.http.HttpEntity;
+import com.qwazr.utils.IOUtils;
 import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 
-public abstract class HttpResponseHandler<T> implements ResponseHandler<T> {
-
-	private final ResponseValidator validator;
-	protected HttpEntity entity;
-	protected StatusLine statusLine;
+public class HttpResponseHandler extends AbstractHttpResponseHandler<HttpResponse> {
 
 	public HttpResponseHandler(final ResponseValidator validator) {
-		this.validator = validator;
+		super(validator);
 	}
 
 	@Override
-	public T handleResponse(final HttpResponse response) throws IOException {
-		if (response == null)
-			throw new ClientProtocolException("No response");
-		entity = response.getEntity();
-		statusLine = response.getStatusLine();
-		if (validator != null)
-			validator.check(statusLine, entity);
-		return null;
+	final public HttpResponse handleResponse(final HttpResponse response) throws IOException {
+		try {
+			super.handleResponse(response);
+			EntityUtils.consumeQuietly(response.getEntity());
+			return response;
+		} finally {
+			IOUtils.close((CloseableHttpResponse) response);
+		}
 	}
-
 }

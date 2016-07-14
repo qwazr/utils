@@ -16,16 +16,18 @@
 
 package com.qwazr.utils.http;
 
+import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.MimeUtils;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-public class DownloadHttpResponseHandler extends HttpResponseHandler<List<FileItem>> {
+public class DownloadHttpResponseHandler extends AbstractHttpResponseHandler<List<FileItem>> {
 
 	private final File repository;
 
@@ -40,6 +42,8 @@ public class DownloadHttpResponseHandler extends HttpResponseHandler<List<FileIt
 			return new MimeUtils.StreamFileUpload(repository).parse(entity);
 		} catch (FileUploadException e) {
 			throw new IOException(e);
+		} finally {
+			IOUtils.close((CloseableHttpResponse) response);
 		}
 	}
 }

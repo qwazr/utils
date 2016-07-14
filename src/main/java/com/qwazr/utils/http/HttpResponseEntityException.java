@@ -16,40 +16,19 @@
 package com.qwazr.utils.http;
 
 import com.qwazr.utils.CharsetUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpResponseException;
+import org.apache.http.util.EntityUtils;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 import java.io.IOException;
 
 public class HttpResponseEntityException extends HttpResponseException {
 
 	private static final long serialVersionUID = 1958648159987063347L;
 
-	private final String contentType;
-	private final String contentMessage;
-
-	public HttpResponseEntityException(final StatusLine statusLine, final HttpEntity entity, String message) {
-		super(getStatusCode(statusLine), message);
-		String cm = null;
-		String ct = null;
-		if (entity != null) {
-			try {
-				cm = IOUtils.toString(entity.getContent(), CharsetUtils.CharsetUTF8);
-				Header header = entity.getContentType();
-				if (header != null)
-					ct = header.getValue();
-			} catch (IllegalStateException | IOException e) {
-			}
-		}
-		contentMessage = cm == null ? message : cm;
-		contentType = ct == null ? MediaType.TEXT_PLAIN : ct;
+	public HttpResponseEntityException(final StatusLine statusLine, final HttpEntity entity, final String message) {
+		super(getStatusCode(statusLine), getMessage(entity, message));
 	}
 
 	private static int getStatusCode(StatusLine statusLine) {
@@ -58,16 +37,15 @@ public class HttpResponseEntityException extends HttpResponseException {
 		return statusLine.getStatusCode();
 	}
 
-	public WebApplicationException getWebApplicationException() {
-		int code = getStatusCode();
-		if (code == 0)
-			return new WebApplicationException(this);
-		ResponseBuilder response = Response.status(code);
-		if (contentMessage == null)
-			return new WebApplicationException(this, response.build());
-		response.type(contentType).entity(contentMessage);
-		return new WebApplicationException(contentMessage, this, response.build());
+	private static String getMessage(final HttpEntity entity, final String message) {
+		try {
+			if (entity != null)
+				return EntityUtils.toString(entity, CharsetUtils.CharsetUTF8);
+			return message;
 
+		} catch (IOException e) {
+			return message;
+		}
 	}
 
 	public static HttpResponseEntityException findFirstCause(Throwable e) {

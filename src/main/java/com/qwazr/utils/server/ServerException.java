@@ -17,6 +17,7 @@ package com.qwazr.utils.server;
 
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.json.JsonExceptionReponse;
+import org.apache.http.client.HttpResponseException;
 import org.slf4j.Logger;
 
 import javax.ws.rs.WebApplicationException;
@@ -34,13 +35,19 @@ public class ServerException extends RuntimeException {
 	private final int statusCode;
 	private final String message;
 
+	private final static int INTERNAL_SERVER_ERROR = Status.INTERNAL_SERVER_ERROR.getStatusCode();
+
 	public ServerException(final Status status, String message, final Exception exception) {
 		super(message, exception);
-		if (status == null && exception != null && exception instanceof WebApplicationException) {
-			WebApplicationException wae = (WebApplicationException) exception;
-			this.statusCode = wae.getResponse().getStatus();
+		if (status == null && exception != null) {
+			if (exception instanceof WebApplicationException) {
+				this.statusCode = ((WebApplicationException) exception).getResponse().getStatus();
+			} else if (exception instanceof HttpResponseException) {
+				this.statusCode = ((HttpResponseException) exception).getStatusCode();
+			} else
+				this.statusCode = INTERNAL_SERVER_ERROR;
 		} else
-			this.statusCode = status != null ? status.getStatusCode() : Status.INTERNAL_SERVER_ERROR.getStatusCode();
+			this.statusCode = status != null ? status.getStatusCode() : INTERNAL_SERVER_ERROR;
 		if (StringUtils.isEmpty(message)) {
 			if (exception != null)
 				message = exception.getMessage();
@@ -100,8 +107,10 @@ public class ServerException extends RuntimeException {
 	}
 
 	private Response getTextResponse() {
-		return Response.status(statusCode).type(MediaType.TEXT_PLAIN)
-				.entity(message == null ? StringUtils.EMPTY : message).build();
+		return Response.status(statusCode)
+				.type(MediaType.TEXT_PLAIN)
+				.entity(message == null ? StringUtils.EMPTY : message)
+				.build();
 	}
 
 	private Response getJsonResponse() {

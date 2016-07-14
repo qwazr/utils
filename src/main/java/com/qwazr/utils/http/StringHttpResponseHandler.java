@@ -24,7 +24,7 @@ import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 
-public class StringHttpResponseHandler extends HttpResponseHandler<String> {
+public class StringHttpResponseHandler extends AbstractHttpResponseHandler<String> {
 
 	public StringHttpResponseHandler(final ResponseValidator validator) {
 		super(validator);

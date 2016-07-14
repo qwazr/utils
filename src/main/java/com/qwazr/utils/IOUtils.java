@@ -96,12 +96,6 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 	}
 
-	public static final void closeObject(final Object response) {
-		if (response == null || !(response instanceof Closeable))
-			return;
-		close((Closeable) response);
-	}
-
 	public interface CloseableContext extends Closeable {
 
 		<T extends AutoCloseable> T add(T autoCloseable);

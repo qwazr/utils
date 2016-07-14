@@ -18,7 +18,7 @@ package com.qwazr.utils.json;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.qwazr.utils.IOUtils;
-import com.qwazr.utils.http.HttpResponseHandler;
+import com.qwazr.utils.http.AbstractHttpResponseHandler;
 import com.qwazr.utils.http.ResponseValidator;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -27,7 +27,7 @@ import java.io.IOException;
 
 public class JsonHttpResponseHandler {
 
-	public static class JsonTreeResponse extends HttpResponseHandler<JsonNode> {
+	public static class JsonTreeResponse extends AbstractHttpResponseHandler<JsonNode> {
 
 		public JsonTreeResponse(final ResponseValidator validator) {
 			super(validator);
@@ -44,7 +44,7 @@ public class JsonHttpResponseHandler {
 		}
 	}
 
-	public static class JsonValueResponse<T> extends HttpResponseHandler<T> {
+	public static class JsonValueResponse<T> extends AbstractHttpResponseHandler<T> {
 
 		private final Class<T> jsonClass;
 
@@ -64,7 +64,7 @@ public class JsonHttpResponseHandler {
 		}
 	}
 
-	public static class JsonValueTypeRefResponse<T> extends HttpResponseHandler<T> {
+	public static class JsonValueTypeRefResponse<T> extends AbstractHttpResponseHandler<T> {
 
 		private final TypeReference<T> typeReference;
 

@@ -20,11 +20,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.http.*;
-import com.qwazr.utils.json.CloseableStreamingOutput;
+import com.qwazr.utils.json.AbstractStreamingOutput;
 import com.qwazr.utils.json.JsonHttpResponseHandler;
 import com.qwazr.utils.json.JsonMapper;
 import com.qwazr.utils.server.RemoteService;
 import com.qwazr.utils.server.ServerException;
+import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.client.AuthCache;
@@ -79,8 +80,7 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		return context;
 	}
 
-	private void setBody(final HttpRequest request, final Object bodyObject)
-			throws JsonProcessingException {
+	private void setBody(final HttpRequest request, final Object bodyObject) throws JsonProcessingException {
 		if (bodyObject == null)
 			return;
 		HttpRequest.Entity requestEntity = (HttpRequest.Entity) request;
@@ -89,8 +89,7 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		else if (bodyObject instanceof InputStream)
 			requestEntity.bodyStream((InputStream) bodyObject, ContentType.APPLICATION_OCTET_STREAM);
 		else
-			requestEntity
-					.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject), ContentType.APPLICATION_JSON);
+			requestEntity.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject), ContentType.APPLICATION_JSON);
 	}
 
 	private <T> T executeJsonEx(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
@@ -117,10 +116,8 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 	private <T> T executeJsonEx(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
 			final TypeReference<T> typeRef, final ResponseValidator validator) throws IOException {
 		setBody(request, bodyObject);
-		return HttpClients.HTTP_CLIENT
-				.execute(request.addHeader("accept", CONTENT_TYPE_JSON_UTF8).request,
-						new JsonHttpResponseHandler.JsonValueTypeRefResponse<>(typeRef, validator),
-						getContext(msTimeOut));
+		return HttpClients.HTTP_CLIENT.execute(request.addHeader("accept", CONTENT_TYPE_JSON_UTF8).request,
+				new JsonHttpResponseHandler.JsonValueTypeRefResponse<>(typeRef, validator), getContext(msTimeOut));
 	}
 
 	@Override
@@ -136,9 +133,9 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 	private JsonNode executeJsonNodeEx(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
 			final ResponseValidator validator) throws IOException {
 		setBody(request, bodyObject);
-		return HttpClients.HTTP_CLIENT
-				.execute(request.addHeader("accept", ContentType.APPLICATION_JSON.toString()).request,
-						new JsonHttpResponseHandler.JsonTreeResponse(validator), getContext(msTimeOut));
+		return HttpClients.HTTP_CLIENT.execute(
+				request.addHeader("accept", ContentType.APPLICATION_JSON.toString()).request,
+				new JsonHttpResponseHandler.JsonTreeResponse(validator), getContext(msTimeOut));
 	}
 
 	@Override
@@ -151,23 +148,33 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		}
 	}
 
-	private Integer executeStatusCodeEx(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
+	private HttpResponse executeEx(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
 			final ResponseValidator validator) throws IOException {
 		setBody(request, bodyObject);
-		return HttpClients.HTTP_CLIENT
-				.execute(request.request, new CodeHttpResponseHandler(validator), getContext(msTimeOut));
+		return HttpClients.HTTP_CLIENT.execute(request.request, new HttpResponseHandler(validator),
+				getContext(msTimeOut));
+	}
+
+	@Override
+	final public HttpResponse execute(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
+			final ResponseValidator validator) {
+		try {
+			return executeEx(request, bodyObject, msTimeOut, validator);
+		} catch (IOException e) {
+			throw ServerException.getServerException(e).getTextException();
+		}
 	}
 
 	@Override
 	final public Integer executeStatusCode(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
 			final ResponseValidator validator) {
 		try {
-			return executeStatusCodeEx(request, bodyObject, msTimeOut, validator);
+			HttpResponse response = executeEx(request, bodyObject, msTimeOut, validator);
+			return response.getStatusLine().getStatusCode();
 		} catch (IOException e) {
 			throw ServerException.getServerException(e).getTextException();
 		}
 	}
-
 
 	private String executeStringEx(final HttpRequest request, final Object bodyObject, final Integer msTimeOut,
 			final ResponseValidator validator) throws IOException {
@@ -186,7 +193,7 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		}
 	}
 
-	private CloseableStreamingOutput executeStreamEx(final HttpRequest request, final Object bodyObject,
+	private AbstractStreamingOutput executeStreamEx(final HttpRequest request, final Object bodyObject,
 			final Integer msTimeOut, final ResponseValidator validator) throws IOException {
 		setBody(request, bodyObject);
 		final CloseableHttpResponse response = HttpClients.HTTP_CLIENT.execute(request.request, getContext(msTimeOut));
@@ -198,11 +205,11 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 				throw e;
 			}
 		}
-		return new CloseableStreamingOutput(response);
+		return AbstractStreamingOutput.with(response);
 	}
 
 	@Override
-	final public CloseableStreamingOutput executeStream(final HttpRequest request, final Object bodyObject,
+	final public AbstractStreamingOutput executeStream(final HttpRequest request, final Object bodyObject,
 			final Integer msTimeOut, final ResponseValidator validator) {
 		try {
 			return executeStreamEx(request, bodyObject, msTimeOut, validator);

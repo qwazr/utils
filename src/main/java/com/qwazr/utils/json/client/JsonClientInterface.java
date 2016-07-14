@@ -19,7 +19,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.qwazr.utils.http.HttpRequest;
 import com.qwazr.utils.http.ResponseValidator;
-import com.qwazr.utils.json.CloseableStreamingOutput;
+import com.qwazr.utils.json.AbstractStreamingOutput;
+import org.apache.http.HttpResponse;
 
 public interface JsonClientInterface {
 
@@ -52,7 +53,6 @@ public interface JsonClientInterface {
 	<T> T executeJson(HttpRequest request, Object bodyObject, Integer msTimeOut, TypeReference<T> typeRef,
 			ResponseValidator validator);
 
-
 	/**
 	 * @param request    the HTTP request to execute
 	 * @param bodyObject an optional object for the body
@@ -62,6 +62,14 @@ public interface JsonClientInterface {
 	 */
 	JsonNode executeJsonNode(HttpRequest request, Object bodyObject, Integer msTimeOut, ResponseValidator validator);
 
+	/**
+	 * @param request
+	 * @param bodyObject
+	 * @param msTimeOut
+	 * @param validator
+	 * @return
+	 */
+	HttpResponse execute(HttpRequest request, Object bodyObject, Integer msTimeOut, ResponseValidator validator);
 
 	/**
 	 * @param request
@@ -71,7 +79,6 @@ public interface JsonClientInterface {
 	 * @return
 	 */
 	Integer executeStatusCode(HttpRequest request, Object bodyObject, Integer msTimeOut, ResponseValidator validator);
-
 
 	/**
 	 * Execute an HTTP request. The bodyObject is sent as payload if it is not
@@ -99,7 +106,7 @@ public interface JsonClientInterface {
 	 * @param validator  The response validator
 	 * @return the content of the HTTP entity in stream format
 	 */
-	CloseableStreamingOutput executeStream(HttpRequest request, Object bodyObject, Integer msTimeOut,
+	AbstractStreamingOutput executeStream(HttpRequest request, Object bodyObject, Integer msTimeOut,
 			ResponseValidator validator);
 
 }
