@@ -19,13 +19,7 @@ import org.apache.commons.lang3.SystemUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 public class ProcessUtils {
 
@@ -72,7 +66,7 @@ public class ProcessUtils {
 	}
 
 	public static Integer run(String commandLine) throws InterruptedException, IOException {
-		Process process = Runtime.getRuntime().exec(commandLine);
+		final Process process = Runtime.getRuntime().exec(commandLine);
 		try {
 			return process.waitFor();
 		} finally {
@@ -81,5 +75,16 @@ public class ProcessUtils {
 				process.destroyForcibly();
 		}
 	}
-	
+
+	public static Process java(final Class<?> javaClass, final Map<String, String> env) throws IOException {
+		final String javaHome = System.getProperty("java.home");
+		final String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
+		final String classpath = System.getProperty("java.class.path");
+		final ProcessBuilder builder = new ProcessBuilder(javaBin, "-cp", classpath, javaClass.getCanonicalName());
+		if (env != null)
+			builder.environment().putAll(env);
+		builder.inheritIO();
+		return builder.start();
+	}
+
 }

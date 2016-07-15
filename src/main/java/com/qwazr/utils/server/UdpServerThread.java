@@ -21,14 +21,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.*;
 import java.util.Collection;
-import java.util.function.Consumer;
 
-/**
- * Created by ekeller on 04/05/2016.
- */
 public class UdpServerThread extends Thread {
 
-	private static final Logger logger = LoggerFactory.getLogger(UdpServerThread.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(UdpServerThread.class);
 
 	public final static int DEFAULT_BUFFER_SIZE = 65536;
 	public final static String DEFAULT_MULTICAST = "239.255.90.91";
@@ -36,30 +32,29 @@ public class UdpServerThread extends Thread {
 	private final int dataBufferSize;
 	private final PacketListener[] packetListeners;
 
-	private volatile Collection<Consumer<DatagramPacket>> datagramConsumersCache;
 	private final InetSocketAddress socketAddress;
-	private final InetAddress multicastAddress;
+	private final InetAddress multicastGroupAddress;
 
-	public UdpServerThread(final InetSocketAddress socketAddress, final InetAddress multicastAddress,
-			Integer dataBufferSize, Collection<PacketListener> packetListeners) {
+	public UdpServerThread(final InetSocketAddress socketAddress, final InetAddress multicastGroupAddress,
+			final Integer dataBufferSize, final Collection<PacketListener> packetListeners) {
 		super();
 		setName("UDP Server");
 		setDaemon(true);
 		this.dataBufferSize = dataBufferSize == null ? DEFAULT_BUFFER_SIZE : dataBufferSize;
 		this.socketAddress = socketAddress;
-		this.multicastAddress = multicastAddress;
+		this.multicastGroupAddress = multicastGroupAddress;
 		this.packetListeners = packetListeners.toArray(new PacketListener[packetListeners.size()]);
 	}
 
 	@Override
 	public void run() {
-		try (final DatagramSocket socket = multicastAddress != null ?
+		try (final DatagramSocket socket = multicastGroupAddress != null ?
 				new MulticastSocket(socketAddress) :
 				new DatagramSocket(socketAddress)) {
 			if (socket instanceof MulticastSocket)
-				((MulticastSocket) socket).joinGroup(multicastAddress);
-			if (logger.isInfoEnabled())
-				logger.info("UDP Server started: " + socketAddress);
+				((MulticastSocket) socket).joinGroup(multicastGroupAddress);
+			if (LOGGER.isInfoEnabled())
+				LOGGER.info("UDP Server started: " + socketAddress);
 			for (; ; ) {
 				final byte[] dataBuffer = new byte[dataBufferSize];
 				final DatagramPacket datagramPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
@@ -68,15 +63,15 @@ public class UdpServerThread extends Thread {
 					try {
 						packetListener.acceptPacket(datagramPacket);
 					} catch (Exception e) {
-						logger.warn(e.getMessage(), e);
+						LOGGER.warn(e.getMessage(), e);
 					}
 				}
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		} finally {
-			if (logger.isInfoEnabled())
-				logger.info("UDP Server exit: " + socketAddress);
+			if (LOGGER.isInfoEnabled())
+				LOGGER.info("UDP Server exit: " + socketAddress);
 		}
 	}
 

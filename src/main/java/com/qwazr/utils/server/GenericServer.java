@@ -33,6 +33,7 @@ import javax.management.OperationsException;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -68,9 +69,9 @@ public class GenericServer {
 
 	final protected UdpServerThread udpServer;
 
-	static final private Logger logger = LoggerFactory.getLogger(GenericServer.class);
+	static final private Logger LOGGER = LoggerFactory.getLogger(GenericServer.class);
 
-	GenericServer(final ServerBuilder builder) {
+	GenericServer(final ServerBuilder builder) throws IOException {
 		this.executorService = builder.executorService;
 		this.serverConfiguration = builder.serverConfiguration;
 		this.webServices = builder.webServices.isEmpty() ? null : new ArrayList<>(builder.webServices);
@@ -93,12 +94,20 @@ public class GenericServer {
 		this.connectorsStatistics = new ArrayList<>();
 	}
 
-	private static UdpServerThread buildUdpServer(final ServerBuilder builder) {
+	private static UdpServerThread buildUdpServer(final ServerBuilder builder) throws IOException {
 		if (builder.packetListeners == null || builder.packetListeners.isEmpty())
 			return null;
-		final InetSocketAddress socketAddress = new InetSocketAddress(builder.serverConfiguration.listenAddress,
-				builder.serverConfiguration.webServiceConnector.port);
-		return new UdpServerThread(socketAddress, null, null, builder.packetListeners);
+		final InetSocketAddress socketAddress;
+		final InetAddress multicastGroupAddress;
+		if (builder.serverConfiguration.udpConnector.address != null) {
+			socketAddress = new InetSocketAddress(builder.serverConfiguration.udpConnector.port);
+			multicastGroupAddress = InetAddress.getByName(builder.serverConfiguration.udpConnector.address);
+		} else {
+			socketAddress = new InetSocketAddress(builder.serverConfiguration.listenAddress,
+					builder.serverConfiguration.webServiceConnector.port);
+			multicastGroupAddress = null;
+		}
+		return new UdpServerThread(socketAddress, multicastGroupAddress, null, builder.packetListeners);
 	}
 
 	private synchronized void start(final Undertow undertow) {
@@ -116,8 +125,8 @@ public class GenericServer {
 			try {
 				manager.stop();
 			} catch (ServletException e) {
-				if (logger.isWarnEnabled())
-					logger.warn("Cannot stop the manager: " + e.getMessage(), e);
+				if (LOGGER.isWarnEnabled())
+					LOGGER.warn("Cannot stop the manager: " + e.getMessage(), e);
 			}
 		undertows.forEach(Undertow::stop);
 	}
@@ -146,7 +155,7 @@ public class GenericServer {
 		deploymentManagers.add(manager);
 		httpHandler = logMetricsHandler;
 
-		logger.info("Start the connector " + serverConfiguration.listenAddress + ":" + connector.port);
+		LOGGER.info("Start the connector " + serverConfiguration.listenAddress + ":" + connector.port);
 
 		Builder servletBuilder = Undertow.builder()
 				.addHttpListener(connector.port, serverConfiguration.listenAddress)
@@ -179,7 +188,7 @@ public class GenericServer {
 			throw new IOException("The data directory does not exists: " + serverConfiguration.dataDirectory);
 		if (!serverConfiguration.dataDirectory.isDirectory())
 			throw new IOException("The data directory path is not a directory: " + serverConfiguration.dataDirectory);
-		logger.info("Data directory sets to: " + serverConfiguration.dataDirectory);
+		LOGGER.info("Data directory sets to: " + serverConfiguration.dataDirectory);
 
 		if (udpServer != null)
 			udpServer.checkStarted();
@@ -190,14 +199,14 @@ public class GenericServer {
 			startHttpServer(serverConfiguration.webAppConnector,
 					ServletApplication.getDeploymentInfo(servletInfos, identityManager, filterInfos, listenerInfos,
 							sessionPersistenceManager, sessionListener), servletAccessLogger,
-					ServerConfiguration.PrefixEnum.WEBAPP.name());
+					ServerConfiguration.VariablesPortPrefix.WEBAPP.name());
 		}
 
 		// Launch the jaxrs application if any
 		if (webServices != null && !webServices.isEmpty()) {
 			final IdentityManager identityManager = getIdentityManager(serverConfiguration.webServiceConnector);
 			startHttpServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo(identityManager),
-					restAccessLogger, ServerConfiguration.PrefixEnum.WEBSERVICE.name());
+					restAccessLogger, ServerConfiguration.VariablesPortPrefix.WEBSERVICE.name());
 		}
 
 		if (shutdownHook) {
@@ -236,7 +245,7 @@ public class GenericServer {
 			try {
 				listener.accept(this);
 			} catch (Exception e) {
-				logger.error(e.getMessage(), e);
+				LOGGER.error(e.getMessage(), e);
 			}
 		});
 	}

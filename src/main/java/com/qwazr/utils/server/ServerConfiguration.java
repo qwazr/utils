@@ -24,43 +24,24 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class ServerConfiguration {
 
 	static final Logger logger = LoggerFactory.getLogger(ServerConfiguration.class);
 
-	public enum PrefixEnum {
+	public enum VariablesPortPrefix {
+		WEBAPP, WEBSERVICE, UDP
+	}
 
-		WEBAPP,
-
-		WEBSERVICE,
-
-		UDP
-
+	public enum VariablesPortSuffix {
+		REALM, AUTHTYPE, PORT, ADDRESS
 	}
 
 	public enum VariablesEnum {
-
 		QWAZR_DATA,
-
-		QWAZR_ETC,
-
 		QWAZR_ETC_DIR,
-
 		LISTEN_ADDR,
-
-		PUBLIC_ADDR,
-
-		REALM,
-
-		AUTHTYPE,
-
-		PORT,
-
-		ADDRESS
-
+		PUBLIC_ADDR
 	}
 
 	/**
@@ -96,10 +77,10 @@ public class ServerConfiguration {
 		final String authType;
 
 
-		private HttpConnector(PrefixEnum prefix, int defaultPort) {
-			port = getPropertyOrEnvInt(prefix, VariablesEnum.PORT, defaultPort);
-			realm = getPropertyOrEnv(prefix, VariablesEnum.REALM);
-			authType = getPropertyOrEnv(prefix, VariablesEnum.AUTHTYPE);
+		private HttpConnector(VariablesPortPrefix prefix, int defaultPort) {
+			port = getPropertyOrEnvInt(prefix, VariablesPortSuffix.PORT, defaultPort);
+			realm = getPropertyOrEnv(prefix, VariablesPortSuffix.REALM);
+			authType = getPropertyOrEnv(prefix, VariablesPortSuffix.AUTHTYPE);
 		}
 	}
 
@@ -110,8 +91,8 @@ public class ServerConfiguration {
 		final String address;
 
 		private UdpConnector(int defaultPort) {
-			address = getPropertyOrEnv(PrefixEnum.UDP, VariablesEnum.ADDRESS);
-			port = getPropertyOrEnvInt(PrefixEnum.UDP, VariablesEnum.PORT, defaultPort);
+			address = getPropertyOrEnv(VariablesPortPrefix.UDP, VariablesPortSuffix.ADDRESS);
+			port = getPropertyOrEnvInt(VariablesPortPrefix.UDP, VariablesPortSuffix.PORT, defaultPort);
 		}
 	}
 
@@ -136,8 +117,8 @@ public class ServerConfiguration {
 		dataDirectory = buildDataDir(getPropertyOrEnv(null, VariablesEnum.QWAZR_DATA));
 		etcDirectories = buildEtcDirectories(dataDirectory, getPropertyOrEnv(null, VariablesEnum.QWAZR_ETC_DIR));
 
-		webAppConnector = new HttpConnector(PrefixEnum.WEBAPP, 9090);
-		webServiceConnector = new HttpConnector(PrefixEnum.WEBSERVICE, 9091);
+		webAppConnector = new HttpConnector(VariablesPortPrefix.WEBAPP, 9090);
+		webServiceConnector = new HttpConnector(VariablesPortPrefix.WEBSERVICE, 9091);
 		udpConnector = new UdpConnector(9091);
 
 		String defaultAddress;
@@ -172,31 +153,31 @@ public class ServerConfiguration {
 		return etcDirectories;
 	}
 
-	final protected Integer getPropertyOrEnvInt(PrefixEnum prefix, Enum<?> key, Integer defaultValue) {
+	final protected Integer getPropertyOrEnvInt(Enum<?> prefix, Enum<?> key, Integer defaultValue) {
 		String value = getPropertyOrEnv(prefix, key);
 		return value == null ? defaultValue : Integer.parseInt(value.trim());
 	}
 
-	final protected String getPropertyOrEnv(PrefixEnum prefix, Enum<?> key) {
+	final protected String getPropertyOrEnv(Enum<?> prefix, Enum<?> key) {
 		return getPropertyOrEnv(prefix, key, null);
 	}
 
-	final protected String getPropertyOrEnv(PrefixEnum prefix, Enum<?> key, String defaultValue) {
+	final protected String getPropertyOrEnv(Enum<?> prefix, Enum<?> key, String defaultValue) {
 		String value = getProperty(prefix, key, null);
 		if (value != null)
 			return value;
 		return getEnv(prefix, key, defaultValue);
 	}
 
-	final public static String getKey(PrefixEnum prefix, Enum<?> key) {
+	final public static String getKey(Enum<?> prefix, Enum<?> key) {
 		return prefix == null ? key.name() : prefix.name() + '_' + key.name();
 	}
 
-	final protected String getEnv(PrefixEnum prefix, Enum<?> key, String defaultValue) {
+	final protected String getEnv(Enum<?> prefix, Enum<?> key, String defaultValue) {
 		return defaultValue(System.getenv(getKey(prefix, key)), defaultValue);
 	}
 
-	final protected String getProperty(PrefixEnum prefix, Enum<?> key, String defaultValue) {
+	final protected String getProperty(Enum<?> prefix, Enum<?> key, String defaultValue) {
 		return defaultValue(System.getProperty(getKey(prefix, key)), defaultValue);
 	}
 

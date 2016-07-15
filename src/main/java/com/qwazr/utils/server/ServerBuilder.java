@@ -24,6 +24,7 @@ import io.undertow.servlet.api.SessionPersistenceManager;
 import org.slf4j.Logger;
 
 import javax.ws.rs.Path;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -139,7 +140,7 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		return executorService;
 	}
 
-	public synchronized GenericServer build() {
+	public synchronized GenericServer build() throws IOException {
 		if (GenericServer.INSTANCE != null)
 			throw new RuntimeException("The server has already been created (only one server per runtime)");
 		GenericServer.INSTANCE = new GenericServer(this);
