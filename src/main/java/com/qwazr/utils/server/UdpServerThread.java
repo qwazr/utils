@@ -27,31 +27,43 @@ public class UdpServerThread extends Thread {
 	private static final Logger LOGGER = LoggerFactory.getLogger(UdpServerThread.class);
 
 	public final static int DEFAULT_BUFFER_SIZE = 65536;
-	public final static String DEFAULT_MULTICAST = "239.255.90.91";
 
 	private final int dataBufferSize;
 	private final PacketListener[] packetListeners;
 
 	private final InetSocketAddress socketAddress;
 	private final InetAddress multicastGroupAddress;
+	private final Integer multicastPort;
 
-	public UdpServerThread(final InetSocketAddress socketAddress, final InetAddress multicastGroupAddress,
-			final Integer dataBufferSize, final Collection<PacketListener> packetListeners) {
+	private UdpServerThread(final InetSocketAddress socketAddress, final InetAddress multicastGroupAddress,
+			final Integer multicastPort, final Integer dataBufferSize,
+			final Collection<PacketListener> packetListeners) {
 		super();
 		setName("UDP Server");
 		setDaemon(true);
-		this.dataBufferSize = dataBufferSize == null ? DEFAULT_BUFFER_SIZE : dataBufferSize;
 		this.socketAddress = socketAddress;
 		this.multicastGroupAddress = multicastGroupAddress;
+		this.multicastPort = multicastPort;
+		this.dataBufferSize = dataBufferSize == null ? DEFAULT_BUFFER_SIZE : dataBufferSize;
 		this.packetListeners = packetListeners.toArray(new PacketListener[packetListeners.size()]);
+	}
+
+	public UdpServerThread(final InetSocketAddress socketAddress, final Integer dataBufferSize,
+			final Collection<PacketListener> packetListeners) {
+		this(socketAddress, null, null, dataBufferSize, packetListeners);
+	}
+
+	public UdpServerThread(final String multicastGroupAddress, final int multicastPort, final Integer dataBufferSize,
+			final Collection<PacketListener> packetListeners) throws UnknownHostException {
+		this(null, InetAddress.getByName(multicastGroupAddress), multicastPort, dataBufferSize, packetListeners);
 	}
 
 	@Override
 	public void run() {
 		try (final DatagramSocket socket = multicastGroupAddress != null ?
-				new MulticastSocket(socketAddress) :
+				new MulticastSocket(multicastPort) :
 				new DatagramSocket(socketAddress)) {
-			if (socket instanceof MulticastSocket)
+			if (multicastGroupAddress != null)
 				((MulticastSocket) socket).joinGroup(multicastGroupAddress);
 			if (LOGGER.isInfoEnabled())
 				LOGGER.info("UDP Server started: " + socketAddress);
@@ -68,7 +80,7 @@ public class UdpServerThread extends Thread {
 				}
 			}
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new RuntimeException("Cannot start the server " + socketAddress, e);
 		} finally {
 			if (LOGGER.isInfoEnabled())
 				LOGGER.info("UDP Server exit: " + socketAddress);

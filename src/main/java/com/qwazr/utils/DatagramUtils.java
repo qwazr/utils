@@ -19,7 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Objects;
 
@@ -34,12 +34,12 @@ public class DatagramUtils {
 	 * @param addresses
 	 * @throws IOException
 	 */
-	public static void send(final byte[] data, final int offset, final int length, final InetSocketAddress... addresses)
+	public static void send(final byte[] data, final int offset, final int length, final SocketAddress... addresses)
 			throws IOException {
 		Objects.requireNonNull(data, "The data is null");
 		Objects.requireNonNull(addresses, "No recipients: the addresses is null");
 		try (final DatagramSocket clientSocket = new DatagramSocket()) {
-			for (InetSocketAddress address : addresses)
+			for (SocketAddress address : addresses)
 				clientSocket.send(new DatagramPacket(data, offset, length, address));
 		}
 	}
@@ -54,11 +54,11 @@ public class DatagramUtils {
 	 * @throws IOException
 	 */
 	public static void send(final byte[] data, final int offset, final int length,
-			final Collection<InetSocketAddress> addresses) throws IOException {
+			final Collection<SocketAddress> addresses) throws IOException {
 		Objects.requireNonNull(data, "Nothing to send: the data is null");
 		Objects.requireNonNull(addresses, "No recipients: the addresses is null");
 		try (final DatagramSocket clientSocket = new DatagramSocket()) {
-			for (InetSocketAddress address : addresses)
+			for (SocketAddress address : addresses)
 				clientSocket.send(new DatagramPacket(data, offset, length, address));
 		}
 	}
@@ -70,7 +70,7 @@ public class DatagramUtils {
 	 * @param addresses the recipients
 	 * @throws IOException
 	 */
-	public static void send(final byte[] data, final InetSocketAddress... addresses) throws IOException {
+	public static void send(final byte[] data, final SocketAddress... addresses) throws IOException {
 		Objects.requireNonNull(data, "Nothing to send: the data is null");
 		send(data, 0, data.length, addresses);
 	}
@@ -82,7 +82,7 @@ public class DatagramUtils {
 	 * @param addresses the recipients
 	 * @throws IOException
 	 */
-	public static void send(final byte[] data, final Collection<InetSocketAddress> addresses) throws IOException {
+	public static void send(final byte[] data, final Collection<SocketAddress> addresses) throws IOException {
 		Objects.requireNonNull(data, "Nothing to send: the data is null");
 		send(data, 0, data.length, addresses);
 	}
@@ -96,20 +96,20 @@ public class DatagramUtils {
 	 * @throws IOException
 	 */
 	public static void send(final Externalizable object, final int bufferSize,
-			final Collection<InetSocketAddress> addresses) throws IOException {
+			final Collection<SocketAddress> addresses) throws IOException {
 		Objects.requireNonNull(object, "Nothing to send: the object is null.");
 		send(SerializationUtils.getBytes(object, bufferSize), addresses);
 	}
 
 	/**
-	 * Send a serializable object to the given address using UDP (datagram) transport
+	 * Send a serializable object to the given addresses using UDP (datagram) transport
 	 *
 	 * @param object     the object to send
 	 * @param bufferSize the initial size of the buffer (for byte array serialisation)
 	 * @param addresses  the recipients
 	 * @throws IOException
 	 */
-	public static void send(final Externalizable object, final int bufferSize, final InetSocketAddress... addresses)
+	public static void send(final Externalizable object, final int bufferSize, final SocketAddress... addresses)
 			throws IOException {
 		Objects.requireNonNull(object, "Nothing to send: the object is null.");
 		send(SerializationUtils.getBytes(object, bufferSize), addresses);

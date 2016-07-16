@@ -33,7 +33,6 @@ import javax.management.OperationsException;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -97,17 +96,13 @@ public class GenericServer {
 	private static UdpServerThread buildUdpServer(final ServerBuilder builder) throws IOException {
 		if (builder.packetListeners == null || builder.packetListeners.isEmpty())
 			return null;
-		final InetSocketAddress socketAddress;
-		final InetAddress multicastGroupAddress;
-		if (builder.serverConfiguration.udpConnector.address != null) {
-			socketAddress = new InetSocketAddress(builder.serverConfiguration.udpConnector.port);
-			multicastGroupAddress = InetAddress.getByName(builder.serverConfiguration.udpConnector.address);
-		} else {
-			socketAddress = new InetSocketAddress(builder.serverConfiguration.listenAddress,
-					builder.serverConfiguration.webServiceConnector.port);
-			multicastGroupAddress = null;
-		}
-		return new UdpServerThread(socketAddress, multicastGroupAddress, null, builder.packetListeners);
+
+		if (builder.serverConfiguration.multicastAddress != null && builder.serverConfiguration.multicastPort != null)
+			return new UdpServerThread(builder.serverConfiguration.multicastAddress,
+					builder.serverConfiguration.multicastPort, null, builder.packetListeners);
+		else
+			return new UdpServerThread(new InetSocketAddress(builder.serverConfiguration.listenAddress,
+					builder.serverConfiguration.webServiceConnector.port), null, builder.packetListeners);
 	}
 
 	private synchronized void start(final Undertow undertow) {
@@ -131,14 +126,14 @@ public class GenericServer {
 		undertows.forEach(Undertow::stop);
 	}
 
-	private final IdentityManager getIdentityManager(final ServerConfiguration.HttpConnector connector)
+	private final IdentityManager getIdentityManager(final ServerConfiguration.WebConnector connector)
 			throws IOException {
 		if (identityManagerProvider == null || connector == null || connector.realm == null)
 			return null;
 		return identityManagerProvider.getIdentityManager(connector.realm);
 	}
 
-	private void startHttpServer(final ServerConfiguration.HttpConnector connector, final DeploymentInfo deploymentInfo,
+	private void startHttpServer(final ServerConfiguration.WebConnector connector, final DeploymentInfo deploymentInfo,
 			final Logger accessLogger, final String jmxName)
 			throws IOException, ServletException, OperationsException, MBeanException {
 
@@ -198,19 +193,19 @@ public class GenericServer {
 			final IdentityManager identityManager = getIdentityManager(serverConfiguration.webAppConnector);
 			startHttpServer(serverConfiguration.webAppConnector,
 					ServletApplication.getDeploymentInfo(servletInfos, identityManager, filterInfos, listenerInfos,
-							sessionPersistenceManager, sessionListener), servletAccessLogger,
-					ServerConfiguration.VariablesPortPrefix.WEBAPP.name());
+							sessionPersistenceManager, sessionListener), servletAccessLogger, "WEBAPP");
 		}
 
 		// Launch the jaxrs application if any
 		if (webServices != null && !webServices.isEmpty()) {
 			final IdentityManager identityManager = getIdentityManager(serverConfiguration.webServiceConnector);
 			startHttpServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo(identityManager),
-					restAccessLogger, ServerConfiguration.VariablesPortPrefix.WEBSERVICE.name());
+					restAccessLogger, "WEBSERVICE");
 		}
 
 		if (shutdownHook) {
 			Runtime.getRuntime().addShutdownHook(new Thread() {
+				@Override
 				public void run() {
 					stopAll();
 				}

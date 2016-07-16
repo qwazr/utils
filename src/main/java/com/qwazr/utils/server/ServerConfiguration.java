@@ -29,19 +29,17 @@ public class ServerConfiguration {
 
 	static final Logger logger = LoggerFactory.getLogger(ServerConfiguration.class);
 
-	public enum VariablesPortPrefix {
-		WEBAPP, WEBSERVICE, UDP
-	}
-
-	public enum VariablesPortSuffix {
-		REALM, AUTHTYPE, PORT, ADDRESS
-	}
-
 	public enum VariablesEnum {
 		QWAZR_DATA,
 		QWAZR_ETC_DIR,
 		LISTEN_ADDR,
-		PUBLIC_ADDR
+		PUBLIC_ADDR,
+		WEBAPP_REALM,
+		WEBAPP_PORT,
+		WEBSERVICE_REALM,
+		WEBSERVICE_PORT,
+		MULTICAST_ADDR,
+		MULTICAST_PORT
 	}
 
 	/**
@@ -65,10 +63,14 @@ public class ServerConfiguration {
 	 */
 	public final String webServicePublicAddress;
 
-	final class HttpConnector {
+	public final String multicastAddress;
+
+	public final Integer multicastPort;
+
+	final class WebConnector {
 
 		/**
-		 * The port TCP port used by the listening socket
+		 * The port used by the listening socket
 		 */
 		final int port;
 
@@ -76,23 +78,11 @@ public class ServerConfiguration {
 
 		final String authType;
 
-
-		private HttpConnector(VariablesPortPrefix prefix, int defaultPort) {
-			port = getPropertyOrEnvInt(prefix, VariablesPortSuffix.PORT, defaultPort);
-			realm = getPropertyOrEnv(prefix, VariablesPortSuffix.REALM);
-			authType = getPropertyOrEnv(prefix, VariablesPortSuffix.AUTHTYPE);
-		}
-	}
-
-	final class UdpConnector {
-
-		final int port;
-
-		final String address;
-
-		private UdpConnector(int defaultPort) {
-			address = getPropertyOrEnv(VariablesPortPrefix.UDP, VariablesPortSuffix.ADDRESS);
-			port = getPropertyOrEnvInt(VariablesPortPrefix.UDP, VariablesPortSuffix.PORT, defaultPort);
+		private WebConnector(final Enum<?> portKey, final Enum<?> realmKey, final Enum<?> authTypeKey,
+				final int defaultPort) {
+			port = portKey != null ? getPropertyOrEnvInt(portKey, defaultPort) : defaultPort;
+			realm = realmKey != null ? getPropertyOrEnv(realmKey) : null;
+			authType = authTypeKey != null ? getPropertyOrEnv(authTypeKey) : null;
 		}
 	}
 
@@ -106,20 +96,18 @@ public class ServerConfiguration {
 	 */
 	public final Collection<File> etcDirectories;
 
-	final HttpConnector webServiceConnector;
+	final WebConnector webServiceConnector;
 
-	final HttpConnector webAppConnector;
-
-	final UdpConnector udpConnector;
+	final WebConnector webAppConnector;
 
 	public ServerConfiguration() {
 
-		dataDirectory = buildDataDir(getPropertyOrEnv(null, VariablesEnum.QWAZR_DATA));
-		etcDirectories = buildEtcDirectories(dataDirectory, getPropertyOrEnv(null, VariablesEnum.QWAZR_ETC_DIR));
+		dataDirectory = buildDataDir(getPropertyOrEnv(VariablesEnum.QWAZR_DATA));
+		etcDirectories = buildEtcDirectories(dataDirectory, getPropertyOrEnv(VariablesEnum.QWAZR_ETC_DIR));
 
-		webAppConnector = new HttpConnector(VariablesPortPrefix.WEBAPP, 9090);
-		webServiceConnector = new HttpConnector(VariablesPortPrefix.WEBSERVICE, 9091);
-		udpConnector = new UdpConnector(9091);
+		webAppConnector = new WebConnector(VariablesEnum.WEBAPP_PORT, VariablesEnum.WEBAPP_REALM, null, 9090);
+		webServiceConnector =
+				new WebConnector(VariablesEnum.WEBSERVICE_PORT, VariablesEnum.WEBSERVICE_REALM, null, 9091);
 
 		String defaultAddress;
 		try {
@@ -128,11 +116,13 @@ public class ServerConfiguration {
 			logger.warn("Cannot extract the address of the localhost.", e);
 			defaultAddress = "localhost";
 		}
-		listenAddress = getPropertyOrEnv(null, VariablesEnum.LISTEN_ADDR, defaultAddress);
-		publicAddress = getPropertyOrEnv(null, VariablesEnum.PUBLIC_ADDR, defaultAddress);
+		listenAddress = getPropertyOrEnv(VariablesEnum.LISTEN_ADDR, defaultAddress);
+		publicAddress = getPropertyOrEnv(VariablesEnum.PUBLIC_ADDR, defaultAddress);
 
 		webApplicationPublicAddress = publicAddress + ':' + webAppConnector.port;
 		webServicePublicAddress = publicAddress + ':' + webServiceConnector.port;
+		multicastAddress = getPropertyOrEnv(VariablesEnum.MULTICAST_ADDR);
+		multicastPort = getPropertyOrEnvInt(VariablesEnum.MULTICAST_PORT, null);
 	}
 
 	private static File buildDataDir(String path) {
@@ -153,35 +143,33 @@ public class ServerConfiguration {
 		return etcDirectories;
 	}
 
-	final protected Integer getPropertyOrEnvInt(Enum<?> prefix, Enum<?> key, Integer defaultValue) {
-		String value = getPropertyOrEnv(prefix, key);
-		return value == null ? defaultValue : Integer.parseInt(value.trim());
+	final protected Integer getPropertyOrEnvInt(final Enum<?> key, final Integer defaultValue) {
+		final String value = getPropertyOrEnv(key);
+		if (value == null)
+			return defaultValue;
+		return Integer.parseInt(value.trim());
 	}
 
-	final protected String getPropertyOrEnv(Enum<?> prefix, Enum<?> key) {
-		return getPropertyOrEnv(prefix, key, null);
+	final protected String getPropertyOrEnv(final Enum<?> key) {
+		return getPropertyOrEnv(key, null);
 	}
 
-	final protected String getPropertyOrEnv(Enum<?> prefix, Enum<?> key, String defaultValue) {
-		String value = getProperty(prefix, key, null);
+	final protected String getPropertyOrEnv(final Enum<?> key, final String defaultValue) {
+		final String value = getProperty(key, null);
 		if (value != null)
 			return value;
-		return getEnv(prefix, key, defaultValue);
+		return getEnv(key, defaultValue);
 	}
 
-	final public static String getKey(Enum<?> prefix, Enum<?> key) {
-		return prefix == null ? key.name() : prefix.name() + '_' + key.name();
+	final protected String getEnv(final Enum<?> key, final String defaultValue) {
+		return defaultValue(System.getenv(key.name()), defaultValue);
 	}
 
-	final protected String getEnv(Enum<?> prefix, Enum<?> key, String defaultValue) {
-		return defaultValue(System.getenv(getKey(prefix, key)), defaultValue);
+	final protected String getProperty(final Enum<?> key, final String defaultValue) {
+		return defaultValue(System.getProperty(key.name()), defaultValue);
 	}
 
-	final protected String getProperty(Enum<?> prefix, Enum<?> key, String defaultValue) {
-		return defaultValue(System.getProperty(getKey(prefix, key)), defaultValue);
-	}
-
-	final protected String defaultValue(String value, String defaultValue) {
+	final protected String defaultValue(String value, final String defaultValue) {
 		if (value == null)
 			return defaultValue;
 		value = value.trim();
