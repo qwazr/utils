@@ -19,9 +19,7 @@ import java.io.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-
-public class SerializationUtils extends
-		org.apache.commons.lang3.SerializationUtils {
+public class SerializationUtils extends org.apache.commons.lang3.SerializationUtils {
 
 	/**
 	 * Read an object from a file using a buffered stream and GZIP compression
@@ -35,7 +33,7 @@ public class SerializationUtils extends
 		try (final FileInputStream is = new FileInputStream(file)) {
 			try (final BufferedInputStream bis = new BufferedInputStream(is)) {
 				try (final GZIPInputStream zis = new GZIPInputStream(bis)) {
-					return SerializationUtils.deserialize(zis);
+					return deserialize(zis);
 				}
 			}
 		}
@@ -48,8 +46,7 @@ public class SerializationUtils extends
 	 * @param file the destination file
 	 * @throws IOException
 	 */
-	public static void serialize(final Serializable obj, final File file)
-			throws IOException {
+	public static void serialize(final Serializable obj, final File file) throws IOException {
 		try (final FileOutputStream os = new FileOutputStream(file)) {
 			try (final BufferedOutputStream bos = new BufferedOutputStream(os)) {
 				try (final GZIPOutputStream zos = new GZIPOutputStream(bos)) {
@@ -91,6 +88,26 @@ public class SerializationUtils extends
 				oos.writeObject(object);
 				oos.flush();
 				return bos.toByteArray();
+			}
+		}
+	}
+
+	/**
+	 * Fill an object to restore its properties using deserialization
+	 *
+	 * @param bytes the serialized bytes
+	 * @param ext   the instancied object
+	 * @param <T>   the type of the container object
+	 * @return the filled object
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
+	public static <T extends Externalizable> T deserialize(final byte[] bytes, final Externalizable ext)
+			throws IOException, ClassNotFoundException {
+		try (final ByteArrayInputStream bis = new ByteArrayInputStream(bytes)) {
+			try (final ObjectInputStream ois = new ObjectInputStream(bis)) {
+				ext.readExternal(ois);
+				return (T) ext;
 			}
 		}
 	}
