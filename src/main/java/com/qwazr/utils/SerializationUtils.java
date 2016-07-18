@@ -60,7 +60,7 @@ public class SerializationUtils extends
 	}
 
 	/**
-	 * Build a byte array from an externlizable object
+	 * Build a byte array from an externalizable object
 	 *
 	 * @param object     the object to serialize
 	 * @param bufferSize the initial sizeof the buffer
@@ -71,6 +71,24 @@ public class SerializationUtils extends
 		try (final ByteArrayOutputStream bos = new ByteArrayOutputStream(bufferSize)) {
 			try (final ObjectOutputStream oos = new ObjectOutputStream(bos)) {
 				object.writeExternal(oos);
+				oos.flush();
+				return bos.toByteArray();
+			}
+		}
+	}
+
+	/**
+	 * Build a byte array from an serializable object
+	 *
+	 * @param object     the object to serialize
+	 * @param bufferSize the initial sizeof the buffer
+	 * @return
+	 * @throws IOException
+	 */
+	public static byte[] getBytes(final Serializable object, final int bufferSize) throws IOException {
+		try (final ByteArrayOutputStream bos = new ByteArrayOutputStream(bufferSize)) {
+			try (final ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+				oos.writeObject(object);
 				oos.flush();
 				return bos.toByteArray();
 			}
