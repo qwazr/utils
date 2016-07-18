@@ -26,9 +26,9 @@ public abstract class PeriodicThread extends Thread {
 
 	private volatile Long lastExecutionTime = null;
 
-	private static final Logger logger = LoggerFactory.getLogger(PeriodicThread.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(PeriodicThread.class);
 
-	protected PeriodicThread(String threadName, int monitoring_period_seconds) {
+	protected PeriodicThread(final String threadName, final int monitoring_period_seconds) {
 		super(threadName);
 		this.monitoring_period = monitoring_period_seconds * 1000;
 	}
@@ -56,8 +56,8 @@ public abstract class PeriodicThread extends Thread {
 		try {
 			sleep(monitoring_period);
 		} catch (InterruptedException e) {
-			if (logger.isWarnEnabled())
-				logger.warn(e.getMessage(), e);
+			if (LOGGER.isWarnEnabled())
+				LOGGER.warn(e.getMessage(), e);
 		}
 	}
 
