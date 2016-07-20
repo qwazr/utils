@@ -139,7 +139,7 @@ public class ServerConfiguration {
 				etcDirectories.add(new File(path));
 		}
 		if (etcDirectories.isEmpty())
-			etcDirectories.add(new File(dataDirectory, "conf"));
+			etcDirectories.add(new File(dataDirectory, "etc"));
 		return etcDirectories;
 	}
 
