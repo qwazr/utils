@@ -31,7 +31,7 @@ public class WildcardMatcher {
 
 	private final String pattern;
 
-	public WildcardMatcher(String pattern) {
+	public WildcardMatcher(final String pattern) {
 		this.pattern = pattern;
 		wcs = pattern == null ? null : splitOnTokens(pattern);
 	}
@@ -57,16 +57,16 @@ public class WildcardMatcher {
 		if (caseSensitivity == null) {
 			caseSensitivity = IOCase.SENSITIVE;
 		}
-		int length = name.length();
+		final int length = name.length();
 		boolean anyChars = false;
 		int textIdx = 0;
 		int wcsIdx = 0;
-		Stack<int[]> backtrack = new Stack<int[]>();
+		final Stack<int[]> backtrack = new Stack<>();
 
 		// loop around a backtrack stack, to handle complex * matching
 		do {
 			if (backtrack.size() > 0) {
-				int[] array = backtrack.pop();
+				final int[] array = backtrack.pop();
 				wcsIdx = array[0];
 				textIdx = array[1];
 				anyChars = true;
@@ -101,7 +101,7 @@ public class WildcardMatcher {
 						}
 						int repeat = caseSensitivity.checkIndexOf(name, textIdx + 1, wcs[wcsIdx]);
 						if (repeat >= 0) {
-							backtrack.push(new int[] { wcsIdx, repeat });
+							backtrack.push(new int[]{wcsIdx, repeat});
 						}
 					} else {
 						// matching from current position
@@ -135,7 +135,7 @@ public class WildcardMatcher {
 	 * @param name the string to test
 	 * @return true if the name matches the pattern
 	 */
-	public boolean match(String name) {
+	public boolean match(final String name) {
 		return match(name, IOCase.INSENSITIVE);
 	}
 
@@ -147,12 +147,12 @@ public class WildcardMatcher {
 	 * @param text the text to split
 	 * @return the array of tokens, never null
 	 */
-	static String[] splitOnTokens(String text) {
+	static String[] splitOnTokens(final String text) {
 		// used by wildcardMatch
 		// package level so a unit test may run on this
 
 		if (text.indexOf('?') == -1 && text.indexOf('*') == -1) {
-			return new String[] { text };
+			return new String[]{text};
 		}
 
 		char[] array = text.toCharArray();
