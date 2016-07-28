@@ -46,7 +46,7 @@ class ServletApplication {
 		if (servletInfos != null)
 			servletInfos.forEach(securableServletInfo -> {
 				deploymentInfo.addServlet(securableServletInfo);
-				if (securableServletInfo.secure && identityManager != null)
+				if (securableServletInfo.isSecure() && identityManager != null)
 					deploymentInfo.addSecurityConstraint(Servlets.securityConstraint()
 							.setEmptyRoleSemantic(SecurityInfo.EmptyRoleSemantic.AUTHENTICATE)
 							.addWebResourceCollection(Servlets.webResourceCollection()

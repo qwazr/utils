@@ -22,7 +22,7 @@ import javax.servlet.Servlet;
 
 public class SecurableServletInfo extends ServletInfo {
 
-	boolean secure;
+	private boolean secure;
 
 	public SecurableServletInfo(final String name, final Class<? extends Servlet> servletClass) {
 		super(name, servletClass);
