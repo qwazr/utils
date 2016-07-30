@@ -97,9 +97,10 @@ public class GenericServer {
 		if (builder.packetListeners == null || builder.packetListeners.isEmpty())
 			return null;
 
-		if (builder.serverConfiguration.multicastAddress != null && builder.serverConfiguration.multicastPort != null)
-			return new UdpServerThread(builder.serverConfiguration.multicastAddress,
-					builder.serverConfiguration.multicastPort, null, builder.packetListeners);
+		if (builder.serverConfiguration.multicastConnector.address != null
+				&& builder.serverConfiguration.multicastConnector.port != -1)
+			return new UdpServerThread(builder.serverConfiguration.multicastConnector.address,
+					builder.serverConfiguration.multicastConnector.port, null, builder.packetListeners);
 		else
 			return new UdpServerThread(new InetSocketAddress(builder.serverConfiguration.listenAddress,
 					builder.serverConfiguration.webServiceConnector.port), null, builder.packetListeners);

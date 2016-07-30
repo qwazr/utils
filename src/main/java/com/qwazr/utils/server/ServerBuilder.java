@@ -74,10 +74,6 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		this(serverConfiguration, Executors.newCachedThreadPool());
 	}
 
-	public ServerBuilder() {
-		this((T) new ServerConfiguration(), Executors.newCachedThreadPool());
-	}
-
 	public void registerWebService(final Class<? extends ServiceInterface> webService) {
 		final ServiceName serviceName = AnnotationsUtils.getFirstAnnotation(webService, ServiceName.class);
 		Objects.requireNonNull(serviceName, "The ServiceName annotation is missing for " + webService);
