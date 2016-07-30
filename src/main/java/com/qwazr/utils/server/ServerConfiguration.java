@@ -39,10 +39,8 @@ public class ServerConfiguration {
 	public final WebConnector multicastConnector;
 
 	public ServerConfiguration(final Map... properties) {
-		this(ConfigCache.getOrCreate(ConfigurationProperties.class, properties));
-	}
-
-	protected ServerConfiguration(final ConfigurationProperties configProperties) {
+		final ConfigurationProperties configProperties =
+				ConfigCache.getOrCreate(ConfigurationProperties.class, properties);
 
 		//Set the data directory
 		final String dataDir = configProperties.dataDirectory();
