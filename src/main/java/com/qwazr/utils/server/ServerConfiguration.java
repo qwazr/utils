@@ -38,7 +38,7 @@ public class ServerConfiguration {
 	public final WebConnector webServiceConnector;
 	public final WebConnector multicastConnector;
 
-	public ServerConfiguration(Map... properties) {
+	public ServerConfiguration(final Map... properties) {
 		this(ConfigCache.getOrCreate(ConfigurationProperties.class, properties));
 	}
 
