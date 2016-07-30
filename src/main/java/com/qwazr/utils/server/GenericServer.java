@@ -144,14 +144,14 @@ public class GenericServer {
 		final DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
 
+		LOGGER.info("Start the connector " + serverConfiguration.listenAddress + ":" + connector.port);
+
 		HttpHandler httpHandler = manager.start();
 		final LogMetricsHandler logMetricsHandler =
 				new LogMetricsHandler(httpHandler, accessLogger, serverConfiguration.listenAddress, connector.port,
 						jmxName);
 		deploymentManagers.add(manager);
 		httpHandler = logMetricsHandler;
-
-		LOGGER.info("Start the connector " + serverConfiguration.listenAddress + ":" + connector.port);
 
 		Builder servletBuilder = Undertow.builder()
 				.addHttpListener(connector.port, serverConfiguration.listenAddress)
