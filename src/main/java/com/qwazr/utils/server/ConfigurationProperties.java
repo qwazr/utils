@@ -17,6 +17,7 @@ package com.qwazr.utils.server;
 
 import org.aeonbits.owner.Config;
 
+@Config.LoadPolicy(Config.LoadType.MERGE)
 public interface ConfigurationProperties extends Config {
 
 	/**
