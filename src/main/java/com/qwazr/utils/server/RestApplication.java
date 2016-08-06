@@ -33,19 +33,30 @@ import java.util.Set;
 /**
  * Generic RestApplication
  */
-public class RestApplication extends Application {
+class RestApplication {
 
-	@Override
-	final public Set<Class<?>> getClasses() {
-		final Set<Class<?>> classes = new LinkedHashSet<>();
-		classes.add(JacksonConfig.class);
-		classes.add(JacksonJsonProvider.class);
-		classes.add(JsonMappingExceptionMapper.class);
-		if (GenericServer.INSTANCE != null)
-			if (GenericServer.INSTANCE.webServices != null)
-				classes.addAll(GenericServer.INSTANCE.webServices);
-		classes.add(RolesAllowedDynamicFeature.class);
-		return classes;
+	public static class WithoutAuth extends Application {
+
+		@Override
+		public Set<Class<?>> getClasses() {
+			final Set<Class<?>> classes = new LinkedHashSet<>();
+			classes.add(JacksonConfig.class);
+			classes.add(JacksonJsonProvider.class);
+			classes.add(JsonMappingExceptionMapper.class);
+			if (GenericServer.INSTANCE != null)
+				if (GenericServer.INSTANCE.webServices != null)
+					classes.addAll(GenericServer.INSTANCE.webServices);
+			return classes;
+		}
+	}
+
+	public static class WithAuth extends WithoutAuth {
+
+		public Set<Class<?>> getClasses() {
+			Set<Class<?>> classes = super.getClasses();
+			classes.add(RolesAllowedDynamicFeature.class);
+			return classes;
+		}
 	}
 
 	final static DeploymentInfo getDeploymentInfo(final IdentityManager identityManager) {
@@ -53,9 +64,11 @@ public class RestApplication extends Application {
 				.setClassLoader(RestApplication.class.getClassLoader())
 				.setContextPath("/")
 				.setDeploymentName("REST");
+		final Class<? extends Application> applicationClass =
+				identityManager == null ? WithoutAuth.class : WithAuth.class;
 		deploymentInfo.addServlets(
 				new ServletInfo("REST", ServletContainer.class).addInitParam("javax.ws.rs.Application",
-						RestApplication.class.getName()).setAsyncSupported(true).addMapping("/*"));
+						applicationClass.getName()).setAsyncSupported(true).addMapping("/*"));
 		if (identityManager != null) {
 			deploymentInfo.setIdentityManager(identityManager);
 			deploymentInfo.addSecurityConstraint(Servlets.securityConstraint()
