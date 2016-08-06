@@ -15,7 +15,6 @@
  */
 package com.qwazr.utils;
 
-import org.apache.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +50,15 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 			return;
 		for (AutoCloseable autoCloseable : autoCloseables)
 			close(autoCloseable);
+	}
+
+	public static final void closeObjects(final Collection<?> objects) {
+		if (objects == null)
+			return;
+		objects.forEach(object -> {
+			if (object instanceof Closeable)
+				close((Closeable) object);
+		});
 	}
 
 	public static final int copy(InputStream inputStream, File destFile) throws IOException {
