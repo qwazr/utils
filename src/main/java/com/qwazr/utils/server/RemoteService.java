@@ -97,7 +97,7 @@ public class RemoteService {
 		this.username = builder.username;
 		this.password = builder.password;
 		this.serverAddress = (this.scheme + "://" + this.host + ':' + this.port).intern();
-		this.serviceAddress = (this.serverAddress + '/' + this.path == null ? StringUtils.EMPTY : this.path).intern();
+		this.serviceAddress = (this.serverAddress + '/' + (this.path == null ? StringUtils.EMPTY : this.path)).intern();
 	}
 
 	public RemoteService(final URI uri) {
