@@ -19,22 +19,31 @@ import java.util.Map;
 
 public class FunctionUtils {
 
+	@FunctionalInterface
 	public interface IntConsumerEx<E extends Exception> {
 
 		void accept(int value) throws E;
 
 	}
 
+	@FunctionalInterface
 	public interface ConsumerEx<T, E extends Exception> {
 
 		void accept(T t) throws E;
 
 	}
 
+	@FunctionalInterface
 	public interface BiConsumerEx<K, V, E extends Exception> {
 
 		void accept(K k, V v) throws E;
 
+	}
+
+	@FunctionalInterface
+	public interface CallableEx<V, E extends Exception> {
+
+		V call() throws E;
 	}
 
 	public final static <K, V, E extends Exception> void forEach(Map<K, V> map, BiConsumerEx<K, V, E> consumer)

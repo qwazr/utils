@@ -129,9 +129,9 @@ public class ServerException extends RuntimeException {
 		if (e instanceof ServerException)
 			return (ServerException) e;
 		if (e instanceof WebApplicationException) {
-			Throwable cause = e.getCause();
-			if (cause != null && cause instanceof ServerException)
-				return (ServerException) e;
+			final Throwable cause = e.getCause();
+			if (cause != null && (cause instanceof ServerException))
+				return (ServerException) cause;
 		}
 		return new ServerException(e);
 	}
@@ -139,13 +139,13 @@ public class ServerException extends RuntimeException {
 	private static WebApplicationException checkCompatible(final Exception e, final MediaType expectedType) {
 		if (!(e instanceof WebApplicationException))
 			return null;
-		WebApplicationException wae = (WebApplicationException) e;
-		Response response = wae.getResponse();
+		final WebApplicationException wae = (WebApplicationException) e;
+		final Response response = wae.getResponse();
 		if (response == null)
 			return null;
 		if (!response.hasEntity())
 			return null;
-		MediaType mediaType = response.getMediaType();
+		final MediaType mediaType = response.getMediaType();
 		if (mediaType == null)
 			return null;
 		if (!expectedType.isCompatible(mediaType))
@@ -154,14 +154,14 @@ public class ServerException extends RuntimeException {
 	}
 
 	public static WebApplicationException getTextException(final Logger logger, final Exception e) {
-		WebApplicationException wae = checkCompatible(e, MediaType.TEXT_PLAIN_TYPE);
+		final WebApplicationException wae = checkCompatible(e, MediaType.TEXT_PLAIN_TYPE);
 		if (wae != null)
 			return wae;
 		return getServerException(e).warnIfCause(logger).getTextException();
 	}
 
 	public static WebApplicationException getJsonException(final Logger logger, final Exception e) {
-		WebApplicationException wae = checkCompatible(e, MediaType.APPLICATION_JSON_TYPE);
+		final WebApplicationException wae = checkCompatible(e, MediaType.APPLICATION_JSON_TYPE);
 		if (wae != null)
 			return wae;
 		return getServerException(e).warnIfCause(logger).getJsonException();
