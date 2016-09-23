@@ -21,7 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class HttpUtils {
-	
+
 	/**
 	 * Extract the parameters from a header content.
 	 *
