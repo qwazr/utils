@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 
 public class StringUtils extends org.apache.commons.lang3.StringUtils {
 
-	final public static String[] EMPTY_ARRAY = new String[]{};
+	final public static String[] EMPTY_ARRAY = new String[] {};
 
 	public static final String replaceConsecutiveSpaces(String source, String replace) {
 		if (isEmpty(source))
@@ -55,8 +55,8 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	}
 
 	public static Pattern wildcardPattern(String s) {
-		final CharSequence[] esc = {"\\", ".", "(", ")", "[", "]", "+", "?", "*"};
-		final CharSequence[] replace = {"/", "\\.", "\\(", "\\)", "\\[", "\\]", "\\+", "\\?", ".*"};
+		final CharSequence[] esc = { "\\", ".", "(", ")", "[", "]", "+", "?", "*" };
+		final CharSequence[] replace = { "/", "\\.", "\\(", "\\)", "\\[", "\\]", "\\+", "\\?", ".*" };
 		s = s.trim();
 		int i = 0;
 		for (CharSequence ch : esc)
