@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
@@ -51,8 +50,12 @@ public class ServerConfiguration {
 		final String paths = configProperties.configDirectories();
 		etcDirectories = new LinkedHashSet<>();
 		final String[] parts = StringUtils.split(paths, File.pathSeparatorChar);
-		for (String part : parts) // By design relative path are relative to the working directory
-			etcDirectories.add(new File(part));
+		int i = 0;
+		for (String part : parts) { // By design relative path are relative to the working directory
+			final File etcFile = new File(part);
+			etcDirectories.add(etcFile);
+			LOGGER.info("Configuration (ETC) directory #" + (++i) + " : " + etcFile.getAbsolutePath());
+		}
 
 		//Set the listen address
 		String address = configProperties.publicAddress();
