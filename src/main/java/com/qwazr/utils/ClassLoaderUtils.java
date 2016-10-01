@@ -19,7 +19,7 @@ import java.io.IOException;
 
 public class ClassLoaderUtils {
 
-	public final static <T> Class<T> findClass(ClassLoader classLoader, String className)
+	public final static <T> Class<T> findClass(final ClassLoader classLoader, final String className)
 			throws ClassNotFoundException {
 		if (classLoader != null)
 			return (Class<T>) classLoader.loadClass(className);
@@ -27,8 +27,8 @@ public class ClassLoaderUtils {
 			return (Class<T>) Class.forName(className);
 	}
 
-	public final static <T> Class<T> findClass(ClassLoader classLoader, String[] classPrefixes, String suffix)
-			throws ClassNotFoundException {
+	public final static <T> Class<T> findClass(final ClassLoader classLoader, final String[] classPrefixes,
+			final String suffix) throws ClassNotFoundException {
 		ClassNotFoundException firstClassException = null;
 		for (String prefix : classPrefixes) {
 			try {
@@ -41,8 +41,8 @@ public class ClassLoaderUtils {
 		throw firstClassException;
 	}
 
-	public final static <T> Class<T> findClass(ClassLoader classLoader, String classDef, String[] classPrefixes)
-			throws ReflectiveOperationException, IOException {
+	public final static <T> Class<T> findClass(final ClassLoader classLoader, final String classDef,
+			final String[] classPrefixes) throws ReflectiveOperationException, IOException {
 		if (classDef == null)
 			return null;
 		if (classPrefixes == null)
@@ -50,4 +50,31 @@ public class ClassLoaderUtils {
 		else
 			return (Class<T>) findClass(classLoader, classPrefixes, classDef);
 	}
+
+	interface ClassFactory {
+
+		<T> T newInstance(Class<T> clazz) throws ReflectiveOperationException;
+
+	}
+
+	static class DefaultFactory implements ClassFactory {
+
+		final static DefaultFactory INSTANCE = new DefaultFactory();
+
+		@Override
+		final public <T> T newInstance(final Class<T> clazz) throws ReflectiveOperationException {
+			return clazz.newInstance();
+		}
+	}
+
+	private static volatile ClassFactory currentClassFactory = DefaultFactory.INSTANCE;
+
+	public final static void register(final ClassFactory classFactory) {
+		currentClassFactory = classFactory == null ? DefaultFactory.INSTANCE : classFactory;
+	}
+
+	public final static <T> T newInstance(final Class<T> clazz) throws ReflectiveOperationException {
+		return currentClassFactory.newInstance(clazz);
+	}
+
 }
