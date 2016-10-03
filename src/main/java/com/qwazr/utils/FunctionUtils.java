@@ -46,9 +46,16 @@ public class FunctionUtils {
 		V call() throws E;
 	}
 
+	@FunctionalInterface
+	public interface RunnableEx<E extends Exception> {
+
+		void run() throws E;
+	}
+
 	public final static <K, V, E extends Exception> void forEach(Map<K, V> map, BiConsumerEx<K, V, E> consumer)
 			throws E {
 		for (Map.Entry<K, V> entry : map.entrySet())
 			consumer.accept(entry.getKey(), entry.getValue());
 	}
+
 }
