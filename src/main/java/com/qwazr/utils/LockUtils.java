@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -38,7 +39,7 @@ final public class LockUtils {
 			}
 		}
 
-		final public <V, E extends Exception> V readEx(final ExceptionCallable<V, E> call) throws E {
+		final public <V, E extends Throwable> V readEx(final ExceptionCallable<V, E> call) throws E {
 			r.lock();
 			try {
 				return call.call();
@@ -58,7 +59,7 @@ final public class LockUtils {
 			}
 		}
 
-		final public <E extends Exception> void readEx(final ExceptionRunnable<E> run) throws E {
+		final public <E extends Throwable> void readEx(final ExceptionRunnable<E> run) throws E {
 			r.lock();
 			try {
 				run.run();
@@ -78,18 +79,16 @@ final public class LockUtils {
 			}
 		}
 
-		final public <V, E extends Exception> V writeEx(final ExceptionCallable<V, E> call) throws E {
+		final public <V, E extends Throwable> V writeEx(final ExceptionCallable<V, E> call) throws E {
 			w.lock();
 			try {
 				return call.call();
-			} catch (Exception e) {
-				throw new InsideLockException(e);
 			} finally {
 				w.unlock();
 			}
 		}
 
-		final public <E extends Exception> void writeEx(final ExceptionRunnable<E> run) throws E {
+		final public <E extends Throwable> void writeEx(final ExceptionRunnable<E> run) throws E {
 			w.lock();
 			try {
 				run.run();
@@ -141,11 +140,11 @@ final public class LockUtils {
 		}
 	}
 
-	public interface ExceptionRunnable<E extends Exception> {
+	public interface ExceptionRunnable<E extends Throwable> {
 		void run() throws E;
 	}
 
-	public interface ExceptionCallable<V, E extends Exception> {
+	public interface ExceptionCallable<V, E extends Throwable> {
 		V call() throws E;
 	}
 
