@@ -66,7 +66,7 @@ public class UdpServerThread extends Thread {
 			if (multicastGroupAddress != null)
 				((MulticastSocket) socket).joinGroup(multicastGroupAddress);
 			if (LOGGER.isInfoEnabled())
-				LOGGER.info("UDP Server started: " + socketAddress);
+				LOGGER.info("UDP Server started: " + socket.getLocalSocketAddress());
 			for (; ; ) {
 				final byte[] dataBuffer = new byte[dataBufferSize];
 				final DatagramPacket datagramPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
