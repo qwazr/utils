@@ -39,4 +39,14 @@ public class RuntimeUtils {
 		return null;
 	}
 
+	public static Thread mainThread = Thread.currentThread();
+
+	public static Integer getActiveThreadCount() {
+		ThreadGroup threadGroup = mainThread.getThreadGroup();
+		if (threadGroup == null)
+			threadGroup = Thread.currentThread().getThreadGroup();
+		return threadGroup == null ? null : threadGroup.activeCount();
+	}
+
+
 }

@@ -43,7 +43,7 @@ public class WelcomeStatus {
 		specification = new TitleVendorVersion(pkg.getSpecificationTitle(), pkg.getSpecificationVendor(),
 				pkg.getSpecificationVersion());
 		memory = new MemoryStatus();
-		runtime = new RuntimeStatus(server.mainThread);
+		runtime = new RuntimeStatus();
 		if (showProperties != null && showProperties) {
 			properties = new TreeMap<>();
 			System.getProperties().forEach((key, value) -> properties.put(key.toString(), value));
@@ -90,8 +90,8 @@ public class WelcomeStatus {
 		public final Integer activeThreads;
 		public final Long openFiles;
 
-		RuntimeStatus(final Thread mainThread) {
-			activeThreads = mainThread.getThreadGroup().activeCount();
+		RuntimeStatus() {
+			activeThreads = RuntimeUtils.getActiveThreadCount();
 			openFiles = RuntimeUtils.getOpenFileCount();
 		}
 	}
