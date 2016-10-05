@@ -68,9 +68,12 @@ public class GenericServer {
 
 	final protected UdpServerThread udpServer;
 
+	final Thread mainThread;
+
 	static final private Logger LOGGER = LoggerFactory.getLogger(GenericServer.class);
 
 	GenericServer(final ServerBuilder builder) throws IOException {
+		this.mainThread = Thread.currentThread();
 		this.executorService = builder.executorService;
 		this.serverConfiguration = builder.serverConfiguration;
 		this.webServices = builder.webServices.isEmpty() ? null : new ArrayList<>(builder.webServices);
