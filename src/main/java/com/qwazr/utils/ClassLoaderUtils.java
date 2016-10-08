@@ -16,6 +16,7 @@
 package com.qwazr.utils;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 public class ClassLoaderUtils {
 
@@ -25,6 +26,13 @@ public class ClassLoaderUtils {
 			return (Class<T>) classLoader.loadClass(className);
 		else
 			return (Class<T>) Class.forName(className);
+	}
+
+	public final static InputStream getResourceAsStream(final ClassLoader classLoader, final String name) {
+		if (classLoader != null)
+			return classLoader.getResourceAsStream(name);
+		else
+			return ClassLoaderUtils.class.getResourceAsStream(name);
 	}
 
 	public final static <T> Class<T> findClass(final ClassLoader classLoader, final String[] classPrefixes,
