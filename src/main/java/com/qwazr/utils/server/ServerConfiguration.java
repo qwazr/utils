@@ -17,12 +17,16 @@ package com.qwazr.utils.server;
 
 import com.qwazr.utils.StringUtils;
 import org.aeonbits.owner.ConfigCache;
+import org.apache.commons.net.util.SubnetUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
@@ -58,19 +62,10 @@ public class ServerConfiguration {
 		}
 
 		//Set the listen address
-		String address = configProperties.publicAddress();
-		if (StringUtils.isEmpty(address)) {
-			try {
-				address = InetAddress.getLocalHost().getHostAddress();
-			} catch (UnknownHostException e) {
-				LOGGER.warn("Cannot extract the address of the localhost.", e);
-				address = "localhost";
-			}
-		}
-		this.publicAddress = address;
+		this.listenAddress = findListenAddress(configProperties.listenAddress());
 
 		//Set the public address
-		this.listenAddress = configProperties.listenAddress();
+		this.publicAddress = findPublicAddress(configProperties.publicAddress(), this.listenAddress);
 
 		//Set the connectors
 		webAppConnector =
@@ -95,6 +90,70 @@ public class ServerConfiguration {
 			this.addressPort = address + ":" + port;
 		}
 
+	}
+
+	private static String findMatchingAddress(final String addressPattern, final String defaultAddress)
+			throws SocketException {
+		final String[] patterns = StringUtils.split(addressPattern, ',');
+		if (patterns == null)
+			return defaultAddress;
+		for (String pattern : patterns) {
+			final SubnetUtils subnet = new SubnetUtils(pattern);
+			final Enumeration<NetworkInterface> enumInterfaces = NetworkInterface.getNetworkInterfaces();
+			while (enumInterfaces != null && enumInterfaces.hasMoreElements()) {
+				final NetworkInterface ifc = enumInterfaces.nextElement();
+				if (!ifc.isUp())
+					continue;
+				final Enumeration<InetAddress> enumAdresses = ifc.getInetAddresses();
+				while (enumAdresses != null && enumAdresses.hasMoreElements()) {
+					final String addr = enumAdresses.nextElement().getHostAddress();
+					if (subnet.getInfo().isInRange(addr))
+						return addr;
+				}
+			}
+		}
+		return defaultAddress;
+	}
+
+	private final static String DEFAULT_LISTEN_ADDRESS = "0.0.0.0";
+
+	private static String findListenAddress(final String addressPattern) {
+		if (StringUtils.isEmpty(addressPattern))
+			return DEFAULT_LISTEN_ADDRESS;
+		try {
+			return findMatchingAddress(addressPattern, DEFAULT_LISTEN_ADDRESS);
+		} catch (SocketException e) {
+			LOGGER.warn("Failed in extracting IP informations. Listen address set to default (" + DEFAULT_LISTEN_ADDRESS
+					+ ")", e);
+			return DEFAULT_LISTEN_ADDRESS;
+		}
+	}
+
+	private final static String DEFAULT_PUBLIC_ADDRESS = "localhost";
+
+	private static String getLocalHostAddress() {
+		try {
+			return InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException e) {
+			LOGGER.warn("Cannot extract the address of the localhost.", e);
+			return DEFAULT_PUBLIC_ADDRESS;
+		}
+	}
+
+	private static String findPublicAddress(final String addressPattern, final String listenAddress) {
+		if (StringUtils.isEmpty(addressPattern))
+			return StringUtils.isEmpty(listenAddress) || DEFAULT_LISTEN_ADDRESS.equals(listenAddress) ?
+					getLocalHostAddress() :
+					listenAddress;
+		try {
+			return findMatchingAddress(addressPattern, DEFAULT_PUBLIC_ADDRESS);
+		} catch (SocketException e) {
+			final String addr = StringUtils.isEmpty(listenAddress) || DEFAULT_LISTEN_ADDRESS.equals(listenAddress) ?
+					DEFAULT_PUBLIC_ADDRESS :
+					listenAddress;
+			LOGGER.warn("Failed in extracting IP informations. Public address set to default (" + addr + ")", e);
+			return addr;
+		}
 	}
 
 }
