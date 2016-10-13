@@ -94,9 +94,10 @@ public class ServerConfiguration {
 		final String[] patterns = StringUtils.split(addressPattern, ',');
 		if (patterns == null)
 			return defaultAddress;
+		if (patterns.length == 1 && !patterns[0].contains("/"))
+			return patterns[0];
 		for (String pattern : patterns) {
-			final SubnetUtils.SubnetInfo subnet =
-					new SubnetUtils(pattern.contains("/") ? pattern : pattern + "/32").getInfo();
+			final SubnetUtils.SubnetInfo subnet = pattern.contains("/") ? new SubnetUtils(pattern).getInfo() : null;
 			final Enumeration<NetworkInterface> enumInterfaces = NetworkInterface.getNetworkInterfaces();
 			while (enumInterfaces != null && enumInterfaces.hasMoreElements()) {
 				final NetworkInterface ifc = enumInterfaces.nextElement();
@@ -108,7 +109,9 @@ public class ServerConfiguration {
 					if (!(inetAddress instanceof Inet4Address))
 						continue;
 					final String addr = inetAddress.getHostAddress();
-					if (subnet.isInRange(addr))
+					if (subnet != null && subnet.isInRange(addr))
+						return addr;
+					if (addr.equals(pattern))
 						return addr;
 				}
 			}
