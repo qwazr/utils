@@ -117,13 +117,18 @@ public class GenericServer {
 
 		if (udpServer != null)
 			udpServer.shutdown();
-		for (DeploymentManager manager : deploymentManagers)
+
+		for (DeploymentManager manager : deploymentManagers) {
 			try {
-				manager.stop();
+				if (manager.getState() == DeploymentManager.State.STARTED)
+					manager.stop();
+				if (manager.getState() == DeploymentManager.State.DEPLOYED)
+					manager.undeploy();
 			} catch (ServletException e) {
 				if (LOGGER.isWarnEnabled())
 					LOGGER.warn("Cannot stop the manager: " + e.getMessage(), e);
 			}
+		}
 		undertows.forEach(Undertow::stop);
 	}
 
