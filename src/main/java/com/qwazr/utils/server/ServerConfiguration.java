@@ -22,10 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -98,16 +95,20 @@ public class ServerConfiguration {
 		if (patterns == null)
 			return defaultAddress;
 		for (String pattern : patterns) {
-			final SubnetUtils subnet = new SubnetUtils(pattern);
+			final SubnetUtils.SubnetInfo subnet =
+					new SubnetUtils(pattern.contains("/") ? pattern : pattern + "/32").getInfo();
 			final Enumeration<NetworkInterface> enumInterfaces = NetworkInterface.getNetworkInterfaces();
 			while (enumInterfaces != null && enumInterfaces.hasMoreElements()) {
 				final NetworkInterface ifc = enumInterfaces.nextElement();
 				if (!ifc.isUp())
 					continue;
-				final Enumeration<InetAddress> enumAdresses = ifc.getInetAddresses();
-				while (enumAdresses != null && enumAdresses.hasMoreElements()) {
-					final String addr = enumAdresses.nextElement().getHostAddress();
-					if (subnet.getInfo().isInRange(addr))
+				final Enumeration<InetAddress> enumAddresses = ifc.getInetAddresses();
+				while (enumAddresses != null && enumAddresses.hasMoreElements()) {
+					final InetAddress inetAddress = enumAddresses.nextElement();
+					if (!(inetAddress instanceof Inet4Address))
+						continue;
+					final String addr = inetAddress.getHostAddress();
+					if (subnet.isInRange(addr))
 						return addr;
 				}
 			}
