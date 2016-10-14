@@ -16,7 +16,7 @@
 package com.qwazr.utils.test;
 
 import com.qwazr.utils.CollectionsUtils;
-import com.qwazr.utils.Externalizer;
+import com.qwazr.utils.externalizer.Externalizer;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Assert;
@@ -31,7 +31,7 @@ public class ExternalizerTest {
 
 	static class Serial implements Externalizable {
 
-		final static Externalizer<Serial> EXTERNALIZER = new Externalizer<>(Serial.class);
+		final static Externalizer<Serial> EXTERNALIZER = Externalizer.of(Serial.class);
 
 		final private int integerValue;
 		public long longValue;
@@ -90,7 +90,7 @@ public class ExternalizerTest {
 	@Test
 	public void createExternalizer() {
 		try {
-			new Externalizer<>(Serial.class);
+			Externalizer.of(Serial.class);
 		} catch (Exception e) {
 			Assert.fail(e.getMessage());
 		}

@@ -89,6 +89,16 @@ public class ServerConfiguration {
 
 	}
 
+	/**
+	 * Manage that kind of pattern:
+	 * 192.168.0.0/16,172.168.0.0/16
+	 * 192.168.0.0/16
+	 * 10.3.12.12
+	 * @param addressPattern
+	 * @param defaultAddress
+	 * @return
+	 * @throws SocketException
+	 */
 	private static String findMatchingAddress(final String addressPattern, final String defaultAddress)
 			throws SocketException {
 		final String[] patterns = StringUtils.split(addressPattern, ',');
