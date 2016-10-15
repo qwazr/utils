@@ -23,11 +23,13 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class ClassExternalizer<T> implements Externalizer<T> {
+public class ClassExternalizer<T> implements Externalizer<T, T> {
 
+	private final Class<T> clazz;
 	private final Collection<Externalizer> externalizers;
 
 	ClassExternalizer(final Class<T> clazz) {
+		this.clazz = clazz;
 		externalizers = new ArrayList<>();
 		final Field[] fields = clazz.getDeclaredFields();
 		for (Field field : fields) {
@@ -45,9 +47,19 @@ public class ClassExternalizer<T> implements Externalizer<T> {
 			externalizer.writeExternal(object, out);
 	}
 
-	final public void readExternal(final T object, final ObjectInput in)
-			throws IOException, ClassNotFoundException {
+	final public void readExternal(final T object, final ObjectInput in) throws IOException, ClassNotFoundException {
 		for (Externalizer externalizer : externalizers)
 			externalizer.readExternal(object, in);
+	}
+
+	@Override
+	final public T readObject(final ObjectInput in) throws IOException {
+		try {
+			final T object = clazz.newInstance();
+			readExternal(object, in);
+			return object;
+		} catch (ReflectiveOperationException e) {
+			throw new IOException(e);
+		}
 	}
 }

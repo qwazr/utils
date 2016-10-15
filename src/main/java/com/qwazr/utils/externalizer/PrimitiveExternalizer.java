@@ -42,15 +42,14 @@ class PrimitiveExternalizer {
 		throw new IllegalArgumentException("Unsupported primitive type: " + clazz);
 	}
 
-	static class IntegerExternalizer<T> extends FieldExternalizer<T> {
+	static class IntegerExternalizer<T> extends FieldExternalizer<T, Integer> {
 
 		IntegerExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			out.writeInt(field.getInt(object));
 		}
 
@@ -59,17 +58,21 @@ class PrimitiveExternalizer {
 				throws IOException, ClassNotFoundException, IllegalAccessException {
 			field.setInt(object, in.readInt());
 		}
+
+		@Override
+		final public Integer readObject(final ObjectInput in) throws IOException {
+			return in.readInt();
+		}
 	}
 
-	static class LongExternalizer<T> extends FieldExternalizer<T> {
+	static class LongExternalizer<T> extends FieldExternalizer<T, Long> {
 
 		LongExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			out.writeLong(field.getLong(object));
 		}
 
@@ -78,17 +81,21 @@ class PrimitiveExternalizer {
 				throws IOException, ClassNotFoundException, IllegalAccessException {
 			field.setLong(object, in.readLong());
 		}
+
+		@Override
+		final public Long readObject(final ObjectInput in) throws IOException {
+			return in.readLong();
+		}
 	}
 
-	static class FloatExternalizer<T> extends FieldExternalizer<T> {
+	static class FloatExternalizer<T> extends FieldExternalizer<T, Float> {
 
 		FloatExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			out.writeFloat(field.getFloat(object));
 		}
 
@@ -97,17 +104,21 @@ class PrimitiveExternalizer {
 				throws IOException, ClassNotFoundException, IllegalAccessException {
 			field.setFloat(object, in.readFloat());
 		}
+
+		@Override
+		final public Float readObject(final ObjectInput in) throws IOException {
+			return in.readFloat();
+		}
 	}
 
-	static class DoubleExternalizer<T> extends FieldExternalizer<T> {
+	static class DoubleExternalizer<T> extends FieldExternalizer<T, Double> {
 
 		DoubleExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			out.writeDouble(field.getDouble(object));
 		}
 
@@ -116,17 +127,21 @@ class PrimitiveExternalizer {
 				throws IOException, ClassNotFoundException, IllegalAccessException {
 			field.setDouble(object, in.readDouble());
 		}
+
+		@Override
+		final public Double readObject(final ObjectInput in) throws IOException {
+			return in.readDouble();
+		}
 	}
 
-	static class ShortExternalizer<T> extends FieldExternalizer<T> {
+	static class ShortExternalizer<T> extends FieldExternalizer<T, Short> {
 
 		ShortExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			out.writeShort(field.getShort(object));
 		}
 
@@ -135,17 +150,21 @@ class PrimitiveExternalizer {
 				throws IOException, ClassNotFoundException, IllegalAccessException {
 			field.setShort(object, in.readShort());
 		}
+
+		@Override
+		final public Short readObject(final ObjectInput in) throws IOException {
+			return in.readShort();
+		}
 	}
 
-	static class BooleanExternalizer<T> extends FieldExternalizer<T> {
+	static class BooleanExternalizer<T> extends FieldExternalizer<T, Boolean> {
 
 		BooleanExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			out.writeBoolean(field.getBoolean(object));
 		}
 
@@ -154,17 +173,21 @@ class PrimitiveExternalizer {
 				throws IOException, ClassNotFoundException, IllegalAccessException {
 			field.setBoolean(object, in.readBoolean());
 		}
+
+		@Override
+		final public Boolean readObject(final ObjectInput in) throws IOException {
+			return in.readBoolean();
+		}
 	}
 
-	static class ByteExternalizer<T> extends FieldExternalizer<T> {
+	static class ByteExternalizer<T> extends FieldExternalizer<T, Byte> {
 
 		ByteExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			out.writeByte(field.getByte(object));
 		}
 
@@ -173,17 +196,21 @@ class PrimitiveExternalizer {
 				throws IOException, ClassNotFoundException, IllegalAccessException {
 			field.setByte(object, in.readByte());
 		}
+
+		@Override
+		final public Byte readObject(final ObjectInput in) throws IOException {
+			return in.readByte();
+		}
 	}
 
-	static class CharExternalizer<T> extends FieldExternalizer<T> {
+	static class CharExternalizer<T> extends FieldExternalizer<T, Character> {
 
 		CharExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			out.writeChar(field.getChar(object));
 		}
 
@@ -191,6 +218,11 @@ class PrimitiveExternalizer {
 		final public void read(final T object, final ObjectInput in)
 				throws IOException, ClassNotFoundException, IllegalAccessException {
 			field.setChar(object, in.readChar());
+		}
+
+		@Override
+		final public Character readObject(final ObjectInput in) throws IOException {
+			return in.readChar();
 		}
 	}
 }

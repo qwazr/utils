@@ -17,6 +17,7 @@ package com.qwazr.utils;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Objects;
 
 public class CollectionsUtils {
@@ -32,6 +33,23 @@ public class CollectionsUtils {
 		for (T o : coll1)
 			if (!Objects.equals(o, i.next()))
 				return false;
+		return true;
+	}
+
+	final public static <K, V> boolean equals(final Map<K, V> map1, final Map<K, V> map2) {
+		if (map1 == null)
+			return map2 == null;
+		else if (map2 == null)
+			return false;
+		if (map1.size() != map2.size())
+			return false;
+		for (Map.Entry<K, V> entry : map1.entrySet()) {
+			V value = map2.get(entry.getKey());
+			if (value == null)
+				return false;
+			if (!Objects.equals(value, entry.getValue()))
+				return false;
+		}
 		return true;
 	}
 }

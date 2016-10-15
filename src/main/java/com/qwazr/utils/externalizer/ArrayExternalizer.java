@@ -20,27 +20,10 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Field;
 
-abstract class ArrayExternalizer<E> extends FieldExternalizer<E> {
+abstract class ArrayExternalizer<E, O> extends FieldExternalizer.AbstractObjectExternalizer<E, O> {
 
 	protected ArrayExternalizer(final Field field) {
 		super(field);
-	}
-
-	/**
-	 * Check if the array should be null. -1 is returned if the array is null.
-	 *
-	 * @param object
-	 * @param in
-	 * @return
-	 * @throws IOException
-	 * @throws IllegalAccessException
-	 */
-	final protected int setCheckArray(final Object object, final ObjectInput in)
-			throws IOException, IllegalAccessException {
-		if (checkIsNotNull(object, in))
-			return in.readInt();
-		else
-			return -1;
 	}
 
 	static FieldExternalizer newArray(final Field field, final Class<?> clazz) {
@@ -68,15 +51,14 @@ abstract class ArrayExternalizer<E> extends FieldExternalizer<E> {
 		return new ObjectExternalizer(field);
 	}
 
-	static class IntegerExternalizer<T> extends ArrayExternalizer<T> {
+	static class IntegerExternalizer<T> extends ArrayExternalizer<T, int[]> {
 
 		IntegerExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			final int[] array = checkNullAndGet(object, out);
 			if (array == null)
 				return;
@@ -86,27 +68,24 @@ abstract class ArrayExternalizer<E> extends FieldExternalizer<E> {
 		}
 
 		@Override
-		final public void read(final T object, final ObjectInput in)
-				throws IOException, ClassNotFoundException, IllegalAccessException {
-			int size = setCheckArray(object, in);
-			if (size == -1)
-				return;
-			final int[] array = new int[size];
-			for (int i = 0; i < size; i++)
+		public int[] readObject(ObjectInput in) throws IOException {
+			if (!in.readBoolean())
+				return null;
+			final int[] array = new int[in.readInt()];
+			for (int i = 0; i < array.length; i++)
 				array[i] = in.readInt();
-			field.set(object, array);
+			return array;
 		}
 	}
 
-	static class LongExternalizer<T> extends ArrayExternalizer<T> {
+	static class LongExternalizer<T> extends ArrayExternalizer<T, long[]> {
 
 		LongExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			final long[] array = checkNullAndGet(object, out);
 			if (array == null)
 				return;
@@ -116,27 +95,24 @@ abstract class ArrayExternalizer<E> extends FieldExternalizer<E> {
 		}
 
 		@Override
-		final public void read(final T object, final ObjectInput in)
-				throws IOException, ClassNotFoundException, IllegalAccessException {
-			int size = setCheckArray(object, in);
-			if (size == -1)
-				return;
-			final long[] array = new long[size];
-			for (int i = 0; i < size; i++)
+		final public long[] readObject(final ObjectInput in) throws IOException {
+			if (!in.readBoolean())
+				return null;
+			final long[] array = new long[in.readInt()];
+			for (int i = 0; i < array.length; i++)
 				array[i] = in.readLong();
-			field.set(object, array);
+			return array;
 		}
 	}
 
-	static class ShortExternalizer<T> extends ArrayExternalizer<T> {
+	static class ShortExternalizer<T> extends ArrayExternalizer<T, short[]> {
 
 		ShortExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			final short[] array = checkNullAndGet(object, out);
 			if (array == null)
 				return;
@@ -146,27 +122,24 @@ abstract class ArrayExternalizer<E> extends FieldExternalizer<E> {
 		}
 
 		@Override
-		final public void read(final T object, final ObjectInput in)
-				throws IOException, ClassNotFoundException, IllegalAccessException {
-			int size = setCheckArray(object, in);
-			if (size == -1)
-				return;
-			final short[] array = new short[size];
-			for (int i = 0; i < size; i++)
+		final public short[] readObject(final ObjectInput in) throws IOException {
+			if (!in.readBoolean())
+				return null;
+			final short[] array = new short[in.readInt()];
+			for (int i = 0; i < array.length; i++)
 				array[i] = in.readShort();
-			field.set(object, array);
+			return array;
 		}
 	}
 
-	static class DoubleExternalizer<T> extends ArrayExternalizer<T> {
+	static class DoubleExternalizer<T> extends ArrayExternalizer<T, double[]> {
 
 		DoubleExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			final double[] array = checkNullAndGet(object, out);
 			if (array == null)
 				return;
@@ -176,27 +149,24 @@ abstract class ArrayExternalizer<E> extends FieldExternalizer<E> {
 		}
 
 		@Override
-		final public void read(final T object, final ObjectInput in)
-				throws IOException, ClassNotFoundException, IllegalAccessException {
-			int size = setCheckArray(object, in);
-			if (size == -1)
-				return;
-			final double[] array = new double[size];
-			for (int i = 0; i < size; i++)
+		final public double[] readObject(final ObjectInput in) throws IOException {
+			if (!in.readBoolean())
+				return null;
+			final double[] array = new double[in.readInt()];
+			for (int i = 0; i < array.length; i++)
 				array[i] = in.readDouble();
-			field.set(object, array);
+			return array;
 		}
 	}
 
-	static class FloatExternalizer<T> extends ArrayExternalizer<T> {
+	static class FloatExternalizer<T> extends ArrayExternalizer<T, float[]> {
 
 		FloatExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			final float[] array = checkNullAndGet(object, out);
 			if (array == null)
 				return;
@@ -206,27 +176,24 @@ abstract class ArrayExternalizer<E> extends FieldExternalizer<E> {
 		}
 
 		@Override
-		final public void read(final T object, final ObjectInput in)
-				throws IOException, ClassNotFoundException, IllegalAccessException {
-			int size = setCheckArray(object, in);
-			if (size == -1)
-				return;
-			final float[] array = new float[size];
-			for (int i = 0; i < size; i++)
+		final public float[] readObject(final ObjectInput in) throws IOException {
+			if (!in.readBoolean())
+				return null;
+			final float[] array = new float[in.readInt()];
+			for (int i = 0; i < array.length; i++)
 				array[i] = in.readFloat();
-			field.set(object, array);
+			return array;
 		}
 	}
 
-	static class BooleanExternalizer<T> extends ArrayExternalizer<T> {
+	static class BooleanExternalizer<T> extends ArrayExternalizer<T, boolean[]> {
 
 		BooleanExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			final boolean[] array = checkNullAndGet(object, out);
 			if (array == null)
 				return;
@@ -236,27 +203,25 @@ abstract class ArrayExternalizer<E> extends FieldExternalizer<E> {
 		}
 
 		@Override
-		final public void read(final T object, final ObjectInput in)
-				throws IOException, ClassNotFoundException, IllegalAccessException {
-			int size = setCheckArray(object, in);
-			if (size == -1)
-				return;
-			final boolean[] array = new boolean[size];
-			for (int i = 0; i < size; i++)
+		final public boolean[] readObject(final ObjectInput in) throws IOException {
+			if (!in.readBoolean())
+				return null;
+			final boolean[] array = new boolean[in.readInt()];
+			for (int i = 0; i < array.length; i++)
 				array[i] = in.readBoolean();
-			field.set(object, array);
+			return array;
 		}
+
 	}
 
-	static class ByteExternalizer<T> extends ArrayExternalizer<T> {
+	static class ByteExternalizer<T> extends ArrayExternalizer<T, byte[]> {
 
 		ByteExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			final byte[] array = checkNullAndGet(object, out);
 			if (array == null)
 				return;
@@ -266,27 +231,24 @@ abstract class ArrayExternalizer<E> extends FieldExternalizer<E> {
 		}
 
 		@Override
-		final public void read(final T object, final ObjectInput in)
-				throws IOException, ClassNotFoundException, IllegalAccessException {
-			int size = setCheckArray(object, in);
-			if (size == -1)
-				return;
-			final byte[] array = new byte[size];
-			for (int i = 0; i < size; i++)
+		final public byte[] readObject(final ObjectInput in) throws IOException {
+			if (!in.readBoolean())
+				return null;
+			final byte[] array = new byte[in.readInt()];
+			for (int i = 0; i < array.length; i++)
 				array[i] = in.readByte();
-			field.set(object, array);
+			return array;
 		}
 	}
 
-	static class CharExternalizer<T> extends ArrayExternalizer<T> {
+	static class CharExternalizer<T> extends ArrayExternalizer<T, char[]> {
 
 		CharExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			final byte[] array = checkNullAndGet(object, out);
 			if (array == null)
 				return;
@@ -296,27 +258,24 @@ abstract class ArrayExternalizer<E> extends FieldExternalizer<E> {
 		}
 
 		@Override
-		final public void read(final T object, final ObjectInput in)
-				throws IOException, ClassNotFoundException, IllegalAccessException {
-			int size = setCheckArray(object, in);
-			if (size == -1)
-				return;
-			final char[] array = new char[size];
-			for (int i = 0; i < size; i++)
+		final public char[] readObject(final ObjectInput in) throws IOException {
+			if (!in.readBoolean())
+				return null;
+			final char[] array = new char[in.readInt()];
+			for (int i = 0; i < array.length; i++)
 				array[i] = in.readChar();
-			field.set(object, array);
+			return array;
 		}
 	}
 
-	static class StringExternalizer<T> extends ArrayExternalizer<T> {
+	static class StringExternalizer<T> extends ArrayExternalizer<T, String[]> {
 
 		StringExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			final String[] array = checkNullAndGet(object, out);
 			if (array == null)
 				return;
@@ -332,28 +291,24 @@ abstract class ArrayExternalizer<E> extends FieldExternalizer<E> {
 		}
 
 		@Override
-		final public void read(final T object, final ObjectInput in)
-				throws IOException, ClassNotFoundException, IllegalAccessException {
-			int size = setCheckArray(object, in);
-			if (size == -1)
-				return;
-			final String[] array = new String[size];
-			for (int i = 0; i < size; i++)
-				if (in.readBoolean())
-					array[i] = in.readUTF();
-			field.set(object, array);
+		final public String[] readObject(final ObjectInput in) throws IOException {
+			if (!in.readBoolean())
+				return null;
+			final String[] array = new String[in.readInt()];
+			for (int i = 0; i < array.length; i++)
+				array[i] = in.readBoolean() ? in.readUTF() : null;
+			return array;
 		}
 	}
 
-	static class ObjectExternalizer<T> extends ArrayExternalizer<T> {
+	static class ObjectExternalizer<T> extends ArrayExternalizer<T, Object[]> {
 
 		ObjectExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		final public void write(final T object, final ObjectOutput out)
-				throws IOException, IllegalAccessException {
+		final public void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			final Object[] array = checkNullAndGet(object, out);
 			if (array == null)
 				return;
@@ -369,16 +324,13 @@ abstract class ArrayExternalizer<E> extends FieldExternalizer<E> {
 		}
 
 		@Override
-		final public void read(final T object, final ObjectInput in)
-				throws IOException, ClassNotFoundException, IllegalAccessException {
-			int size = setCheckArray(object, in);
-			if (size == -1)
-				return;
-			final Object[] array = new Object[size];
-			for (int i = 0; i < size; i++)
-				if (in.readBoolean())
-					array[i] = in.readObject();
-			field.set(object, array);
+		final public Object[] readObject(final ObjectInput in) throws IOException, ClassNotFoundException {
+			if (!in.readBoolean())
+				return null;
+			final Object[] array = new Object[in.readInt()];
+			for (int i = 0; i < array.length; i++)
+				array[i] = in.readBoolean() ? in.readObject() : null;
+			return array;
 		}
 	}
 }

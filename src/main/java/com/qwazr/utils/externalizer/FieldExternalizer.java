@@ -15,15 +15,15 @@
  */
 package com.qwazr.utils.externalizer;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
+import java.util.Map;
 
-abstract class FieldExternalizer<T> implements Externalizer<T> {
+abstract class FieldExternalizer<T, O> implements Externalizer<T, O> {
 
 	protected final Field field;
 
@@ -36,14 +36,14 @@ abstract class FieldExternalizer<T> implements Externalizer<T> {
 	 *
 	 * @param object
 	 * @param out
-	 * @param <T>
+	 * @param <E>
 	 * @return null or the value
 	 * @throws IllegalAccessException
 	 * @throws IOException
 	 */
-	final protected <T> T checkNullAndGet(final Object object, final ObjectOutput out)
+	final protected <E> E checkNullAndGet(final T object, final ObjectOutput out)
 			throws IllegalAccessException, IOException {
-		final T value = (T) field.get(object);
+		final E value = (E) field.get(object);
 		if (value == null) {
 			out.writeBoolean(false);
 			return null;
@@ -52,17 +52,9 @@ abstract class FieldExternalizer<T> implements Externalizer<T> {
 		return value;
 	}
 
-	final protected boolean checkIsNotNull(final Object object, final ObjectInput in)
-			throws IOException, IllegalAccessException {
-		if (in.readBoolean())
-			return true;
-		field.set(object, null);
-		return false;
-	}
-
 	protected abstract void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException;
 
-	protected abstract void read(final T object, final ObjectInput out)
+	protected abstract void read(final T object, final ObjectInput in)
 			throws IOException, ClassNotFoundException, IllegalAccessException;
 
 	@Override
@@ -90,19 +82,50 @@ abstract class FieldExternalizer<T> implements Externalizer<T> {
 			return ArrayExternalizer.newArray(field, clazz);
 		if (String.class.isAssignableFrom(clazz))
 			return new StringExternalizer<>(field);
+		if (Long.class.isAssignableFrom(clazz))
+			return new LongExternalizer<>(field);
+		if (Integer.class.isAssignableFrom(clazz))
+			return new IntegerExternalizer<>(field);
+		if (Short.class.isAssignableFrom(clazz))
+			return new ShortExternalizer<>(field);
+		if (Double.class.isAssignableFrom(clazz))
+			return new DoubleExternalizer<>(field);
+		if (Float.class.isAssignableFrom(clazz))
+			return new FloatExternalizer<>(field);
+		if (Character.class.isAssignableFrom(clazz))
+			return new CharExternalizer<>(field);
+		if (Byte.class.isAssignableFrom(clazz))
+			return new ByteExternalizer<>(field);
 		if (Collection.class.isAssignableFrom(clazz))
-			return new CollectionExternalizer<>(field);
-		return new ClassExternalizer<>(clazz);
+			return new CollectionExternalizer(field, clazz);
+		if (Map.class.isAssignableFrom(clazz))
+			return new MapExternalizer(field, clazz);
+		if (Serializable.class.isAssignableFrom(clazz))
+			return new SerializedExternalizer(field, clazz);
+		throw new IllegalArgumentException("Unsupported class: " + clazz);
 	}
 
-	static class StringExternalizer<T> extends FieldExternalizer<T> {
+	static abstract class AbstractObjectExternalizer<T, O> extends FieldExternalizer<T, O> {
+
+		protected AbstractObjectExternalizer(Field field) {
+			super(field);
+		}
+
+		@Override
+		final protected void read(final T object, final ObjectInput in)
+				throws IOException, ClassNotFoundException, IllegalAccessException {
+			field.set(object, readObject(in));
+		}
+	}
+
+	static class StringExternalizer<T> extends AbstractObjectExternalizer<T, String> {
 
 		protected StringExternalizer(final Field field) {
 			super(field);
 		}
 
 		@Override
-		protected void write(T object, ObjectOutput out) throws IOException, IllegalAccessException {
+		final protected void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			final String value = checkNullAndGet(object, out);
 			if (value == null)
 				return;
@@ -110,31 +133,181 @@ abstract class FieldExternalizer<T> implements Externalizer<T> {
 		}
 
 		@Override
-		protected void read(T object, ObjectInput out)
-				throws IOException, ClassNotFoundException, IllegalAccessException {
-			if (checkIsNotNull(object, out))
-				field.set(object, out.readUTF());
+		final public String readObject(final ObjectInput in) throws IOException {
+			return in.readBoolean() ? in.readUTF() : null;
 		}
-
 	}
 
-	static class CollectionExternalizer<T> extends FieldExternalizer<T> {
+	static class LongExternalizer<T> extends AbstractObjectExternalizer<T, Long> {
 
-		private final Constructor<? extends Collection> collectionConstructor;
-		private final Externalizer<Object> componentExternalizer;
-
-		protected CollectionExternalizer(final Field field, Class<? extends Collection> clazz) {
+		protected LongExternalizer(final Field field) {
 			super(field);
-			try {
-				collectionConstructor = clazz.getConstructor();
-			} catch (NoSuchMethodException e) {
-				throw new IllegalArgumentException("Not empty public constructor for the type " + clazz);
-			}
-			componentExternalizer = Externalizer.of(field.getGenericType().getClass());
 		}
 
 		@Override
-		protected void write(T object, ObjectOutput out) throws IOException, IllegalAccessException {
+		final protected void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
+			final Long value = checkNullAndGet(object, out);
+			if (value == null)
+				return;
+			out.writeLong(value);
+		}
+
+		@Override
+		final public Long readObject(final ObjectInput in) throws IOException {
+			return in.readBoolean() ? in.readLong() : null;
+		}
+	}
+
+	static class IntegerExternalizer<T> extends AbstractObjectExternalizer<T, Integer> {
+
+		protected IntegerExternalizer(final Field field) {
+			super(field);
+		}
+
+		@Override
+		final protected void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
+			final Integer value = checkNullAndGet(object, out);
+			if (value == null)
+				return;
+			out.writeInt(value);
+		}
+
+		@Override
+		final public Integer readObject(final ObjectInput in) throws IOException {
+			return in.readBoolean() ? in.readInt() : null;
+		}
+	}
+
+	static class ShortExternalizer<T> extends AbstractObjectExternalizer<T, Short> {
+
+		protected ShortExternalizer(final Field field) {
+			super(field);
+		}
+
+		@Override
+		final protected void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
+			final Short value = checkNullAndGet(object, out);
+			if (value == null)
+				return;
+			out.writeShort(value);
+		}
+
+		@Override
+		final public Short readObject(final ObjectInput in) throws IOException {
+			return in.readBoolean() ? in.readShort() : null;
+		}
+	}
+
+	static class DoubleExternalizer<T> extends AbstractObjectExternalizer<T, Double> {
+
+		protected DoubleExternalizer(final Field field) {
+			super(field);
+		}
+
+		@Override
+		final protected void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
+			final Double value = checkNullAndGet(object, out);
+			if (value == null)
+				return;
+			out.writeDouble(value);
+		}
+
+		@Override
+		final public Double readObject(final ObjectInput in) throws IOException {
+			return in.readBoolean() ? in.readDouble() : null;
+		}
+	}
+
+	static class FloatExternalizer<T> extends AbstractObjectExternalizer<T, Float> {
+
+		protected FloatExternalizer(final Field field) {
+			super(field);
+		}
+
+		@Override
+		final protected void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
+			final Float value = checkNullAndGet(object, out);
+			if (value == null)
+				return;
+			out.writeFloat(value);
+		}
+
+		@Override
+		final public Float readObject(final ObjectInput in) throws IOException {
+			return in.readBoolean() ? in.readFloat() : null;
+		}
+	}
+
+	static class CharExternalizer<T> extends AbstractObjectExternalizer<T, Character> {
+
+		protected CharExternalizer(final Field field) {
+			super(field);
+		}
+
+		@Override
+		final protected void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
+			final Character value = checkNullAndGet(object, out);
+			if (value == null)
+				return;
+			out.writeChar(value);
+		}
+
+		@Override
+		final public Character readObject(final ObjectInput in) throws IOException {
+			return in.readBoolean() ? in.readChar() : null;
+		}
+	}
+
+	static class ByteExternalizer<T> extends AbstractObjectExternalizer<T, Byte> {
+
+		protected ByteExternalizer(final Field field) {
+			super(field);
+		}
+
+		@Override
+		final protected void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
+			final Byte value = checkNullAndGet(object, out);
+			if (value == null)
+				return;
+			out.writeByte(value);
+		}
+
+		@Override
+		final public Byte readObject(final ObjectInput in) throws IOException {
+			return in.readBoolean() ? in.readByte() : null;
+		}
+	}
+
+	static abstract class ConstructorExternalizer<T, C> extends AbstractObjectExternalizer<T, C> {
+
+		protected final Constructor<? extends C> constructor;
+
+		protected ConstructorExternalizer(final Field field, final Class<? extends C> clazz) {
+			super(field);
+			try {
+				constructor = clazz.getConstructor();
+			} catch (NoSuchMethodException e) {
+				throw new IllegalArgumentException("Not empty public constructor for the type " + clazz);
+			}
+		}
+
+		protected Externalizer<Object, ?> getGeneric(final int pos) {
+			final ParameterizedType paramTypes = (ParameterizedType) field.getGenericType();
+			return Externalizer.of((Class<?>) paramTypes.getActualTypeArguments()[pos]);
+		}
+	}
+
+	static class CollectionExternalizer<T> extends ConstructorExternalizer<T, Collection> {
+
+		protected final Externalizer<Object, ?> componentExternalizer;
+
+		protected CollectionExternalizer(final Field field, Class<? extends Collection> clazz) {
+			super(field, clazz);
+			componentExternalizer = getGeneric(0);
+		}
+
+		@Override
+		final protected void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
 			final Collection<Object> collection = checkNullAndGet(object, out);
 			if (collection == null)
 				return;
@@ -144,19 +317,79 @@ abstract class FieldExternalizer<T> implements Externalizer<T> {
 		}
 
 		@Override
-		protected void read(T object, ObjectInput out)
-				throws IOException, ClassNotFoundException, IllegalAccessException {
-			if (!checkIsNotNull(object, out))
-				return;
+		final public Collection readObject(final ObjectInput in) throws IOException, ClassNotFoundException {
 			try {
-				final Collection collection = collectionConstructor.newInstance();
-				int size = out.readInt();
+				if (!in.readBoolean())
+					return null;
+				final Collection collection = constructor.newInstance();
+				int size = in.readInt();
 				while (size-- > 0)
-					componentExternalizer.
-					field.set(object, out.readUTF());
-			} catch (InstantiationException | InvocationTargetException e) {
+					collection.add(componentExternalizer.readObject(in));
+				return collection;
+			} catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
 				throw new IllegalArgumentException(e);
 			}
+		}
+	}
+
+	static class MapExternalizer<T> extends ConstructorExternalizer<T, Map> {
+
+		protected final Externalizer<Object, ?> keyExternalizer;
+		protected final Externalizer<Object, ?> valueExternalizer;
+
+		protected MapExternalizer(final Field field, Class<? extends Map> clazz) {
+			super(field, clazz);
+			keyExternalizer = getGeneric(0);
+			valueExternalizer = getGeneric(1);
+		}
+
+		@Override
+		final protected void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
+			final Map<?, ?> map = checkNullAndGet(object, out);
+			if (map == null)
+				return;
+			out.writeInt(map.size());
+			for (Map.Entry entry : map.entrySet()) {
+				keyExternalizer.writeExternal(entry.getKey(), out);
+				valueExternalizer.writeExternal(entry.getValue(), out);
+			}
+		}
+
+		@Override
+		final public Map readObject(final ObjectInput in) throws IOException, ClassNotFoundException {
+			try {
+				if (!in.readBoolean())
+					return null;
+				final Map map = constructor.newInstance();
+				int size = in.readInt();
+				while (size-- > 0)
+					map.put(keyExternalizer.readObject(in), valueExternalizer.readObject(in));
+				return map;
+			} catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
+				throw new IllegalArgumentException(e);
+			}
+		}
+	}
+
+	static class SerializedExternalizer<T> extends ConstructorExternalizer<T, T> {
+
+		protected SerializedExternalizer(final Field field, final Class<? extends T> clazz) {
+			super(field, clazz);
+		}
+
+		@Override
+		final protected void write(final T object, final ObjectOutput out) throws IOException, IllegalAccessException {
+			final T value = checkNullAndGet(object, out);
+			if (value == null)
+				return;
+			out.writeObject(value);
+		}
+
+		@Override
+		final public T readObject(final ObjectInput in) throws IOException, ClassNotFoundException {
+			if (!in.readBoolean())
+				return null;
+			return (T) in.readObject();
 		}
 	}
 }
