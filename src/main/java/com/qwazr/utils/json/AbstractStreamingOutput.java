@@ -22,7 +22,10 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 
 import javax.ws.rs.core.StreamingOutput;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
 import java.nio.charset.Charset;
 
 public abstract class AbstractStreamingOutput implements StreamingOutput {
@@ -55,7 +58,7 @@ public abstract class AbstractStreamingOutput implements StreamingOutput {
 					throw new ClientProtocolException("The response is null");
 				final HttpEntity entity = response.getEntity();
 				if (entity == null)
-					throw new ClientProtocolException("The entity is null");
+					return null;
 				final InputStream input = entity.getContent();
 				if (input == null)
 					throw new ClientProtocolException("The entity content is empty");
