@@ -29,7 +29,7 @@ public class SerializationUtils {
 	 * @return
 	 * @throws IOException
 	 */
-	public static byte[] serialize(final Serializable object, final int bufferSize) throws IOException {
+	public static byte[] toCompressedBytes(final Serializable object, final int bufferSize) throws IOException {
 		try (final ByteArrayOutputStream output = new ByteArrayOutputStream(bufferSize)) {
 			Externalizor.serialize(object, output);
 			return output.toByteArray();
@@ -45,7 +45,7 @@ public class SerializationUtils {
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public static <T extends Serializable> T deserialize(final byte[] bytes)
+	public static <T extends Serializable> T fromCompressedBytes(final byte[] bytes)
 			throws IOException, ClassNotFoundException {
 		try (final ByteArrayInputStream input = new ByteArrayInputStream(bytes)) {
 			return Externalizor.deserialize(input);
