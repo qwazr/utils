@@ -119,6 +119,8 @@ public class RemoteService {
 
 	public static class Builder {
 
+		private final URI initialURI;
+
 		private String scheme;
 		private String host;
 		private String[] pathSegments;
@@ -129,6 +131,7 @@ public class RemoteService {
 		private MultivaluedMap<String, String> queryParams;
 
 		public Builder() {
+			initialURI = null;
 			scheme = null;
 			host = null;
 			pathSegments = null;
@@ -140,6 +143,7 @@ public class RemoteService {
 		}
 
 		public Builder(final URI uri) {
+			initialURI = uri;
 			setScheme(uri.getScheme());
 			setHost(uri.getHost());
 			setPath(uri.getPath());
@@ -150,6 +154,10 @@ public class RemoteService {
 
 		public Builder(final String url) throws URISyntaxException {
 			this(new URI(url));
+		}
+
+		public URI getInitialURI() {
+			return initialURI;
 		}
 
 		/**
