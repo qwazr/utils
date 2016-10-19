@@ -15,100 +15,40 @@
  */
 package com.qwazr.utils;
 
+import com.qwazr.externalizor.Externalizor;
+
 import java.io.*;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
-public class SerializationUtils extends org.apache.commons.lang3.SerializationUtils {
+public class SerializationUtils {
 
 	/**
-	 * Read an object from a file using a buffered stream and GZIP compression
-	 *
-	 * @param file the destination file
-	 * @param <T>  the type of the object
-	 * @return the deserialized object
-	 * @throws IOException
-	 */
-	public static <T> T deserialize(final File file) throws IOException {
-		try (final FileInputStream is = new FileInputStream(file)) {
-			try (final BufferedInputStream bis = new BufferedInputStream(is)) {
-				try (final GZIPInputStream zis = new GZIPInputStream(bis)) {
-					return deserialize(zis);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Write an object to a file using a buffered stream and GZIP compression.
-	 *
-	 * @param obj  the object to write
-	 * @param file the destination file
-	 * @throws IOException
-	 */
-	public static void serialize(final Serializable obj, final File file) throws IOException {
-		try (final FileOutputStream os = new FileOutputStream(file)) {
-			try (final BufferedOutputStream bos = new BufferedOutputStream(os)) {
-				try (final GZIPOutputStream zos = new GZIPOutputStream(bos)) {
-					SerializationUtils.serialize(obj, zos);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Build a byte array from an externalizable object
-	 *
-	 * @param object     the object to serialize
-	 * @param bufferSize the initial sizeof the buffer
-	 * @return a byte array
-	 * @throws IOException
-	 */
-	public static byte[] getBytes(final Externalizable object, final int bufferSize) throws IOException {
-		try (final ByteArrayOutputStream bos = new ByteArrayOutputStream(bufferSize)) {
-			try (final ObjectOutputStream oos = new ObjectOutputStream(bos)) {
-				object.writeExternal(oos);
-				oos.flush();
-				return bos.toByteArray();
-			}
-		}
-	}
-
-	/**
-	 * Build a byte array from an serializable object
+	 * Build a compressed byte array from an serializable object
 	 *
 	 * @param object     the object to serialize
 	 * @param bufferSize the initial sizeof the buffer
 	 * @return
 	 * @throws IOException
 	 */
-	public static byte[] getBytes(final Serializable object, final int bufferSize) throws IOException {
-		try (final ByteArrayOutputStream bos = new ByteArrayOutputStream(bufferSize)) {
-			try (final ObjectOutputStream oos = new ObjectOutputStream(bos)) {
-				oos.writeObject(object);
-				oos.flush();
-				return bos.toByteArray();
-			}
+	public static byte[] serialize(final Serializable object, final int bufferSize) throws IOException {
+		try (final ByteArrayOutputStream output = new ByteArrayOutputStream(bufferSize)) {
+			Externalizor.serialize(object, output);
+			return output.toByteArray();
 		}
 	}
 
 	/**
-	 * Fill an object to restore its properties using deserialization
+	 * Fill an object to restore its properties using deserialization (with compaction)
 	 *
 	 * @param bytes the serialized bytes
-	 * @param ext   the instancied object
 	 * @param <T>   the type of the container object
 	 * @return the filled object
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public static <T extends Externalizable> T deserialize(final byte[] bytes, final Externalizable ext)
+	public static <T extends Serializable> T deserialize(final byte[] bytes)
 			throws IOException, ClassNotFoundException {
-		try (final ByteArrayInputStream bis = new ByteArrayInputStream(bytes)) {
-			try (final ObjectInputStream ois = new ObjectInputStream(bis)) {
-				ext.readExternal(ois);
-				return (T) ext;
-			}
+		try (final ByteArrayInputStream input = new ByteArrayInputStream(bytes)) {
+			return Externalizor.deserialize(input);
 		}
 	}
 

@@ -98,7 +98,7 @@ public class DatagramUtils {
 	public static void send(final Externalizable object, final int bufferSize,
 			final Collection<SocketAddress> addresses) throws IOException {
 		Objects.requireNonNull(object, "Nothing to send: the object is null.");
-		send(SerializationUtils.getBytes(object, bufferSize), addresses);
+		send(SerializationUtils.serialize(object, bufferSize), addresses);
 	}
 
 	/**
@@ -112,7 +112,7 @@ public class DatagramUtils {
 	public static void send(final Externalizable object, final int bufferSize, final SocketAddress... addresses)
 			throws IOException {
 		Objects.requireNonNull(object, "Nothing to send: the object is null.");
-		send(SerializationUtils.getBytes(object, bufferSize), addresses);
+		send(SerializationUtils.serialize(object, bufferSize), addresses);
 	}
 
 }

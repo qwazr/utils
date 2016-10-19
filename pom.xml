@@ -23,6 +23,10 @@
             <artifactId>undertow-servlet</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.qwazr</groupId>
+            <artifactId>externalizor</artifactId>
+        </dependency>
+        <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
         </dependency>
