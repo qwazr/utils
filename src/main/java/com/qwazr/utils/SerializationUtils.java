@@ -18,37 +18,116 @@ package com.qwazr.utils;
 import com.qwazr.externalizor.Externalizor;
 
 import java.io.*;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class SerializationUtils {
 
 	/**
-	 * Build a compressed byte array from an serializable object
+	 * Build a compressed byte array from an serializable object using Externalizor
 	 *
-	 * @param object     the object to serialize
-	 * @param bufferSize the initial sizeof the buffer
+	 * @param object the object to serialize
 	 * @return
 	 * @throws IOException
+	 * @throws ReflectiveOperationException
+	 * @see Externalizor
 	 */
-	public static byte[] toCompressedBytes(final Serializable object, final int bufferSize) throws IOException {
-		try (final ByteArrayOutputStream output = new ByteArrayOutputStream(bufferSize)) {
+	public static byte[] toExternalizorBytes(final Serializable object)
+			throws IOException, ReflectiveOperationException {
+		try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
 			Externalizor.serialize(object, output);
 			return output.toByteArray();
 		}
 	}
 
 	/**
-	 * Fill an object to restore its properties using deserialization (with compaction)
+	 * Deserialize an object from a compressed byte array using Externalizor
 	 *
 	 * @param bytes the serialized bytes
 	 * @param <T>   the type of the container object
 	 * @return the filled object
 	 * @throws IOException
+	 * @throws ReflectiveOperationException
+	 * @see Externalizor
+	 */
+	public static <T extends Serializable> T fromExternalizorBytes(final byte[] bytes,
+			final Class<? extends Serializable> clazz) throws IOException, ReflectiveOperationException {
+		try (final ByteArrayInputStream input = new ByteArrayInputStream(bytes)) {
+			return Externalizor.deserialize(input, (Class<T>) clazz);
+		}
+	}
+
+	/**
+	 * Build a byte array using the standard Java serialization
+	 *
+	 * @param object the object to serialize
+	 * @return
+	 * @throws IOException
+	 */
+	public static byte[] toDefaultBytes(final Serializable object) throws IOException {
+		try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+			try (final ObjectOutputStream objected = new ObjectOutputStream(output)) {
+				objected.writeObject(object);
+			}
+			return output.toByteArray();
+		}
+	}
+
+	/**
+	 * Deserialize an object using Java default serialization
+	 *
+	 * @param bytes the serialized bytes
+	 * @param bytes the serialized bytes
+	 * @return the filled object
+	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public static <T extends Serializable> T fromCompressedBytes(final byte[] bytes)
+
+	public static <T extends Serializable> T fromDefaultBytes(final byte[] bytes)
 			throws IOException, ClassNotFoundException {
 		try (final ByteArrayInputStream input = new ByteArrayInputStream(bytes)) {
-			return Externalizor.deserialize(input);
+			try (final ObjectInputStream objected = new ObjectInputStream(input)) {
+				return (T) objected.readObject();
+			}
+		}
+	}
+
+	/**
+	 * Build a byte array using the standard Java serialization with GZIP compression
+	 *
+	 * @param object the object to serialize
+	 * @return
+	 * @throws IOException
+	 */
+	public static byte[] toDefaultCompressedBytes(final Serializable object) throws IOException {
+		try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+			try (final GZIPOutputStream compressed = new GZIPOutputStream(output)) {
+				try (final ObjectOutputStream objected = new ObjectOutputStream(compressed)) {
+					objected.writeObject(object);
+				}
+			}
+			return output.toByteArray();
+		}
+	}
+
+	/**
+	 * Deserialize an object using Java default serialization with GZIP compression
+	 *
+	 * @param bytes the serialized bytes
+	 * @param bytes the serialized bytes
+	 * @return the filled object
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
+
+	public static <T extends Serializable> T fromDefaultCompressedBytes(final byte[] bytes)
+			throws IOException, ClassNotFoundException {
+		try (final ByteArrayInputStream input = new ByteArrayInputStream(bytes)) {
+			try (final GZIPInputStream compressed = new GZIPInputStream(input)) {
+				try (final ObjectInputStream objected = new ObjectInputStream(compressed)) {
+					return (T) objected.readObject();
+				}
+			}
 		}
 	}
 

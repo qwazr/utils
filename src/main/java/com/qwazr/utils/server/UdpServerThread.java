@@ -26,9 +26,6 @@ public class UdpServerThread extends Thread {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(UdpServerThread.class);
 
-	public final static int DEFAULT_BUFFER_SIZE = 65536;
-
-	private final int dataBufferSize;
 	private final PacketListener[] packetListeners;
 
 	private final InetSocketAddress socketAddress;
@@ -44,7 +41,6 @@ public class UdpServerThread extends Thread {
 		this.socketAddress = socketAddress;
 		this.multicastGroupAddress = multicastGroupAddress;
 		this.multicastPort = multicastPort;
-		this.dataBufferSize = dataBufferSize == null ? DEFAULT_BUFFER_SIZE : dataBufferSize;
 		this.packetListeners = packetListeners.toArray(new PacketListener[packetListeners.size()]);
 	}
 
@@ -68,7 +64,7 @@ public class UdpServerThread extends Thread {
 			if (LOGGER.isInfoEnabled())
 				LOGGER.info("UDP Server started: " + socket.getLocalSocketAddress());
 			for (; ; ) {
-				final byte[] dataBuffer = new byte[dataBufferSize];
+				final byte[] dataBuffer = new byte[65536];
 				final DatagramPacket datagramPacket = new DatagramPacket(dataBuffer, dataBuffer.length);
 				socket.receive(datagramPacket);
 				for (PacketListener packetListener : packetListeners) {

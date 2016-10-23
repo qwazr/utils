@@ -15,8 +15,8 @@
  */
 package com.qwazr.utils;
 
-import java.io.Externalizable;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketAddress;
@@ -90,29 +90,25 @@ public class DatagramUtils {
 	/**
 	 * Send a serializable object to the given address using UDP (datagram) transport
 	 *
-	 * @param object     the object to send
-	 * @param bufferSize the initial size of the buffer (for byte array serialisation)
-	 * @param addresses  the recipients
+	 * @param object    the object to send
+	 * @param addresses the recipients
 	 * @throws IOException
 	 */
-	public static void send(final Externalizable object, final int bufferSize,
-			final Collection<SocketAddress> addresses) throws IOException {
+	public static void send(final Serializable object, final Collection<SocketAddress> addresses) throws IOException {
 		Objects.requireNonNull(object, "Nothing to send: the object is null.");
-		send(SerializationUtils.toCompressedBytes(object, bufferSize), addresses);
+		send(SerializationUtils.toDefaultCompressedBytes(object), addresses);
 	}
 
 	/**
 	 * Send a serializable object to the given addresses using UDP (datagram) transport
 	 *
-	 * @param object     the object to send
-	 * @param bufferSize the initial size of the buffer (for byte array serialisation)
-	 * @param addresses  the recipients
+	 * @param object    the object to send
+	 * @param addresses the recipients
 	 * @throws IOException
 	 */
-	public static void send(final Externalizable object, final int bufferSize, final SocketAddress... addresses)
-			throws IOException {
+	public static void send(final Serializable object, final SocketAddress... addresses) throws IOException {
 		Objects.requireNonNull(object, "Nothing to send: the object is null.");
-		send(SerializationUtils.toCompressedBytes(object, bufferSize), addresses);
+		send(SerializationUtils.toDefaultCompressedBytes(object), addresses);
 	}
 
 }
