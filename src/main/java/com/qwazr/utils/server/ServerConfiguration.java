@@ -64,11 +64,12 @@ public class ServerConfiguration {
 
 		//Set the connectors
 		webAppConnector =
-				new WebConnector(publicAddress, configProperties.webAppPort(), configProperties.webAppRealm());
+				new WebConnector(publicAddress, configProperties.webAppPort(), 9090, configProperties.webAppRealm());
 		webServiceConnector =
-				new WebConnector(publicAddress, configProperties.webServicePort(), configProperties.webServiceRealm());
+				new WebConnector(publicAddress, configProperties.webServicePort(), 9091,
+						configProperties.webServiceRealm());
 		multicastConnector =
-				new WebConnector(configProperties.multicastAddress(), configProperties.multicastPort(), null);
+				new WebConnector(configProperties.multicastAddress(), configProperties.multicastPort(), 9091, null);
 	}
 
 	public static class WebConnector {
@@ -78,11 +79,11 @@ public class ServerConfiguration {
 		public final int port;
 		public final String addressPort;
 
-		private WebConnector(final String address, final Integer port, final String realm) {
+		private WebConnector(final String address, final Integer port, final int defaulPort, final String realm) {
 			this.address = address;
 			this.realm = realm;
-			this.port = port == null ? -1 : port;
-			this.addressPort = address + ":" + port;
+			this.port = port == null ? defaulPort : port;
+			this.addressPort = this.address + ":" + this.port;
 		}
 
 	}
