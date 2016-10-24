@@ -23,9 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.*;
-import java.util.Enumeration;
-import java.util.LinkedHashSet;
-import java.util.Map;
+import java.util.*;
 
 public class ServerConfiguration {
 
@@ -94,19 +92,21 @@ public class ServerConfiguration {
 	 * 192.168.0.0/16,172.168.0.0/16
 	 * 192.168.0.0/16
 	 * 10.3.12.12
+	 *
 	 * @param addressPattern
-	 * @param defaultAddress
 	 * @return
 	 * @throws SocketException
 	 */
-	private static String findMatchingAddress(final String addressPattern, final String defaultAddress)
+	public static void findMatchingAddress(final String addressPattern, final Collection<String> collect)
 			throws SocketException {
 		final String[] patterns = StringUtils.split(addressPattern, ',');
 		if (patterns == null)
-			return defaultAddress;
-		if (patterns.length == 1 && !patterns[0].contains("/"))
-			return patterns[0];
+			return;
 		for (String pattern : patterns) {
+			if (!pattern.contains("/")) {
+				collect.add(pattern);
+				continue;
+			}
 			final SubnetUtils.SubnetInfo subnet = pattern.contains("/") ? new SubnetUtils(pattern).getInfo() : null;
 			final Enumeration<NetworkInterface> enumInterfaces = NetworkInterface.getNetworkInterfaces();
 			while (enumInterfaces != null && enumInterfaces.hasMoreElements()) {
@@ -118,15 +118,12 @@ public class ServerConfiguration {
 					final InetAddress inetAddress = enumAddresses.nextElement();
 					if (!(inetAddress instanceof Inet4Address))
 						continue;
-					final String addr = inetAddress.getHostAddress();
-					if (subnet != null && subnet.isInRange(addr))
-						return addr;
-					if (addr.equals(pattern))
-						return addr;
+					final String address = inetAddress.getHostAddress();
+					if (subnet != null && subnet.isInRange(address) || address.equals(pattern))
+						collect.add(address);
 				}
 			}
 		}
-		return defaultAddress;
 	}
 
 	private final static String DEFAULT_LISTEN_ADDRESS = "0.0.0.0";
@@ -135,7 +132,9 @@ public class ServerConfiguration {
 		if (StringUtils.isEmpty(addressPattern))
 			return DEFAULT_LISTEN_ADDRESS;
 		try {
-			return findMatchingAddress(addressPattern, DEFAULT_LISTEN_ADDRESS);
+			final ArrayList<String> list = new ArrayList<>();
+			findMatchingAddress(addressPattern, list);
+			return list.isEmpty() ? DEFAULT_LISTEN_ADDRESS : list.get(0);
 		} catch (SocketException e) {
 			LOGGER.warn("Failed in extracting IP informations. Listen address set to default (" + DEFAULT_LISTEN_ADDRESS
 					+ ")", e);
@@ -160,7 +159,9 @@ public class ServerConfiguration {
 					getLocalHostAddress() :
 					listenAddress;
 		try {
-			return findMatchingAddress(addressPattern, DEFAULT_PUBLIC_ADDRESS);
+			final ArrayList<String> list = new ArrayList<>();
+			findMatchingAddress(addressPattern, list);
+			return list.isEmpty() ? DEFAULT_PUBLIC_ADDRESS : list.get(0);
 		} catch (SocketException e) {
 			final String addr = StringUtils.isEmpty(listenAddress) || DEFAULT_LISTEN_ADDRESS.equals(listenAddress) ?
 					DEFAULT_PUBLIC_ADDRESS :
