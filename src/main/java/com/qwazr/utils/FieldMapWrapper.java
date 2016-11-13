@@ -133,6 +133,7 @@ public class FieldMapWrapper<T> {
 						final Collection fieldValues = (Collection) fieldType.newInstance();
 						for (int i = 0; i < length; i++)
 							fieldValues.add(Array.get(fieldValue, i));
+						field.set(record, fieldValues);
 					} else
 						field.set(record, Array.get(fieldValue, 0));
 					return;
