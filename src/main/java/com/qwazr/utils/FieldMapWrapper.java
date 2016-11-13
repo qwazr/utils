@@ -126,9 +126,15 @@ public class FieldMapWrapper<T> {
 					return;
 				}
 				if (fieldValueType.isArray()) {
-					if (Array.getLength(fieldValue) == 0)
+					final int length = Array.getLength(fieldValue);
+					if (length == 0)
 						return;
-					field.set(record, Array.get(fieldValue, 0));
+					if (Collection.class.isAssignableFrom(fieldType)) {
+						final Collection fieldValues = (Collection) fieldType.newInstance();
+						for (int i = 0; i < length; i++)
+							fieldValues.add(Array.get(fieldValue, i));
+					} else
+						field.set(record, Array.get(fieldValue, 0));
 					return;
 				}
 				if (Serializable.class.isAssignableFrom(fieldType)) {
