@@ -149,7 +149,7 @@ public class FieldMapWrapper<T> {
 		return record;
 	}
 
-	protected List<T> toRecords(final List<LinkedHashMap<String, Object>> docs) {
+	protected List<T> toRecords(final List<Map<String, Object>> docs) {
 		if (docs == null)
 			return null;
 		final List<T> records = new ArrayList<>();
