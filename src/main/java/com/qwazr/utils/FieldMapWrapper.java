@@ -51,14 +51,10 @@ public class FieldMapWrapper<T> {
 					return;
 				}
 				if (value instanceof Collection) {
-					if (((Collection) value).isEmpty())
-						return;
 					map.put(name, value);
 					return;
 				}
 				if (value instanceof Map) {
-					if (((Map) value).isEmpty())
-						return;
 					map.put(name, value);
 					return;
 				}
