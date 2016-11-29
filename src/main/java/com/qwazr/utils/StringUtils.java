@@ -29,9 +29,7 @@ import java.util.regex.Pattern;
 
 public class StringUtils extends org.apache.commons.lang3.StringUtils {
 
-	final public static String[] EMPTY_ARRAY = new String[] {};
-
-	public static final String replaceConsecutiveSpaces(String source, String replace) {
+	public static final String replaceConsecutiveSpaces(final String source, final String replace) {
 		if (isEmpty(source))
 			return source;
 		StringBuilder target = new StringBuilder();

@@ -15,8 +15,20 @@
  */
 package com.qwazr.utils.test;
 
+import com.qwazr.utils.HtmlUtils;
 import org.junit.Assert;
 import org.junit.Test;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.qwazr.utils.HtmlUtils.htmlWrap;
 import static com.qwazr.utils.HtmlUtils.htmlWrapReduce;
@@ -49,4 +61,26 @@ public class HtmlUtilsTest {
 			Assert.assertEquals(WRAP_REDUCE_RESULTS[i++], htmlWrapReduce(url, 20, 80));
 
 	}
+
+	static final String html =
+			"<html>" + "<head>\n" + "<meta name=\"metacontent\"/>\n" + "<title>Title Test</title>\n" + "</head>\n"
+					+ "<body>\n" + "<h1>My title</h1>\n" + "<p>The content <span>of</span> the\narticle</p>\n"
+					+ "</body>\n" + "</html>";
+
+	public static Document getHtmlDocument(final String xml)
+			throws IOException, SAXException, ParserConfigurationException {
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		DocumentBuilder db = dbf.newDocumentBuilder();
+		return db.parse(new InputSource(new StringReader(xml)));
+	}
+
+	@Test
+	public void testDomTextExtractor() throws ParserConfigurationException, SAXException, IOException {
+		final Document document = getHtmlDocument(html);
+		List<String> result = new ArrayList<>();
+		HtmlUtils.domTextExtractor(document, result::add);
+		Assert.assertArrayEquals(new String[] { "Title Test", "My title", "The content of the article" },
+				result.toArray());
+	}
+
 }

@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils.test;
 
+import com.qwazr.utils.DomUtils;
 import com.qwazr.utils.XPathParser;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -107,10 +108,8 @@ public class XPathParserTest {
 	public void testEvaluateNodes()
 			throws IOException, SAXException, ParserConfigurationException, XPathExpressionException {
 		XPathParser xpp = new XPathParser();
-		XPathParser.NodeIterator iterator = xpp.evaluateNodes(xmlDocument, "//p");
 		Evaluator evaluator = new Evaluator();
-		while (iterator.hasNext())
-			evaluator.accept(iterator.next());
+		xpp.evaluateNodes(xmlDocument, "//p").forEach(evaluator::accept);
 		Assert.assertEquals(2, evaluator.nodeList.size());
 	}
 
@@ -146,7 +145,7 @@ public class XPathParserTest {
 			throws IOException, SAXException, ParserConfigurationException, XPathExpressionException {
 		XPathParser xpp = new XPathParser();
 		Assert.assertEquals("metacontent",
-				XPathParser.getAttributeString(xpp.evaluateNode(xmlDocument, "/html/head/meta"), "name"));
+				DomUtils.getAttributeString(xpp.evaluateNode(xmlDocument, "/html/head/meta"), "name"));
 	}
 
 }

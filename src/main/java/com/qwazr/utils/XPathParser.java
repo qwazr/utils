@@ -16,14 +16,12 @@
 package com.qwazr.utils;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.namespace.QName;
 import javax.xml.xpath.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
@@ -72,19 +70,17 @@ public class XPathParser {
 		return (Node) getExpression(query).evaluate(rootNode, XPathConstants.NODE);
 	}
 
-	final public NodeIterator evaluateNodes(final Node rootNode, final String query) throws XPathExpressionException {
-		return new NodeIterator((NodeList) getExpression(query).evaluate(rootNode, XPathConstants.NODESET));
+	final public DomUtils.Looper evaluateNodes(final Node rootNode, final String query)
+			throws XPathExpressionException {
+		return DomUtils.iterator((NodeList) getExpression(query).evaluate(rootNode, XPathConstants.NODESET));
 	}
 
 	private static final List<Pair<QName, BiConsumer<Object, Consumer>>> consumers = new ArrayList<>();
 
 	static {
 		consumers.add(Pair.of(XPathConstants.NODESET, (object, consumer) -> {
-			if (object != null && consumer != null) {
-				final NodeIterator nodeIterator = new NodeIterator((NodeList) object);
-				while (nodeIterator.hasNext())
-					consumer.accept(nodeIterator.next());
-			}
+			if (object != null && consumer != null)
+				DomUtils.iterator((NodeList) object).forEach(consumer::accept);
 		}));
 		consumers.add(Pair.of(XPathConstants.NODE, (object, consumer) -> {
 			if (object != null && consumer != null)
@@ -138,36 +134,4 @@ public class XPathParser {
 		}
 	}
 
-	public static class NodeIterator implements Iterator<Node> {
-
-		private final NodeList nodeList;
-		private final int length;
-		private int pos;
-
-		public NodeIterator(final NodeList nodeList) {
-			this.nodeList = nodeList;
-			length = nodeList == null ? 0 : nodeList.getLength();
-			pos = 0;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return pos < length;
-		}
-
-		@Override
-		public Node next() {
-			return nodeList.item(pos++);
-		}
-	}
-
-	public static Node getAttribute(final Node node, final String attributeName) {
-		final NamedNodeMap attributes = node.getAttributes();
-		return attributes == null ? null : attributes.getNamedItem(attributeName);
-	}
-
-	public static String getAttributeString(final Node node, final String attributeName) {
-		final Node attrNode = getAttribute(node, attributeName);
-		return attrNode == null ? null : attrNode.getTextContent();
-	}
 }
