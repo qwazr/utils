@@ -19,24 +19,28 @@ package com.qwazr.utils.server;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.qwazr.utils.RuntimeUtils;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class WelcomeStatus {
 
 	public final TitleVendorVersion implementation;
 	public final TitleVendorVersion specification;
-	public final List<String> endpoints;
+	public final TreeSet<String> endpoints;
 	public final MemoryStatus memory;
 	public final RuntimeStatus runtime;
 	public final SortedMap<String, Object> properties;
 	public final SortedMap<String, String> env;
 
-	public WelcomeStatus(final GenericServer server, final Boolean showProperties, final Boolean showEnvVars) {
-		endpoints = new ArrayList<>(server.getServicePaths());
+	public WelcomeStatus(final Boolean showProperties, final Boolean showEnvVars) {
+		final GenericServer server = GenericServer.getInstance();
+		if (server != null) {
+			endpoints = new TreeSet<>();
+			server.forEachServicePath(endpoints::add);
+		} else
+			endpoints = null;
 		final Package pkg = getClass().getPackage();
 		implementation = new TitleVendorVersion(pkg.getImplementationTitle(), pkg.getImplementationVendor(),
 				pkg.getImplementationVersion());

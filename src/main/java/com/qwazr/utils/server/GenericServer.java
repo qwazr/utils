@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils.server;
 
+import com.qwazr.utils.file.TrackedInterface;
 import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;
 import io.undertow.UndertowOptions;
@@ -35,28 +36,30 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 public class GenericServer {
 
-	static volatile GenericServer INSTANCE = null;
+	// One instance per JVM
+	private static volatile GenericServer INSTANCE = null;
 
-	final Collection<Class<? extends ServiceInterface>> webServices;
-	final Collection<String> webServiceNames;
-	final Collection<String> webServicePaths;
+	final private ServerBuilder<?> builder;
+	final private TrackedInterface etcTracker;
+
+	final private Collection<Class<? extends ServiceInterface>> webServices;
+	final private Collection<String> webServiceNames;
+	final private Collection<String> webServicePaths;
 	final private IdentityManagerProvider identityManagerProvider;
 	final private Collection<ConnectorStatisticsMXBean> connectorsStatistics;
 
 	final private Collection<Listener> startedListeners;
 	final private Collection<Listener> shutdownListeners;
 
-	final protected Collection<Undertow> undertows;
-	final protected Collection<DeploymentManager> deploymentManagers;
+	final private Collection<Undertow> undertows;
+	final private Collection<DeploymentManager> deploymentManagers;
 
-	final protected ExecutorService executorService;
-
-	final protected ServerConfiguration serverConfiguration;
+	final private ServerConfiguration serverConfiguration;
 
 	final private Collection<SecurableServletInfo> servletInfos;
 	final private Map<String, FilterInfo> filterInfos;
@@ -70,27 +73,67 @@ public class GenericServer {
 
 	static final private Logger LOGGER = LoggerFactory.getLogger(GenericServer.class);
 
-	GenericServer(final ServerBuilder builder) throws IOException {
-		this.executorService = builder.executorService;
-		this.serverConfiguration = builder.serverConfiguration;
-		this.webServices = builder.webServices.isEmpty() ? null : new ArrayList<>(builder.webServices);
-		this.webServiceNames = builder.webServiceNames.isEmpty() ? null : new ArrayList<>(builder.webServiceNames);
-		this.webServicePaths = builder.webServicePaths.isEmpty() ? null : new ArrayList<>(builder.webServicePaths);
-		this.undertows = new ArrayList<>();
-		this.deploymentManagers = new ArrayList<>();
-		this.identityManagerProvider = builder.identityManagerProvider;
-		this.servletInfos = builder.servletInfos.isEmpty() ? null : new ArrayList<>(builder.servletInfos);
-		this.filterInfos = builder.filterInfos.isEmpty() ? null : new LinkedHashMap(builder.filterInfos);
-		this.listenerInfos = builder.listenerInfos.isEmpty() ? null : new ArrayList<>(builder.listenerInfos);
-		this.sessionPersistenceManager = builder.sessionPersistenceManager;
-		this.sessionListener = builder.sessionListener;
-		this.servletAccessLogger = builder.servletAccessLogger;
-		this.restAccessLogger = builder.restAccessLogger;
-		this.udpServer = buildUdpServer(builder);
-		this.startedListeners = builder.startedListeners.isEmpty() ? null : new ArrayList<>(builder.startedListeners);
-		this.shutdownListeners =
-				builder.shutdownListeners.isEmpty() ? null : new ArrayList<>(builder.shutdownListeners);
-		this.connectorsStatistics = new ArrayList<>();
+	protected GenericServer(final ServerConfiguration serverConfiguration) throws IOException {
+		synchronized (GenericServer.class) {
+			if (INSTANCE != null)
+				throw new RuntimeException("The server " + getClass().getName() + " is already running");
+
+			this.builder = new ServerBuilder<>(serverConfiguration);
+			this.etcTracker =
+					TrackedInterface.build(serverConfiguration.etcDirectories, serverConfiguration.etcFileFilter);
+
+			this.serverConfiguration = builder.serverConfiguration;
+			this.webServices = builder.webServices.isEmpty() ? null : new ArrayList<>(builder.webServices);
+			this.webServiceNames = builder.webServiceNames.isEmpty() ? null : new ArrayList<>(builder.webServiceNames);
+			this.webServicePaths = builder.webServicePaths.isEmpty() ? null : new ArrayList<>(builder.webServicePaths);
+			this.undertows = new ArrayList<>();
+			this.deploymentManagers = new ArrayList<>();
+			this.identityManagerProvider = builder.identityManagerProvider;
+			this.servletInfos = builder.servletInfos.isEmpty() ? null : new ArrayList<>(builder.servletInfos);
+			this.filterInfos = builder.filterInfos.isEmpty() ? null : new LinkedHashMap<>(builder.filterInfos);
+			this.listenerInfos = builder.listenerInfos.isEmpty() ? null : new ArrayList<>(builder.listenerInfos);
+			this.sessionPersistenceManager = builder.sessionPersistenceManager;
+			this.sessionListener = builder.sessionListener;
+			this.servletAccessLogger = builder.servletAccessLogger;
+			this.restAccessLogger = builder.restAccessLogger;
+			this.udpServer = buildUdpServer(builder);
+			this.startedListeners =
+					builder.startedListeners.isEmpty() ? null : new ArrayList<>(builder.startedListeners);
+			this.shutdownListeners =
+					builder.shutdownListeners.isEmpty() ? null : new ArrayList<>(builder.shutdownListeners);
+			this.connectorsStatistics = new ArrayList<>();
+
+			if (this.etcTracker != null)
+				builder.etcConsumers.forEach(this.etcTracker::register);
+
+			INSTANCE = this;
+		}
+	}
+
+	public static GenericServer getInstance() {
+		return INSTANCE;
+	}
+
+	public void forEachWebServices(final Consumer<Class<? extends ServiceInterface>> consumer) {
+		if (webServices != null)
+			webServices.forEach(consumer::accept);
+	}
+
+	public void forEachServicePath(final Consumer<String> consumer) {
+		if (webServicePaths != null)
+			webServicePaths.forEach(consumer::accept);
+	}
+
+	public Collection<String> getWebServiceNames() {
+		return webServiceNames;
+	}
+
+	protected ServerBuilder getBuilder() {
+		return builder;
+	}
+
+	protected TrackedInterface getEtcTracker() {
+		return etcTracker;
 	}
 
 	private static UdpServerThread buildUdpServer(final ServerBuilder builder) throws IOException {
@@ -107,6 +150,8 @@ public class GenericServer {
 	}
 
 	private synchronized void start(final Undertow undertow) {
+		etcTracker.check();
+		// start the server
 		undertow.start();
 		undertows.add(undertow);
 	}
@@ -180,7 +225,7 @@ public class GenericServer {
 	 * @throws IOException      if any IO error occur
 	 * @throws ServletException if the servlet configuration failed
 	 */
-	final public GenericServer start(boolean shutdownHook)
+	final public void start(boolean shutdownHook)
 			throws IOException, ServletException, ReflectiveOperationException, OperationsException, MBeanException {
 
 		java.util.logging.Logger.getLogger("").setLevel(Level.WARNING);
@@ -219,19 +264,10 @@ public class GenericServer {
 		}
 
 		executeListener(startedListeners);
-		return this;
 	}
 
 	public Collection<ConnectorStatisticsMXBean> getConnectorsStatistics() {
 		return connectorsStatistics;
-	}
-
-	public Collection<String> getServiceNames() {
-		return webServiceNames;
-	}
-
-	public Collection<String> getServicePaths() {
-		return webServicePaths;
 	}
 
 	public interface Listener {

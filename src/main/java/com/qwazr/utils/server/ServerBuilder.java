@@ -16,6 +16,7 @@
 package com.qwazr.utils.server;
 
 import com.qwazr.utils.AnnotationsUtils;
+import com.qwazr.utils.file.TrackedInterface;
 import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.api.FilterInfo;
 import io.undertow.servlet.api.ListenerInfo;
@@ -24,7 +25,6 @@ import io.undertow.servlet.api.SessionPersistenceManager;
 import org.slf4j.Logger;
 
 import javax.ws.rs.Path;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -49,10 +49,12 @@ public class ServerBuilder<T extends ServerConfiguration> {
 	GenericServer.IdentityManagerProvider identityManagerProvider;
 	final Collection<GenericServer.Listener> startedListeners;
 	final Collection<GenericServer.Listener> shutdownListeners;
+	final Collection<TrackedInterface.FileChangeConsumer> etcConsumers;
 
-	public ServerBuilder(final T serverConfiguration, final ExecutorService executorService) {
+	ServerBuilder(final T serverConfiguration, final ExecutorService executorService) {
 		this.executorService = executorService == null ? Executors.newCachedThreadPool() : executorService;
 		this.serverConfiguration = serverConfiguration;
+		// Load the configuration files
 		webServices = new LinkedHashSet<>();
 		webServicePaths = new LinkedHashSet<>();
 		webServiceNames = new LinkedHashSet<>();
@@ -68,10 +70,12 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		restAccessLogger = null;
 		startedListeners = new LinkedHashSet<>();
 		shutdownListeners = new LinkedHashSet<>();
+		etcConsumers = new LinkedHashSet<>();
 	}
 
 	public ServerBuilder(final T serverConfiguration) {
 		this(serverConfiguration, Executors.newCachedThreadPool());
+		// Load the configuration files
 	}
 
 	public void registerWebService(final Class<? extends ServiceInterface> webService) {
@@ -136,11 +140,7 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		return executorService;
 	}
 
-	public synchronized GenericServer build() throws IOException {
-		if (GenericServer.INSTANCE != null)
-			throw new RuntimeException("The server has already been created (only one server per runtime)");
-		GenericServer.INSTANCE = new GenericServer(this);
-		return GenericServer.INSTANCE;
+	public void registerEtcTracker(final TrackedInterface.FileChangeConsumer tracker) {
+		this.etcConsumers.add(tracker);
 	}
-
 }

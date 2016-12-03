@@ -15,57 +15,51 @@
  **/
 package com.qwazr.utils.server;
 
-import org.aeonbits.owner.Config;
-
-@Config.LoadPolicy(Config.LoadType.MERGE)
-public interface ConfigurationProperties extends Config {
+public interface ConfigurationProperties {
 
 	/**
 	 * The data directory
 	 */
-	@Key("QWAZR_DATA")
-	String dataDirectory();
+	String QWAZR_DATA = "QWAZR_DATA";
 
 	/**
 	 * The configuration directory
+	 * The default value is "etc" (relative to the working directory)
 	 */
-	@Key("QWAZR_ETC_DIR")
-	@DefaultValue("etc")
-	String configDirectories();
+	String QWAZR_ETC_DIR = "QWAZR_ETC_DIR";
 
 	/**
-	 * The hostname or address uses for the listening socket
+	 * A wildcard filter for configuration files
 	 */
-	@Key("LISTEN_ADDR")
-	@DefaultValue("0.0.0.0")
-	String listenAddress();
+	String QWAZR_ETC = "QWAZR_ETC";
+
+	/**
+	 * The hostname or address uses for the listening socket.
+	 * The default value is: 0.0.0.0
+	 */
+	String LISTEN_ADDR = "LISTEN_ADDR";
 
 	/**
 	 * The public hostname or address and port for external access (node
-	 * communication)
+	 * communication). The default value is the LISTEN_ADDR.
 	 */
-	@Key("PUBLIC_ADDR")
-	String publicAddress();
+	String PUBLIC_ADDR = "PUBLIC_ADDR";
 
-	@Key("WEBAPP_REALM")
-	String webAppRealm();
+	String WEBAPP_REALM = "WEBAPP_REALM";
 
-	@Key("WEBAPP_PORT")
-	@DefaultValue("9090")
-	int webAppPort();
+	String WEBAPP_PORT = "WEBAPP_PORT";
 
-	@Key("WEBSERVICE_REALM")
-	String webServiceRealm();
+	String WEBSERVICE_REALM = "WEBSERVICE_REALM";
 
-	@Key("WEBSERVICE_PORT")
-	@DefaultValue("9091")
-	int webServicePort();
+	String WEBSERVICE_PORT = "WEBSERVICE_PORT";
 
-	@Key("MULTICAST_ADDR")
-	String multicastAddress();
+	String MULTICAST_ADDR = "MULTICAST_ADDR";
 
-	@Key("MULTICAST_PORT")
-	Integer multicastPort();
+	String MULTICAST_PORT = "MULTICAST_PORT";
+
+	String QWAZR_MASTERS = "QWAZR_MASTERS";
+
+	String QWAZR_GROUPS = "QWAZR_GROUPS";
 
 }
 

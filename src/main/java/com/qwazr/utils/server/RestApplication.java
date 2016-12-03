@@ -43,9 +43,10 @@ class RestApplication {
 			classes.add(JacksonConfig.class);
 			classes.add(JacksonJsonProvider.class);
 			classes.add(JsonMappingExceptionMapper.class);
-			if (GenericServer.INSTANCE != null)
-				if (GenericServer.INSTANCE.webServices != null)
-					classes.addAll(GenericServer.INSTANCE.webServices);
+			// Get the service from the generic server instance
+			final GenericServer server = GenericServer.getInstance();
+			if (server != null)
+				server.forEachWebServices(classes::add);
 			return classes;
 		}
 	}

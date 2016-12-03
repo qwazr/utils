@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.Collection;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public interface TrackedInterface {
 
