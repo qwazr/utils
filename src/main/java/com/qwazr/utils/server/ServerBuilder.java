@@ -16,7 +16,6 @@
 package com.qwazr.utils.server;
 
 import com.qwazr.utils.AnnotationsUtils;
-import com.qwazr.utils.file.TrackedInterface;
 import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.api.FilterInfo;
 import io.undertow.servlet.api.ListenerInfo;
@@ -45,7 +44,6 @@ public class ServerBuilder {
 	GenericServer.IdentityManagerProvider identityManagerProvider;
 	final Collection<GenericServer.Listener> startedListeners;
 	final Collection<GenericServer.Listener> shutdownListeners;
-	final Collection<TrackedInterface.FileChangeConsumer> etcConsumers;
 
 	ServerBuilder() {
 		webServices = new LinkedHashSet<>();
@@ -63,7 +61,6 @@ public class ServerBuilder {
 		restAccessLogger = null;
 		startedListeners = new LinkedHashSet<>();
 		shutdownListeners = new LinkedHashSet<>();
-		etcConsumers = new LinkedHashSet<>();
 	}
 
 	public void registerWebService(final Class<? extends ServiceInterface> webService) {
@@ -120,7 +117,4 @@ public class ServerBuilder {
 		this.restAccessLogger = logger;
 	}
 
-	public void registerEtcTracker(final TrackedInterface.FileChangeConsumer tracker) {
-		this.etcConsumers.add(tracker);
-	}
 }

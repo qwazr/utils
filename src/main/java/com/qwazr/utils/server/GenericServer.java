@@ -15,7 +15,6 @@
  */
 package com.qwazr.utils.server;
 
-import com.qwazr.utils.file.TrackedInterface;
 import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;
 import io.undertow.UndertowOptions;
@@ -32,6 +31,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.OperationsException;
 import javax.servlet.ServletException;
+import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
@@ -47,7 +47,6 @@ public abstract class GenericServer {
 	private static volatile GenericServer INSTANCE = null;
 
 	final private ExecutorService executorService;
-	final private TrackedInterface etcTracker;
 
 	final private Collection<Class<? extends ServiceInterface>> webServices;
 	final private Collection<String> webServiceNames;
@@ -83,11 +82,23 @@ public abstract class GenericServer {
 			this.configuration = configuration;
 
 			final ServerBuilder builder = new ServerBuilder();
-			this.etcTracker = TrackedInterface.build(configuration.etcDirectories, configuration.etcFileFilter);
+
+			final Set<File> etcFiles = new LinkedHashSet<>();
+
+			// List the configuration files
+			if (configuration.etcDirectories != null)
+				configuration.etcDirectories.forEach(dir -> {
+					final File[] files = configuration.etcFileFilter == null ?
+							dir.listFiles() :
+							dir.listFiles(configuration.etcFileFilter);
+					if (files != null)
+						for (File file : files)
+							etcFiles.add(file);
+				});
 
 			this.executorService = Executors.newCachedThreadPool();
 
-			build(executorService, builder, configuration);
+			build(executorService, builder, configuration, Collections.unmodifiableSet(etcFiles));
 
 			this.webServices = builder.webServices.isEmpty() ? null : new ArrayList<>(builder.webServices);
 			this.webServiceNames = builder.webServiceNames.isEmpty() ? null : new ArrayList<>(builder.webServiceNames);
@@ -109,13 +120,7 @@ public abstract class GenericServer {
 					builder.shutdownListeners.isEmpty() ? null : new ArrayList<>(builder.shutdownListeners);
 			this.connectorsStatistics = new ArrayList<>();
 
-			if (this.etcTracker != null)
-				builder.etcConsumers.forEach(this.etcTracker::register);
-
 			INSTANCE = this;
-
-			if (etcTracker != null)
-				etcTracker.check();
 		}
 	}
 
@@ -138,7 +143,7 @@ public abstract class GenericServer {
 	}
 
 	protected abstract void build(final ExecutorService executorService, final ServerBuilder builder,
-			final ServerConfiguration configuration) throws IOException;
+			final ServerConfiguration configuration, final Collection<File> etcFiles) throws IOException;
 
 	private static UdpServerThread buildUdpServer(final ServerBuilder builder, final ServerConfiguration configuration)
 			throws IOException {
