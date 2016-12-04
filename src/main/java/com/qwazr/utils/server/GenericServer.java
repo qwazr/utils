@@ -36,15 +36,17 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
-public class GenericServer {
+public abstract class GenericServer {
 
 	// One instance per JVM
 	private static volatile GenericServer INSTANCE = null;
 
-	final private ServerBuilder<?> builder;
+	final private ExecutorService executorService;
 	final private TrackedInterface etcTracker;
 
 	final private Collection<Class<? extends ServiceInterface>> webServices;
@@ -59,7 +61,7 @@ public class GenericServer {
 	final private Collection<Undertow> undertows;
 	final private Collection<DeploymentManager> deploymentManagers;
 
-	final private ServerConfiguration serverConfiguration;
+	final private ServerConfiguration configuration;
 
 	final private Collection<SecurableServletInfo> servletInfos;
 	final private Map<String, FilterInfo> filterInfos;
@@ -69,20 +71,24 @@ public class GenericServer {
 	final private Logger servletAccessLogger;
 	final private Logger restAccessLogger;
 
-	final protected UdpServerThread udpServer;
+	final private UdpServerThread udpServer;
 
 	static final private Logger LOGGER = LoggerFactory.getLogger(GenericServer.class);
 
-	protected GenericServer(final ServerConfiguration serverConfiguration) throws IOException {
+	protected GenericServer(final ServerConfiguration configuration) throws IOException {
 		synchronized (GenericServer.class) {
 			if (INSTANCE != null)
 				throw new RuntimeException("The server " + getClass().getName() + " is already running");
 
-			this.builder = new ServerBuilder<>(serverConfiguration);
-			this.etcTracker =
-					TrackedInterface.build(serverConfiguration.etcDirectories, serverConfiguration.etcFileFilter);
+			this.configuration = configuration;
 
-			this.serverConfiguration = builder.serverConfiguration;
+			final ServerBuilder builder = new ServerBuilder();
+			this.etcTracker = TrackedInterface.build(configuration.etcDirectories, configuration.etcFileFilter);
+
+			this.executorService = Executors.newCachedThreadPool();
+
+			build(executorService, builder, configuration);
+
 			this.webServices = builder.webServices.isEmpty() ? null : new ArrayList<>(builder.webServices);
 			this.webServiceNames = builder.webServiceNames.isEmpty() ? null : new ArrayList<>(builder.webServiceNames);
 			this.webServicePaths = builder.webServicePaths.isEmpty() ? null : new ArrayList<>(builder.webServicePaths);
@@ -96,7 +102,7 @@ public class GenericServer {
 			this.sessionListener = builder.sessionListener;
 			this.servletAccessLogger = builder.servletAccessLogger;
 			this.restAccessLogger = builder.restAccessLogger;
-			this.udpServer = buildUdpServer(builder);
+			this.udpServer = buildUdpServer(builder, configuration);
 			this.startedListeners =
 					builder.startedListeners.isEmpty() ? null : new ArrayList<>(builder.startedListeners);
 			this.shutdownListeners =
@@ -107,6 +113,9 @@ public class GenericServer {
 				builder.etcConsumers.forEach(this.etcTracker::register);
 
 			INSTANCE = this;
+
+			if (etcTracker != null)
+				etcTracker.check();
 		}
 	}
 
@@ -128,29 +137,24 @@ public class GenericServer {
 		return webServiceNames;
 	}
 
-	protected ServerBuilder getBuilder() {
-		return builder;
-	}
+	protected abstract void build(final ExecutorService executorService, final ServerBuilder builder,
+			final ServerConfiguration configuration) throws IOException;
 
-	protected TrackedInterface getEtcTracker() {
-		return etcTracker;
-	}
-
-	private static UdpServerThread buildUdpServer(final ServerBuilder builder) throws IOException {
+	private static UdpServerThread buildUdpServer(final ServerBuilder builder, final ServerConfiguration configuration)
+			throws IOException {
 		if (builder.packetListeners == null || builder.packetListeners.isEmpty())
 			return null;
 
-		if (builder.serverConfiguration.multicastConnector.address != null
-				&& builder.serverConfiguration.multicastConnector.port != -1)
-			return new UdpServerThread(builder.serverConfiguration.multicastConnector.address,
-					builder.serverConfiguration.multicastConnector.port, null, builder.packetListeners);
+		if (configuration.multicastConnector.address != null && configuration.multicastConnector.port != -1)
+			return new UdpServerThread(configuration.multicastConnector.address, configuration.multicastConnector.port,
+					null, builder.packetListeners);
 		else
-			return new UdpServerThread(new InetSocketAddress(builder.serverConfiguration.listenAddress,
-					builder.serverConfiguration.webServiceConnector.port), null, builder.packetListeners);
+			return new UdpServerThread(
+					new InetSocketAddress(configuration.listenAddress, configuration.webServiceConnector.port), null,
+					builder.packetListeners);
 	}
 
 	private synchronized void start(final Undertow undertow) {
-		etcTracker.check();
 		// start the server
 		undertow.start();
 		undertows.add(undertow);
@@ -175,10 +179,11 @@ public class GenericServer {
 			}
 		}
 		undertows.forEach(Undertow::stop);
+
+		executorService.shutdown();
 	}
 
-	private final IdentityManager getIdentityManager(final ServerConfiguration.WebConnector connector)
-			throws IOException {
+	private IdentityManager getIdentityManager(final ServerConfiguration.WebConnector connector) throws IOException {
 		if (identityManagerProvider == null || connector == null || connector.realm == null)
 			return null;
 		return identityManagerProvider.getIdentityManager(connector.realm);
@@ -194,17 +199,16 @@ public class GenericServer {
 		final DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
 
-		LOGGER.info("Start the connector " + serverConfiguration.listenAddress + ":" + connector.port);
+		LOGGER.info("Start the connector " + configuration.listenAddress + ":" + connector.port);
 
 		HttpHandler httpHandler = manager.start();
 		final LogMetricsHandler logMetricsHandler =
-				new LogMetricsHandler(httpHandler, accessLogger, serverConfiguration.listenAddress, connector.port,
-						jmxName);
+				new LogMetricsHandler(httpHandler, accessLogger, configuration.listenAddress, connector.port, jmxName);
 		deploymentManagers.add(manager);
 		httpHandler = logMetricsHandler;
 
 		Builder servletBuilder = Undertow.builder()
-				.addHttpListener(connector.port, serverConfiguration.listenAddress)
+				.addHttpListener(connector.port, configuration.listenAddress)
 				.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000)
 				.setHandler(httpHandler);
 		start(servletBuilder.build());
@@ -230,27 +234,27 @@ public class GenericServer {
 
 		java.util.logging.Logger.getLogger("").setLevel(Level.WARNING);
 
-		if (!serverConfiguration.dataDirectory.exists())
-			throw new IOException("The data directory does not exists: " + serverConfiguration.dataDirectory);
-		if (!serverConfiguration.dataDirectory.isDirectory())
-			throw new IOException("The data directory path is not a directory: " + serverConfiguration.dataDirectory);
-		LOGGER.info("Data directory sets to: " + serverConfiguration.dataDirectory);
+		if (!configuration.dataDirectory.exists())
+			throw new IOException("The data directory does not exists: " + configuration.dataDirectory);
+		if (!configuration.dataDirectory.isDirectory())
+			throw new IOException("The data directory path is not a directory: " + configuration.dataDirectory);
+		LOGGER.info("Data directory sets to: " + configuration.dataDirectory);
 
 		if (udpServer != null)
 			udpServer.checkStarted();
 
 		// Launch the servlet application if any
 		if (servletInfos != null && !servletInfos.isEmpty()) {
-			final IdentityManager identityManager = getIdentityManager(serverConfiguration.webAppConnector);
-			startHttpServer(serverConfiguration.webAppConnector,
+			final IdentityManager identityManager = getIdentityManager(configuration.webAppConnector);
+			startHttpServer(configuration.webAppConnector,
 					ServletApplication.getDeploymentInfo(servletInfos, identityManager, filterInfos, listenerInfos,
 							sessionPersistenceManager, sessionListener), servletAccessLogger, "WEBAPP");
 		}
 
 		// Launch the jaxrs application if any
 		if (webServices != null && !webServices.isEmpty()) {
-			final IdentityManager identityManager = getIdentityManager(serverConfiguration.webServiceConnector);
-			startHttpServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo(identityManager),
+			final IdentityManager identityManager = getIdentityManager(configuration.webServiceConnector);
+			startHttpServer(configuration.webServiceConnector, RestApplication.getDeploymentInfo(identityManager),
 					restAccessLogger, "WEBSERVICE");
 		}
 

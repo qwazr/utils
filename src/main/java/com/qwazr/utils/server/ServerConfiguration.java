@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
@@ -36,6 +37,7 @@ public class ServerConfiguration implements ConfigurationProperties {
 	private final Map<Object, Object> properties;
 
 	public final File dataDirectory;
+	public final File tempDirectory;
 
 	public final Set<File> etcDirectories;
 	public final FileFilter etcFileFilter;
@@ -65,7 +67,7 @@ public class ServerConfiguration implements ConfigurationProperties {
 		}
 
 		//Set the data directory
-		dataDirectory = getDataDirectory(getStringProperty(QWAZR_DATA));
+		dataDirectory = getDataDirectory(getStringProperty(QWAZR_DATA, null));
 		if (dataDirectory == null)
 			throw new IOException("The data directory has not been set.");
 		if (!dataDirectory.exists())
@@ -73,45 +75,55 @@ public class ServerConfiguration implements ConfigurationProperties {
 		if (!dataDirectory.isDirectory())
 			throw new IOException("The data directory is not a directory: " + dataDirectory.getAbsolutePath());
 
+		//Set the temp directory
+		tempDirectory = getTempDirectory(dataDirectory, getStringProperty(QWAZR_TEMP, null));
+		if (!tempDirectory.exists())
+			tempDirectory.mkdirs();
+		if (!dataDirectory.exists())
+			throw new IOException("The temp directory does not exists: " + tempDirectory.getAbsolutePath());
+		if (!dataDirectory.isDirectory())
+			throw new IOException("The temp directory is not a directory: " + tempDirectory.getAbsolutePath());
+
 		//Set the configuration directories
-		etcDirectories = getEtcDirectories(getStringProperty(QWAZR_ETC_DIR));
-		etcFileFilter = buildEtcFileFilter(getStringProperty(QWAZR_ETC));
+		etcDirectories = getEtcDirectories(getStringProperty(QWAZR_ETC_DIR, null));
+		etcFileFilter = buildEtcFileFilter(getStringProperty(QWAZR_ETC, null));
 
 		//Set the listen address
-		listenAddress = findListenAddress(getStringProperty(LISTEN_ADDR));
+		listenAddress = findListenAddress(getStringProperty(LISTEN_ADDR, null));
 
 		//Set the public address
-		publicAddress = findPublicAddress(getStringProperty(PUBLIC_ADDR), this.listenAddress);
+		publicAddress = findPublicAddress(getStringProperty(PUBLIC_ADDR, null), this.listenAddress);
 
 		//Set the connectors
-		webAppConnector =
-				new WebConnector(publicAddress, getIntegerProperty(WEBAPP_PORT), 9090, getStringProperty(WEBAPP_REALM));
-		webServiceConnector = new WebConnector(publicAddress, getIntegerProperty(WEBSERVICE_PORT), 9091,
-				getStringProperty(WEBSERVICE_REALM));
+		webAppConnector = new WebConnector(publicAddress, getIntegerProperty(WEBAPP_PORT, null), 9090,
+				getStringProperty(WEBAPP_REALM, null));
+		webServiceConnector = new WebConnector(publicAddress, getIntegerProperty(WEBSERVICE_PORT, null), 9091,
+				getStringProperty(WEBSERVICE_REALM, null));
 		multicastConnector =
-				new WebConnector(getStringProperty(MULTICAST_ADDR), getIntegerProperty(MULTICAST_PORT), 9091, null);
+				new WebConnector(getStringProperty(MULTICAST_ADDR, null), getIntegerProperty(MULTICAST_PORT, null),
+						9091, null);
 
 		// Collect the master address.
 		final LinkedHashSet<String> set = new LinkedHashSet<>();
 		try {
-			findMatchingAddress(getStringProperty(QWAZR_MASTERS), set);
+			findMatchingAddress(getStringProperty(QWAZR_MASTERS, null), set);
 		} catch (SocketException e) {
 			LOGGER.warn("Failed in extracting IP information. No master server is configured.");
 		}
 		this.masters = set.isEmpty() ? null : Collections.unmodifiableSet(set);
 
-		this.groups = buildSet(getStringProperty(QWAZR_GROUPS), ",; \t", true);
+		this.groups = buildSet(getStringProperty(QWAZR_GROUPS, null), ",; \t", true);
 	}
 
-	protected String getStringProperty(final String propName) {
+	public String getStringProperty(final String propName, final String defaultValue) {
 		final Object o = properties.get(propName);
-		return o == null ? null : o.toString();
+		return o == null ? defaultValue : o.toString();
 	}
 
-	protected Integer getIntegerProperty(final String propName) {
+	public Integer getIntegerProperty(final String propName, final Integer defaultValue) {
 		final Object o = properties.get(propName);
 		if (o == null)
-			return null;
+			return defaultValue;
 		if (o instanceof Number)
 			return ((Number) o).intValue();
 		return Integer.parseInt(o.toString());
@@ -138,6 +150,10 @@ public class ServerConfiguration implements ConfigurationProperties {
 	private static File getDataDirectory(final String dataDir) {
 		//Set the data directory
 		return StringUtils.isEmpty(dataDir) ? new File(System.getProperty("user.dir")) : new File(dataDir);
+	}
+
+	private static File getTempDirectory(final File dataDir, final String value) {
+		return value == null || value.isEmpty() ? new File(dataDir, "tmp") : new File(value);
 	}
 
 	private static Set<File> getEtcDirectories(final String value) {
@@ -286,8 +302,26 @@ public class ServerConfiguration implements ConfigurationProperties {
 		return props;
 	}
 
-	private static Map<String, String> argsToMap(final String... args) {
-		return argsToMapPrefix("--", args);
+	protected static Map<String, String> argsToMap(final String... args) throws IOException {
+		final Map<String, String> props = argsToMapPrefix("--", args);
+
+		// Load the QWAZR_PROPERTIES
+		String propertyFile = props.get(QWAZR_PROPERTIES);
+		if (propertyFile == null)
+			propertyFile = System.getProperty(QWAZR_PROPERTIES, System.getenv(QWAZR_PROPERTIES));
+		if (propertyFile != null) {
+			final File propFile = new File(propertyFile);
+			if (LOGGER.isInfoEnabled())
+				LOGGER.info("Load QWAZR_PROPERTIES file: " + propFile.getAbsolutePath());
+			final Properties properties = new Properties();
+			try (final FileReader reader = new FileReader(propFile)) {
+				properties.load(reader);
+			}
+			// Priority to program argument, we only put the value if the key is not present
+			properties.forEach((key, value) -> props.putIfAbsent(key.toString(), value.toString()));
+		}
+
+		return props;
 	}
 
 	public static Builder of() {
@@ -296,13 +330,13 @@ public class ServerConfiguration implements ConfigurationProperties {
 
 	public static class Builder {
 
-		private final Map<String, Object> map;
+		protected final Map<String, String> map;
 		private final Set<String> masters;
 		private final Set<String> groups;
 		private final Set<String> etcFilters;
 		private final Set<String> etcDirectories;
 
-		private Builder() {
+		protected Builder() {
 			this.map = new HashMap<>();
 			this.masters = new LinkedHashSet<>();
 			this.groups = new LinkedHashSet<>();
@@ -311,41 +345,90 @@ public class ServerConfiguration implements ConfigurationProperties {
 		}
 
 		public Builder data(final File file) {
-			map.put(QWAZR_DATA, file.getPath());
+			if (file != null)
+				map.put(QWAZR_DATA, file.getPath());
+			return this;
+		}
+
+		public Builder temp(final File file) {
+			if (file != null)
+				map.put(QWAZR_TEMP, file.getPath());
 			return this;
 		}
 
 		public Builder publicAddress(final String address) {
-			map.put(PUBLIC_ADDR, address);
+			if (address != null)
+				map.put(PUBLIC_ADDR, address);
 			return this;
 		}
 
 		public Builder listenAddress(final String address) {
-			map.put(LISTEN_ADDR, address);
+			if (address != null)
+				map.put(LISTEN_ADDR, address);
 			return this;
 		}
 
 		public Builder master(final String master) {
-			masters.add(master);
+			if (master != null)
+				masters.add(master);
 			return this;
 		}
 
 		public Builder group(final String group) {
-			groups.add(group);
+			if (group != null)
+				groups.add(group);
 			return this;
 		}
 
 		public Builder etcFilter(final String etcFilter) {
-			etcFilters.add(etcFilter);
+			if (etcFilter != null)
+				etcFilters.add(etcFilter);
 			return this;
 		}
 
-		public Builder etcDirectory(final String etcDirectory) {
-			etcDirectories.add(etcDirectory);
+		public Builder etcDirectory(final File etcDirectory) {
+			if (etcDirectory != null)
+				etcDirectories.add(etcDirectory.getAbsolutePath());
 			return this;
 		}
 
-		public ServerConfiguration build() throws IOException {
+		public Builder webAppPort(Integer webappPort) {
+			if (webappPort != null)
+				map.put(WEBAPP_PORT, webappPort.toString());
+			return this;
+		}
+
+		public Builder webServicePort(Integer webServicePort) {
+			if (webServicePort != null)
+				map.put(WEBSERVICE_PORT, webServicePort.toString());
+			return this;
+		}
+
+		public Builder webAppRealm(String webAppRealm) {
+			if (webAppRealm != null)
+				map.put(WEBAPP_REALM, webAppRealm);
+			return this;
+		}
+
+		public Builder webServiceRealm(String webServiceRealm) {
+			if (webServiceRealm != null)
+				map.put(WEBSERVICE_REALM, webServiceRealm);
+			return this;
+		}
+
+		public Builder multicastAddress(String multicastAddress) {
+			if (multicastAddress != null)
+				map.put(MULTICAST_ADDR, multicastAddress);
+			return this;
+		}
+
+		public Builder multicastPort(Integer multicastPort) {
+			if (multicastPort != null)
+				map.put(MULTICAST_PORT, multicastPort.toString());
+			return this;
+		}
+
+		public Map<String, String> finalMap() {
 			if (!masters.isEmpty())
 				map.put(QWAZR_MASTERS, StringUtils.join(masters, ','));
 			if (!groups.isEmpty())
@@ -354,8 +437,13 @@ public class ServerConfiguration implements ConfigurationProperties {
 				map.put(QWAZR_ETC, StringUtils.join(etcFilters, ','));
 			if (!etcDirectories.isEmpty())
 				map.put(QWAZR_ETC_DIR, StringUtils.join(etcDirectories, File.pathSeparatorChar));
-			return new ServerConfiguration(map);
+			return map;
 		}
+
+		public ServerConfiguration build() throws IOException {
+			return new ServerConfiguration(finalMap());
+		}
+
 	}
 }
 

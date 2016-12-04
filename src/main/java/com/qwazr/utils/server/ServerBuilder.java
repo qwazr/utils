@@ -26,13 +26,9 @@ import org.slf4j.Logger;
 
 import javax.ws.rs.Path;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-public class ServerBuilder<T extends ServerConfiguration> {
+public class ServerBuilder {
 
-	final ExecutorService executorService;
-	final T serverConfiguration;
 	final Collection<Class<? extends ServiceInterface>> webServices;
 	final Collection<String> webServicePaths;
 	final Collection<String> webServiceNames;
@@ -51,10 +47,7 @@ public class ServerBuilder<T extends ServerConfiguration> {
 	final Collection<GenericServer.Listener> shutdownListeners;
 	final Collection<TrackedInterface.FileChangeConsumer> etcConsumers;
 
-	ServerBuilder(final T serverConfiguration, final ExecutorService executorService) {
-		this.executorService = executorService == null ? Executors.newCachedThreadPool() : executorService;
-		this.serverConfiguration = serverConfiguration;
-		// Load the configuration files
+	ServerBuilder() {
 		webServices = new LinkedHashSet<>();
 		webServicePaths = new LinkedHashSet<>();
 		webServiceNames = new LinkedHashSet<>();
@@ -71,11 +64,6 @@ public class ServerBuilder<T extends ServerConfiguration> {
 		startedListeners = new LinkedHashSet<>();
 		shutdownListeners = new LinkedHashSet<>();
 		etcConsumers = new LinkedHashSet<>();
-	}
-
-	public ServerBuilder(final T serverConfiguration) {
-		this(serverConfiguration, Executors.newCachedThreadPool());
-		// Load the configuration files
 	}
 
 	public void registerWebService(final Class<? extends ServiceInterface> webService) {
@@ -130,14 +118,6 @@ public class ServerBuilder<T extends ServerConfiguration> {
 
 	public void setRestAccessLogger(final Logger logger) {
 		this.restAccessLogger = logger;
-	}
-
-	public T getServerConfiguration() {
-		return serverConfiguration;
-	}
-
-	public ExecutorService getExecutorService() {
-		return executorService;
 	}
 
 	public void registerEtcTracker(final TrackedInterface.FileChangeConsumer tracker) {

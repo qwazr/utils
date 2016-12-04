@@ -18,9 +18,20 @@ package com.qwazr.utils.server;
 public interface ConfigurationProperties {
 
 	/**
+	 * An optional path to a property configuration file
+	 */
+	String QWAZR_PROPERTIES = "QWAZR_PROPERTIES";
+
+	/**
 	 * The data directory
 	 */
 	String QWAZR_DATA = "QWAZR_DATA";
+
+	/**
+	 * The temp files directory.
+	 * The default value is "{QWAZR_DATA}/tmp"
+	 */
+	String QWAZR_TEMP = "QWAZR_TEMP";
 
 	/**
 	 * The configuration directory
