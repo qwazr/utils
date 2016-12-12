@@ -15,6 +15,9 @@
  */
 package com.qwazr.utils;
 
+import com.fasterxml.uuid.EthernetAddress;
+import com.fasterxml.uuid.Generators;
+import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -24,31 +27,38 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.UUID;
 
 public class HashUtils {
 
-    public static final int getMurmur3Mod(final String hashString, Charset charset, final int mod) {
-	HashFunction m3 = Hashing.murmur3_128();
-	if (charset == null)
-	    charset = Charset.defaultCharset();
-	return (Math.abs(m3.hashString(hashString, charset).asInt()) % mod);
-    }
-
-    public static String md5Hex(File file) throws IOException {
-	FileInputStream fis = new FileInputStream(file);
-	try {
-	    BufferedInputStream bis = new BufferedInputStream(fis);
-	    try {
-		return DigestUtils.md5Hex(bis);
-	    } finally {
-		IOUtils.closeQuietly(bis);
-	    }
-	} finally {
-	    IOUtils.closeQuietly(fis);
+	public static final int getMurmur3Mod(final String hashString, Charset charset, final int mod) {
+		HashFunction m3 = Hashing.murmur3_128();
+		if (charset == null)
+			charset = Charset.defaultCharset();
+		return (Math.abs(m3.hashString(hashString, charset).asInt()) % mod);
 	}
-    }
 
-    public static String md5Hex(String text) {
-	return DigestUtils.md5Hex(text);
-    }
+	public static String md5Hex(File file) throws IOException {
+		FileInputStream fis = new FileInputStream(file);
+		try {
+			BufferedInputStream bis = new BufferedInputStream(fis);
+			try {
+				return DigestUtils.md5Hex(bis);
+			} finally {
+				IOUtils.closeQuietly(bis);
+			}
+		} finally {
+			IOUtils.closeQuietly(fis);
+		}
+	}
+
+	public static String md5Hex(String text) {
+		return DigestUtils.md5Hex(text);
+	}
+
+	private static TimeBasedGenerator uuidGenerator = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
+
+	public static UUID newTimeBasedUUID() {
+		return uuidGenerator.generate();
+	}
 }
