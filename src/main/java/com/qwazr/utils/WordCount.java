@@ -16,11 +16,12 @@
 
 package com.qwazr.utils;
 
+import com.google.common.util.concurrent.AtomicDouble;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class WordCount {
 
@@ -63,7 +64,7 @@ public class WordCount {
 	public static float compare(WordCount dic1, WordCount dic2) {
 		HashSet<String> wordSet = new HashSet<>(dic1.wordCount.keySet());
 		wordSet.addAll(dic2.wordCount.keySet());
-		AtomicLong similarity = new AtomicLong();
+		AtomicDouble similarity = new AtomicDouble();
 		wordSet.forEach(word -> {
 			final AtomicInteger c1 = dic1.wordCount.get(word);
 			final AtomicInteger c2 = dic2.wordCount.get(word);
@@ -72,7 +73,7 @@ public class WordCount {
 			final double v1 = c1.doubleValue();
 			final double v2 = c2.doubleValue();
 			final double delta = v1 > v2 ? v2 / v1 : v1 / v2;
-			similarity.addAndGet(Double.doubleToLongBits(delta));
+			similarity.addAndGet(delta);
 		});
 		return similarity.floatValue() / (float) wordSet.size();
 	}
