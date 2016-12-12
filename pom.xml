@@ -134,7 +134,8 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>20.0</version>
+            <version>19.0</version>
+            <!-- v19.0 required by Cassandra Driver in qwazr/library-->
         </dependency>
         <dependency>
             <groupId>com.cybozu.labs</groupId>
