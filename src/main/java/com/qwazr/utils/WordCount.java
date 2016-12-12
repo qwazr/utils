@@ -16,13 +16,11 @@
 
 package com.qwazr.utils;
 
-import com.google.common.util.concurrent.AtomicDouble;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class WordCount {
 
@@ -59,30 +57,22 @@ public class WordCount {
 	public int addWord(String word) {
 		if (word == null)
 			return 0;
-		AtomicInteger count = wordCount.get(word);
-		if (count == null) {
-			count = new AtomicInteger();
-			wordCount.put(word, count);
-		}
-		return count.incrementAndGet();
+		return wordCount.computeIfAbsent(word, k -> new AtomicInteger()).incrementAndGet();
 	}
 
 	public static float compare(WordCount dic1, WordCount dic2) {
-		HashSet<String> wordSet = new HashSet<String>(dic1.wordCount.keySet());
+		HashSet<String> wordSet = new HashSet<>(dic1.wordCount.keySet());
 		wordSet.addAll(dic2.wordCount.keySet());
-		AtomicDouble similarity = new AtomicDouble();
-		wordSet.forEach(new Consumer<String>() {
-			@Override
-			public void accept(String word) {
-				final AtomicInteger c1 = dic1.wordCount.get(word);
-				final AtomicInteger c2 = dic2.wordCount.get(word);
-				if (c1 == null || c2 == null)
-					return;
-				final double v1 = c1.doubleValue();
-				final double v2 = c2.doubleValue();
-				final double delta = v1 > v2 ? v2 / v1 : v1 / v2;
-				similarity.addAndGet(delta);
-			}
+		AtomicLong similarity = new AtomicLong();
+		wordSet.forEach(word -> {
+			final AtomicInteger c1 = dic1.wordCount.get(word);
+			final AtomicInteger c2 = dic2.wordCount.get(word);
+			if (c1 == null || c2 == null)
+				return;
+			final double v1 = c1.doubleValue();
+			final double v2 = c2.doubleValue();
+			final double delta = v1 > v2 ? v2 / v1 : v1 / v2;
+			similarity.addAndGet(Double.doubleToLongBits(delta));
 		});
 		return similarity.floatValue() / (float) wordSet.size();
 	}
