@@ -4,9 +4,10 @@ node {
 
     git url: 'https://github.com/qwazr/utils.git'
 
-    stage 'Build'
+    stage 'Build' 
 
     withMaven(maven: 'Maven') {
         sh "mvn -U clean deploy"
     }
+
 }
