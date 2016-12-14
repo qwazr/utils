@@ -15,8 +15,6 @@
  */
 package com.qwazr.utils;
 
-import com.qwazr.utils.server.ServerException;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Array;
@@ -34,7 +32,7 @@ public class FieldMapWrapper<T> {
 	}
 
 	/**
-	 * Build a new Map by reading the IndexField annotations
+	 * Build a new Map by reading the annotations
 	 *
 	 * @param row the record
 	 * @return a new Map
@@ -67,7 +65,7 @@ public class FieldMapWrapper<T> {
 					return;
 				}
 			} catch (IOException | ReflectiveOperationException e) {
-				throw new ServerException("Cannot convert the field " + name, e);
+				throw new IllegalArgumentException("Cannot convert the field " + name, e);
 			}
 		});
 		return map.isEmpty() ? null : map;
@@ -143,7 +141,7 @@ public class FieldMapWrapper<T> {
 				throw new UnsupportedOperationException(
 						"Field " + fieldName + " not assignable: " + fieldType + " -> " + fieldValueType);
 			} catch (ReflectiveOperationException | IOException e) {
-				throw new ServerException(e);
+				throw new IllegalStateException(e);
 			}
 		});
 		return record;

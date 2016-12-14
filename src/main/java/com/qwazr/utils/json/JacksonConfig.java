@@ -16,14 +16,11 @@
 package com.qwazr.utils.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.qwazr.utils.server.ServiceInterface;
 
-import javax.ws.rs.Produces;
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 
 @Provider
-@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
 public class JacksonConfig implements ContextResolver<ObjectMapper> {
 
 	public JacksonConfig() {

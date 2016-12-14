@@ -15,10 +15,6 @@
  */
 package com.qwazr.utils.json;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.qwazr.utils.server.ServerException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -43,12 +39,10 @@ public class DirectoryJsonManager<T> {
 
 	private final Class<T> instanceClass;
 
-	protected DirectoryJsonManager(File directory, Class<T> instanceClass)
-					throws IOException,
-					ServerException {
+	protected DirectoryJsonManager(File directory, Class<T> instanceClass) throws IOException {
 		this.instanceClass = instanceClass;
 		this.directory = directory;
-		this.instancesMap = new LinkedHashMap<String, Pair<Long, T>>();
+		this.instancesMap = new LinkedHashMap<>();
 		load();
 	}
 
@@ -56,8 +50,7 @@ public class DirectoryJsonManager<T> {
 		return new File(directory, name + ".json");
 	}
 
-	protected void load() throws IOException,
-					ServerException {
+	protected void load() throws IOException {
 		try {
 			File[] files = directory.listFiles(JsonFileFilter.INSTANCE);
 			if (files == null)
@@ -78,10 +71,10 @@ public class DirectoryJsonManager<T> {
 	}
 
 	private void buildCache() {
-		instancesCache = new LinkedHashMap<String, Pair<Long, T>>(instancesMap);
+		instancesCache = new LinkedHashMap<>(instancesMap);
 	}
 
-	protected T delete(String name) throws ServerException, IOException {
+	protected T delete(String name) throws IOException {
 		if (StringUtils.isEmpty(name))
 			return null;
 		name = name.intern();
@@ -103,8 +96,7 @@ public class DirectoryJsonManager<T> {
 		return item;
 	}
 
-	protected void set(String name, T instance)
-					throws IOException, ServerException {
+	protected void set(String name, T instance) throws IOException {
 		if (instance == null)
 			return;
 		if (StringUtils.isEmpty(name))
