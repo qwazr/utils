@@ -23,21 +23,22 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
-public class JsonMapper {
+public class JsonMapper extends ObjectMapper {
 
-	public final static ObjectMapper MAPPER;
-
-	public final static TypeReference<TreeMap<String, String>> MapStringStringTypeRef = new TypeReference<TreeMap<String, String>>() {
-	};
-
-	public final static TypeReference<TreeMap<String, ArrayList<String>>> MapStringListStringTypeRef = new TypeReference<TreeMap<String, ArrayList<String>>>() {
-	};
-
-	static {
-		MAPPER = new ObjectMapper();
-		MAPPER.configure(Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
-		MAPPER.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-		MAPPER.configure(SerializationFeature.INDENT_OUTPUT, true);
+	public JsonMapper() {
+		configure(Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
+		configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+		configure(SerializationFeature.INDENT_OUTPUT, true);
 	}
+
+	public final static JsonMapper MAPPER = new JsonMapper();
+
+	public final static TypeReference<TreeMap<String, String>> MapStringStringTypeRef =
+			new TypeReference<TreeMap<String, String>>() {
+			};
+
+	public final static TypeReference<TreeMap<String, ArrayList<String>>> MapStringListStringTypeRef =
+			new TypeReference<TreeMap<String, ArrayList<String>>>() {
+			};
 
 }
