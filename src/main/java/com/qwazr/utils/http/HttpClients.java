@@ -55,8 +55,8 @@ public class HttpClients {
 			}
 		}
 
-		final Registry<ConnectionSocketFactory> sfr = RegistryBuilder.<ConnectionSocketFactory>create()
-				.register("http", PlainConnectionSocketFactory.getSocketFactory())
+		final Registry<ConnectionSocketFactory> sfr = RegistryBuilder.<ConnectionSocketFactory>create().register("http",
+				PlainConnectionSocketFactory.getSocketFactory())
 				.register("https", ssl != null ? ssl : SSLConnectionSocketFactory.getSocketFactory())
 				.build();
 
@@ -67,7 +67,6 @@ public class HttpClients {
 
 		HTTP_CLIENT = HttpClientBuilder.create().setConnectionManager(CNX_MANAGER).build();
 	}
-
 
 	public static final CloseableHttpClient UNSECURE_HTTP_CLIENT;
 	public static final PoolingHttpClientConnectionManager UNSECURE_CNX_MANAGER;
@@ -88,19 +87,18 @@ public class HttpClients {
 			SSLConnectionSocketFactory sslSocketFactory =
 					new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
 
-			Registry<ConnectionSocketFactory> sfr = RegistryBuilder.<ConnectionSocketFactory>create()
-					.register("http", PlainConnectionSocketFactory.getSocketFactory())
-					.register("https", sslSocketFactory)
-					.build();
+			Registry<ConnectionSocketFactory> sfr = RegistryBuilder.<ConnectionSocketFactory>create().register("http",
+					PlainConnectionSocketFactory.getSocketFactory()).register("https", sslSocketFactory).build();
 
 			UNSECURE_CNX_MANAGER = new PoolingHttpClientConnectionManager(sfr);
 			UNSECURE_CNX_MANAGER.setDefaultMaxPerRoute(100);
 			UNSECURE_CNX_MANAGER.setMaxTotal(200);
 			UNSECURE_CNX_MANAGER.setValidateAfterInactivity(1000);
 
-			UNSECURE_HTTP_CLIENT =
-					HttpClientBuilder.create().setSSLContext(sslContext).setConnectionManager(UNSECURE_CNX_MANAGER)
-							.build();
+			UNSECURE_HTTP_CLIENT = HttpClientBuilder.create()
+					.setSSLContext(sslContext)
+					.setConnectionManager(UNSECURE_CNX_MANAGER)
+					.build();
 
 		} catch (Exception e) {
 			throw new RuntimeException(e);
