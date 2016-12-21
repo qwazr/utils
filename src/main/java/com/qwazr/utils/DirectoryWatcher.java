@@ -28,14 +28,13 @@ import java.util.function.Consumer;
 
 public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 
-	private final static Logger logger = LoggerFactory.getLogger(DirectoryWatcher.class);
+	private final static Logger LOGGER = LoggerFactory.getLogger(DirectoryWatcher.class);
 
 	private final Path rootPath;
 	private final WatchService watcher;
 	private final HashSet<Consumer<Path>> consumers;
 
 	private volatile Consumer<Path>[] consumersCache;
-	private volatile Exception exception;
 
 	private final HashMap<WatchKey, Path> keys;
 
@@ -43,13 +42,12 @@ public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 		FileSystem fs = FileSystems.getDefault();
 		this.watcher = fs.newWatchService();
 		this.rootPath = rootPath;
-		this.keys = new HashMap<WatchKey, Path>();
-		this.consumers = new HashSet<Consumer<Path>>();
+		this.keys = new HashMap<>();
+		this.consumers = new HashSet<>();
 		this.consumersCache = new Consumer[0];
-		exception = null;
 	}
 
-	private final static HashMap<Path, DirectoryWatcher> watchers = new HashMap<Path, DirectoryWatcher>();
+	private final static HashMap<Path, DirectoryWatcher> watchers = new HashMap<>();
 
 	/**
 	 * <p>Create a new DirectoryWatcher instance.</p>
@@ -63,7 +61,8 @@ public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 
 			DirectoryWatcher watcher = watchers.get(rootPath);
 			if (watcher == null) {
-				logger.info("New directory watcher: " + rootPath);
+				if (LOGGER.isInfoEnabled())
+					LOGGER.info("New directory watcher: " + rootPath);
 				watcher = new DirectoryWatcher(rootPath);
 				watchers.put(rootPath, watcher);
 			}
@@ -108,7 +107,6 @@ public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 
 	@Override
 	public void run() {
-		exception = null;
 		try {
 			registerDirectory(rootPath, watcher, keys);
 			// Infinite loop.
@@ -141,10 +139,12 @@ public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 						break;
 				}
 			}
-		} catch (IOException | InterruptedException e) {
-			exception = e;
-			if (logger.isWarnEnabled())
-				logger.warn("Directory watcher ends: " + rootPath, e);
+		} catch (ClosedWatchServiceException e1) {
+			if (LOGGER.isDebugEnabled())
+				LOGGER.debug("Directory watcher ends: " + rootPath, e1);
+		} catch (IOException | InterruptedException e2) {
+			if (LOGGER.isWarnEnabled())
+				LOGGER.warn("Directory watcher ends: " + rootPath, e2);
 		}
 	}
 
