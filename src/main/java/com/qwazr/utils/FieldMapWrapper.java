@@ -75,13 +75,28 @@ public class FieldMapWrapper<T> {
 	 * Buid a collection of Map by reading the IndexFields of the annotated documents
 	 *
 	 * @param rows a collection of records
-	 * @return a new array of map objects
+	 * @return a new list of mapped objects
 	 */
 	protected List<Map<String, Object>> newMapCollection(final Collection<T> rows) {
 		if (rows == null || rows.isEmpty())
 			return null;
 		final List<Map<String, Object>> list = new ArrayList<>(rows.size());
 		rows.forEach(row -> list.add(newMap(row)));
+		return list;
+	}
+
+	/**
+	 * Buid a collection of Map by reading the IndexFields of the annotated documents
+	 *
+	 * @param rows an array of records
+	 * @return a new list of mapped objects
+	 */
+	protected List<Map<String, Object>> newMapArray(final T... rows) {
+		if (rows == null || rows.length == 0)
+			return null;
+		final List<Map<String, Object>> list = new ArrayList<>(rows.length);
+		for (T row : rows)
+			list.add(newMap(row));
 		return list;
 	}
 
@@ -147,7 +162,7 @@ public class FieldMapWrapper<T> {
 		return record;
 	}
 
-	protected List<T> toRecords(final List<Map<String, Object>> docs) {
+	protected List<T> toRecords(final Collection<Map<String, Object>> docs) {
 		if (docs == null)
 			return null;
 		final List<T> records = new ArrayList<>();
@@ -158,6 +173,20 @@ public class FieldMapWrapper<T> {
 				throw new RuntimeException(e);
 			}
 		});
+		return records;
+	}
+
+	protected List<T> toRecords(final Map<String, Object>... docs) {
+		if (docs == null)
+			return null;
+		final List<T> records = new ArrayList<>();
+		for (Map<String, Object> doc : docs) {
+			try {
+				records.add(toRecord(doc));
+			} catch (ReflectiveOperationException e) {
+				throw new RuntimeException(e);
+			}
+		}
 		return records;
 	}
 }
