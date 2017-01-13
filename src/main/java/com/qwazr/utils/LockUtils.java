@@ -15,7 +15,6 @@
  */
 package com.qwazr.utils;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -32,6 +31,8 @@ final public class LockUtils {
 			r.lock();
 			try {
 				return call.call();
+			} catch (RuntimeException e) {
+				throw e;
 			} catch (Exception e) {
 				throw new InsideLockException(e);
 			} finally {
@@ -52,6 +53,8 @@ final public class LockUtils {
 			r.lock();
 			try {
 				run.run();
+			} catch (RuntimeException e) {
+				throw e;
 			} catch (Exception e) {
 				throw new InsideLockException(e);
 			} finally {
@@ -72,6 +75,8 @@ final public class LockUtils {
 			w.lock();
 			try {
 				return call.call();
+			} catch (RuntimeException e) {
+				throw e;
 			} catch (Exception e) {
 				throw new InsideLockException(e);
 			} finally {
@@ -116,6 +121,8 @@ final public class LockUtils {
 				if (result != null)
 					return result;
 				return write.call();
+			} catch (RuntimeException e) {
+				throw e;
 			} catch (Exception e) {
 				throw new InsideLockException(e);
 			} finally {
