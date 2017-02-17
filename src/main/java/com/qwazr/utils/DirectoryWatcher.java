@@ -54,9 +54,11 @@ public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 	 * <p>A DirectoryWatcher is a running thread listening for events in the file system.</p>
 	 *
 	 * @param rootPath The path of the monitored directory
-	 * @throws IOException
+	 * @param consumer The consumer called each time a file event occurs
+	 * @return a new DirectoryWatcher
+	 * @throws IOException if any I/O error occurs
 	 */
-	public static DirectoryWatcher register(Path rootPath, Consumer<Path> consumer) throws IOException {
+	public static DirectoryWatcher register(final Path rootPath, final Consumer<Path> consumer) throws IOException {
 		synchronized (watchers) {
 
 			DirectoryWatcher watcher = watchers.get(rootPath);
@@ -71,14 +73,14 @@ public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 		}
 	}
 
-	private synchronized void register(Consumer<Path> consumer) {
+	private synchronized void register(final Consumer<Path> consumer) {
 		synchronized (consumers) {
 			if (consumers.add(consumer))
 				consumersCache = consumers.toArray(new Consumer[consumers.size()]);
 		}
 	}
 
-	public synchronized void unregister(Consumer<Path> consumer) throws IOException {
+	public synchronized void unregister(final Consumer<Path> consumer) throws IOException {
 		synchronized (consumers) {
 			if (consumers.remove(consumer))
 				consumersCache = consumers.toArray(new Consumer[consumers.size()]);
@@ -91,8 +93,8 @@ public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 		}
 	}
 
-	final public static void registerDirectory(Path rootPath, WatchService watcher, HashMap<WatchKey, Path> keys)
-			throws IOException {
+	public static void registerDirectory(final Path rootPath, final WatchService watcher,
+			final HashMap<WatchKey, Path> keys) throws IOException {
 		Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
 			@Override
 			final public FileVisitResult preVisitDirectory(Path file, BasicFileAttributes attrs) throws IOException {

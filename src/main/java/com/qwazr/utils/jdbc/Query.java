@@ -34,14 +34,9 @@ import java.util.logging.Logger;
  * Represents an SQL query. In JDBC view, a query contains at least a
  * PreparedStatement. It can also contains a ResultSet. Statement and ResultSet
  * are automatically closed when Query or Transaction is closed.
- * <p>
  * The most important behavior is to return a list of Pojo instead of a
  * ResultSet.
- * </p>
- * <p>
  * The example show how to use it.
- * </p>
- * <p>
  * <pre>
  * Transaction transaction = null;
  * try {
@@ -124,9 +119,9 @@ public class Query {
 				if (method == null)
 					throw new Exception("No method found for column " + columnIndex, e);
 				throw new Exception(
-								"Error on column " + columnIndex + " method " + method.getName() + (colObject == null ?
-												"" :
-												" object class is " + colObject.getClass().getName()), e);
+						"Error on column " + columnIndex + " method " + method.getName() + (colObject == null ?
+								"" :
+								" object class is " + colObject.getClass().getName()), e);
 			}
 		}
 	}
@@ -148,8 +143,8 @@ public class Query {
 				if (propDesc.getWriteMethod() != null && propDesc.getName().equalsIgnoreCase(columnName)) {
 					methods.add(new MethodColumnIndex(i, propDesc.getWriteMethod()));
 					if (logger.isLoggable(Level.FINEST))
-						logger.finest("Found property \"" + propDesc.getName() + "\" for column name \"" + columnName
-										+ "\"");
+						logger.finest(
+								"Found property \"" + propDesc.getName() + "\" for column name \"" + columnName + "\"");
 					break;
 				}
 			}
@@ -159,8 +154,8 @@ public class Query {
 		moveToFirstResult();
 		int limit = maxResults;
 		while (resultSet.next() && limit-- != 0) {
-			@SuppressWarnings("unchecked") T bean = (T) Beans
-							.instantiate(beanClass.getClassLoader(), beanClass.getCanonicalName());
+			@SuppressWarnings("unchecked") T bean =
+					(T) Beans.instantiate(beanClass.getClassLoader(), beanClass.getCanonicalName());
 			for (MethodColumnIndex methodColumnIndex : methods)
 				methodColumnIndex.invoke(bean, resultSet);
 			list.add(bean);

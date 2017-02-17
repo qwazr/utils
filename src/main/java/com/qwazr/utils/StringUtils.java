@@ -67,7 +67,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	 * @return a base64 encoded string
 	 * @throws UnsupportedEncodingException if the encoding is not supported
 	 */
-	public final static String base64encode(String text) throws UnsupportedEncodingException {
+	public static String base64encode(final String text) throws UnsupportedEncodingException {
 		if (isEmpty(text))
 			return null;
 		return Base64.encodeBase64URLSafeString(text.getBytes("UTF-8"));
@@ -77,13 +77,13 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	 * @param base64String the base64 string to decode
 	 * @return a decoded string
 	 */
-	public final static String base64decode(String base64String) {
+	public static String base64decode(final String base64String) {
 		if (isEmpty(base64String))
 			return null;
 		return new String(Base64.decodeBase64(base64String));
 	}
 
-	public final static int compareNullValues(final Object v1, final Object v2) {
+	public static int compareNullValues(final Object v1, final Object v2) {
 		if (v1 == null) {
 			if (v2 == null)
 				return 0;
@@ -94,7 +94,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		return 0;
 	}
 
-	public final static int compareNullString(final String v1, final String v2) {
+	public static int compareNullString(final String v1, final String v2) {
 		if (v1 == null) {
 			if (v2 == null)
 				return 0;
@@ -105,7 +105,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		return v1.compareTo(v2);
 	}
 
-	public static int compareNullHashCode(Object o1, Object o2) {
+	public static int compareNullHashCode(final Object o1, final Object o2) {
 		if (o1 == null) {
 			if (o2 == null)
 				return 0;
@@ -116,15 +116,15 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		return o2.hashCode() - o1.hashCode();
 	}
 
-	public final static String leftPad(int value, int size) {
+	public static String leftPad(final int value, final int size) {
 		return org.apache.commons.lang3.StringUtils.leftPad(Integer.toString(value), size, '0');
 	}
 
-	public final static String leftPad(long value, int size) {
+	public static String leftPad(final long value, final int size) {
 		return org.apache.commons.lang3.StringUtils.leftPad(Long.toString(value), size, '0');
 	}
 
-	public final static String[] toStringArray(Collection<? extends Object> collection, boolean sort) {
+	public static String[] toStringArray(final Collection<? extends Object> collection, final boolean sort) {
 		if (collection == null)
 			return null;
 		String[] array = new String[collection.size()];
@@ -136,7 +136,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		return array;
 	}
 
-	public final static CharSequence fastConcatCharSequence(final CharSequence... charSeqs) {
+	public static CharSequence fastConcatCharSequence(final CharSequence... charSeqs) {
 		if (charSeqs == null)
 			return null;
 		if (charSeqs.length == 1)
@@ -148,17 +148,17 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		return sb;
 	}
 
-	public final static String fastConcat(final CharSequence... charSeqs) {
+	public static String fastConcat(final CharSequence... charSeqs) {
 		CharSequence cs = fastConcatCharSequence(charSeqs);
 		return cs == null ? null : cs.toString();
 	}
 
-	public static void appendArray(StringBuilder sb, Object[] array) {
+	public static void appendArray(final StringBuilder sb, final Object[] array) {
 		for (Object object : array)
 			appendObject(sb, object);
 	}
 
-	public static void appendCollection(StringBuilder sb, Collection<?> collection) {
+	public static void appendCollection(final StringBuilder sb, final Collection<?> collection) {
 		for (Object object : collection)
 			appendObject(sb, object);
 	}
@@ -172,7 +172,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 			sb.append(object.toString());
 	}
 
-	public final static CharSequence fastConcatCharSequence(final Object... objects) {
+	public static CharSequence fastConcatCharSequence(final Object... objects) {
 		if (objects == null)
 			return null;
 		if (objects.length == 1)
@@ -185,7 +185,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		return sb;
 	}
 
-	public final static String fastConcat(final Object... objects) {
+	public static String fastConcat(final Object... objects) {
 		CharSequence cs = fastConcatCharSequence(objects);
 		return cs == null ? null : cs.toString();
 	}
@@ -197,10 +197,10 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	 * @param collectEmptyLines true if the empty lines should be collected
 	 * @param lineCollector     the collection filled with the found lines
 	 * @return the number of lines found
-	 * @throws IOException
+	 * @throws IOException if any I/O error occurs
 	 */
-	public final static int linesCollector(String text, boolean collectEmptyLines, Collection<String> lineCollector)
-			throws IOException {
+	public static int linesCollector(final String text, final boolean collectEmptyLines,
+			final Collection<String> lineCollector) throws IOException {
 		if (text == null)
 			return 0;
 		int i = 0;
@@ -225,7 +225,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	 * @param escaped_chars a list of char to escape
 	 * @return the escaped string
 	 */
-	public static String escape_chars(String source, char[] escaped_chars) {
+	public static String escape_chars(final String source, final char[] escaped_chars) {
 		if (escaped_chars == null || escaped_chars.length == 0)
 			return source;
 		if (source == null || source.length() == 0)
@@ -247,18 +247,18 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	 * @param str the string to split
 	 * @return an array with one item per line
 	 */
-	public static String[] splitLines(String str) {
+	public static String[] splitLines(final String str) {
 		return split(str, System.lineSeparator());
 	}
 
 	/**
 	 * Ensure the string ends with the given suffix
 	 *
-	 * @param str
-	 * @param suffix
+	 * @param str    the string to test
+	 * @param suffix the suffix to add
 	 * @return a string
 	 */
-	public static String ensureSuffix(String str, String suffix) {
+	public static String ensureSuffix(final String str, final String suffix) {
 		if (suffix == null)
 			return str;
 		if (str == null)
@@ -269,11 +269,11 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	}
 
 	/**
-	 * @param text
-	 * @param replacements
-	 * @return
+	 * @param text         the string to check
+	 * @param replacements the replacement map
+	 * @return the new string with the replacements
 	 */
-	public static String replaceEach(String text, Map<String, Object> replacements) {
+	public static String replaceEach(final String text, final Map<String, Object> replacements) {
 		if (replacements == null)
 			return text;
 		String[] search = ArrayUtils.toArray(replacements.keySet());
@@ -281,7 +281,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		return replaceEach(text, search, replace);
 	}
 
-	public static boolean anyDigit(CharSequence chars) {
+	public static boolean anyDigit(final CharSequence chars) {
 		if (chars == null)
 			return false;
 		return chars.chars().anyMatch(new IntPredicate() {
@@ -292,7 +292,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		});
 	}
 
-	public static boolean anyAlpha(CharSequence chars) {
+	public static boolean anyAlpha(final CharSequence chars) {
 		if (chars == null)
 			return false;
 		return chars.chars().anyMatch(new IntPredicate() {

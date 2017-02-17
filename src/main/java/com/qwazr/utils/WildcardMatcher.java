@@ -44,10 +44,10 @@ public class WildcardMatcher {
 	 * Match the passed name with the current pattern
 	 *
 	 * @param name            the string to test
-	 * @param caseSensitivity
+	 * @param caseSensitivity enable or disable the case sentisitiviy
 	 * @return true if the name match the pattern
 	 */
-	public boolean match(String name, IOCase caseSensitivity) {
+	public boolean match(final String name, IOCase caseSensitivity) {
 		if (name == null && wcs == null) {
 			return true;
 		}
@@ -101,7 +101,7 @@ public class WildcardMatcher {
 						}
 						int repeat = caseSensitivity.checkIndexOf(name, textIdx + 1, wcs[wcsIdx]);
 						if (repeat >= 0) {
-							backtrack.push(new int[]{wcsIdx, repeat});
+							backtrack.push(new int[] { wcsIdx, repeat });
 						}
 					} else {
 						// matching from current position
@@ -152,7 +152,7 @@ public class WildcardMatcher {
 		// package level so a unit test may run on this
 
 		if (text.indexOf('?') == -1 && text.indexOf('*') == -1) {
-			return new String[]{text};
+			return new String[] { text };
 		}
 
 		char[] array = text.toCharArray();

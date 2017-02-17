@@ -47,7 +47,7 @@ public class PIDFile {
 	 * Save the PID number in the PID file
 	 *
 	 * @return this instance
-	 * @throws IOException
+	 * @throws IOException if any I/O error occurs
 	 */
 	public PIDFile savePidToFile() throws IOException {
 		FileOutputStream fos = new FileOutputStream(pidFile);

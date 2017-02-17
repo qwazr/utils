@@ -19,20 +19,19 @@ import org.slf4j.Logger;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ExceptionUtils extends org.apache.commons.lang3.exception.ExceptionUtils {
 
-	public final static String getLocation(StackTraceElement[] stackTrace, String prefix) {
+	public static String getLocation(StackTraceElement[] stackTrace, String prefix) {
 		for (StackTraceElement element : stackTrace)
 			if (element.getClassName().startsWith(prefix))
 				return element.toString();
 		return null;
 	}
 
-	public final static String getFirstLocation(StackTraceElement[] stackTrace) {
+	public static String getFirstLocation(StackTraceElement[] stackTrace) {
 		for (StackTraceElement element : stackTrace) {
 			String ele = element.toString();
 			if (ele != null && ele.length() > 0)
@@ -41,7 +40,7 @@ public class ExceptionUtils extends org.apache.commons.lang3.exception.Exception
 		return null;
 	}
 
-	public final static String getFullStackTrace(StackTraceElement[] stackTrace) {
+	public static String getFullStackTrace(StackTraceElement[] stackTrace) {
 		StringWriter sw = null;
 		PrintWriter pw = null;
 		try {
@@ -56,24 +55,15 @@ public class ExceptionUtils extends org.apache.commons.lang3.exception.Exception
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T extends Exception> T throwException(final Exception exception, Class<T> exceptionClass) throws T {
+	public static <T extends Exception> T throwException(final Exception exception, final Class<T> exceptionClass)
+			throws T {
 		if (exception == null)
 			return null;
 		if (exceptionClass.isInstance(exception))
 			throw (T) exception;
 		try {
 			return exceptionClass.getConstructor(Exception.class).newInstance(exception);
-		} catch (InstantiationException e) {
-			throw new RuntimeException(e);
-		} catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
-		} catch (IllegalArgumentException e) {
-			throw new RuntimeException(e);
-		} catch (InvocationTargetException e) {
-			throw new RuntimeException(e);
-		} catch (NoSuchMethodException e) {
-			throw new RuntimeException(e);
-		} catch (SecurityException e) {
+		} catch (ReflectiveOperationException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -118,19 +108,16 @@ public class ExceptionUtils extends org.apache.commons.lang3.exception.Exception
 		}
 
 		/**
-		 * Return the hold exception if any
-		 *
-		 * @param <E>
-		 * @return
+		 * @param <E> the generic type of the hold exception
+		 * @return the hold exception if any
 		 */
 		public <E extends Exception> E getException() {
 			return (E) holdException;
 		}
 
 		/**
-		 * Throw the exception if any
-		 *
-		 * @throws
+		 * @param <E> the generic type of the hold exception
+		 * @throws E the exception if any
 		 */
 		public <E extends Exception> void thrownIfAny() throws E {
 			if (holdException != null)

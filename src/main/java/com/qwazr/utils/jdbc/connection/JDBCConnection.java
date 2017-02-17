@@ -25,15 +25,10 @@ import java.util.logging.Level;
 
 /**
  * A connection manager getting database connection from an JDBC url.
- * <p>
  * Take care to set driver and url parameters before using getNewTransaction
  * method.
- * </p>
- * <p>
  * That example show how create an instance of a JDBCConnection using a MySQL
  * database.
- * </p>
- * <p>
  * <pre>
  * JDBCConnection connectionManager = new JDBCConnection();
  * connectionManager.setDriver(&quot;com.mysql.jdbc.Driver&quot;);
@@ -61,13 +56,14 @@ public class JDBCConnection extends ConnectionManager {
 	}
 
 	/**
-	 * @param driver The driver class name
-	 * @param url    The url used to connect to database
+	 * @param classLoader the ClassLoader to use for object creation
+	 * @param driver      The driver class name
+	 * @param url         The url used to connect to database
 	 * @throws ClassNotFoundException if the class of the driver cannot be found
 	 * @throws IllegalAccessException in case of any illegal access
 	 * @throws InstantiationException if the driver cannot be constructed
 	 */
-	public JDBCConnection(ClassLoader classLoader, String driver, String url)
+	public JDBCConnection(final ClassLoader classLoader, final String driver, final String url)
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException {
 		setDriver(classLoader, driver);
 		setUrl(url);
