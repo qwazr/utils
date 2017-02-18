@@ -27,16 +27,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-public class ConcurrentQueueTest extends ConcurrentQueue<Integer> {
+public class ConcurrentQueueTest {
 
 	private static ExecutorService executor;
 
-	private final AtomicInteger counter;
-
-	public ConcurrentQueueTest() {
-		super(executor, Math.min(4, Runtime.getRuntime().availableProcessors()));
-		counter = new AtomicInteger();
-	}
+	private final int MULTI_THREAD = Math.min(4, Runtime.getRuntime().availableProcessors());
 
 	@BeforeClass
 	public static void before() {
@@ -49,17 +44,63 @@ public class ConcurrentQueueTest extends ConcurrentQueue<Integer> {
 	}
 
 	@Test
-	public void test() {
+	public void quickQueue() {
+		final AtomicInteger counter = new AtomicInteger();
 		final int l = RandomUtils.nextInt(1000, 5000);
-		for (int i = 0; i < l; i++)
-			accept(RandomUtils.nextInt());
-		close();
+		try (final QuickQueue queue = new QuickQueue(counter)) {
+			for (int i = 0; i < l; i++)
+				queue.accept(RandomUtils.nextInt());
+		}
 		Assert.assertEquals(l, counter.get());
 	}
 
-	@Override
-	protected Consumer<Integer> getNewConsumer() {
-		return integer -> counter.incrementAndGet();
+	private final static Integer ENDING_ITEM = -1;
+
+	private class QuickQueue extends ConcurrentQueue<Integer> {
+
+		private final AtomicInteger counter;
+
+		private QuickQueue(final AtomicInteger counter) {
+			super(executor, MULTI_THREAD, ENDING_ITEM);
+			this.counter = counter;
+		}
+
+		@Override
+		protected Consumer<Integer> getNewConsumer() {
+			return integer -> counter.incrementAndGet();
+		}
 	}
 
+	@Test
+	public void slowQueue() {
+		final AtomicInteger counter = new AtomicInteger();
+		final int l = RandomUtils.nextInt(5, 10);
+		try (final SlowQueue queue = new SlowQueue(counter)) {
+			for (int i = 0; i < l; i++)
+				queue.accept(RandomUtils.nextInt());
+		}
+		Assert.assertEquals(l, counter.get());
+	}
+
+	private class SlowQueue extends ConcurrentQueue<Integer> {
+
+		private final AtomicInteger counter;
+
+		private SlowQueue(AtomicInteger counter) {
+			super(executor, MULTI_THREAD, ENDING_ITEM);
+			this.counter = counter;
+		}
+
+		@Override
+		protected Consumer<Integer> getNewConsumer() {
+			return integer -> {
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					throw new RuntimeException(e);
+				}
+				counter.incrementAndGet();
+			};
+		}
+	}
 }

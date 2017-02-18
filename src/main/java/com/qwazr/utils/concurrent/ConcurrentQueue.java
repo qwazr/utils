@@ -18,37 +18,38 @@ package com.qwazr.utils.concurrent;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
 import java.util.function.Consumer;
 
 abstract public class ConcurrentQueue<T> implements Consumer<T>, Closeable {
 
-	private final SynchronousQueue<T> queue;
+	private final ArrayBlockingQueue<T> queue;
 	private final List<Future> futures;
+	private final T breakItem;
 
-	protected ConcurrentQueue(final ExecutorService executor, final int threadNumber) {
-		queue = new SynchronousQueue<>();
-		futures = new ArrayList<>();
-		for (int i = 0; i < threadNumber; i++) {
-			futures.add(executor.submit(() -> {
-				final Consumer<T> consumer = getNewConsumer();
-				try {
-					for (; ; ) {
-						consumer.accept(queue.take());
-					}
-				} catch (InterruptedException e) {
-				}
-			}));
-		}
+	protected ConcurrentQueue(final ExecutorService executor, final int threadNumber, final T breakItem) {
+		this.futures = new ArrayList<>();
+		this.breakItem = breakItem;
+		this.queue = new ArrayBlockingQueue<>(threadNumber);
+		for (int i = 0; i < threadNumber; i++)
+			futures.add(executor.submit(new ItemConsumer()));
 	}
 
 	protected abstract Consumer<T> getNewConsumer();
 
 	@Override
 	public void close() {
-		futures.forEach(future -> future.cancel(true));
+		try {
+			for (int i = 0; i < futures.size(); i++)
+				queue.put(breakItem);
+			for (Future future : futures)
+				future.get();
+		} catch (InterruptedException | ExecutionException e) {
+			throw new RuntimeException(e);
+		}
 		futures.clear();
 	}
 
@@ -58,6 +59,25 @@ abstract public class ConcurrentQueue<T> implements Consumer<T>, Closeable {
 			queue.put(entry);
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	private class ItemConsumer implements Runnable {
+
+		private final Consumer<T> consumer = getNewConsumer();
+
+		@Override
+		final public void run() {
+			try {
+				for (; ; ) {
+					final T item = queue.take();
+					if (item == breakItem)
+						return;
+					consumer.accept(item);
+				}
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 }
