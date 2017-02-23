@@ -15,12 +15,11 @@
  **/
 package com.qwazr.utils;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 public class ClassLoaderUtils {
 
-	public final static <T> Class<T> findClass(final ClassLoader classLoader, final String className)
+	public static <T> Class<T> findClass(final ClassLoader classLoader, final String className)
 			throws ClassNotFoundException {
 		if (classLoader != null)
 			return (Class<T>) classLoader.loadClass(className);
@@ -28,19 +27,21 @@ public class ClassLoaderUtils {
 			return (Class<T>) Class.forName(className);
 	}
 
-	public final static InputStream getResourceAsStream(final ClassLoader classLoader, final String name) {
+	public static InputStream getResourceAsStream(final ClassLoader classLoader, final String name) {
 		if (classLoader != null)
 			return classLoader.getResourceAsStream(name);
 		else
 			return ClassLoaderUtils.class.getResourceAsStream(name);
 	}
 
-	public final static <T> Class<T> findClass(final ClassLoader classLoader, final String[] classPrefixes,
-			final String suffix) throws ClassNotFoundException {
+	public static <T> Class<T> findClass(final ClassLoader classLoader, final String classSuffix,
+			final String... classPrefixes) throws ClassNotFoundException {
+		if (classPrefixes == null || classPrefixes.length == 0)
+			return findClass(classLoader, classSuffix);
 		ClassNotFoundException firstClassException = null;
 		for (String prefix : classPrefixes) {
 			try {
-				return (Class<T>) findClass(classLoader, prefix + suffix);
+				return (Class<T>) findClass(classLoader, prefix + classSuffix);
 			} catch (ClassNotFoundException e) {
 				if (firstClassException == null)
 					firstClassException = e;
@@ -49,40 +50,20 @@ public class ClassLoaderUtils {
 		throw firstClassException;
 	}
 
-	public final static <T> Class<T> findClass(final ClassLoader classLoader, final String classDef,
-			final String[] classPrefixes) throws ReflectiveOperationException, IOException {
-		if (classDef == null)
-			return null;
-		if (classPrefixes == null)
-			return findClass(classLoader, classDef);
-		else
-			return (Class<T>) findClass(classLoader, classPrefixes, classDef);
-	}
+	public interface ClassFactory {
 
-	interface ClassFactory {
+		DefaultFactory DEFAULT = new DefaultFactory();
 
 		<T> T newInstance(Class<T> clazz) throws ReflectiveOperationException;
 
 	}
 
-	static class DefaultFactory implements ClassFactory {
-
-		final static DefaultFactory INSTANCE = new DefaultFactory();
+	final public static class DefaultFactory implements ClassFactory {
 
 		@Override
 		final public <T> T newInstance(final Class<T> clazz) throws ReflectiveOperationException {
 			return clazz.newInstance();
 		}
-	}
-
-	private static volatile ClassFactory currentClassFactory = DefaultFactory.INSTANCE;
-
-	public final static void register(final ClassFactory classFactory) {
-		currentClassFactory = classFactory == null ? DefaultFactory.INSTANCE : classFactory;
-	}
-
-	public final static <T> T newInstance(final Class<T> clazz) throws ReflectiveOperationException {
-		return currentClassFactory.newInstance(clazz);
 	}
 
 }
