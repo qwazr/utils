@@ -15,7 +15,6 @@
  */
 package com.qwazr.utils.test;
 
-import com.qwazr.utils.FunctionUtils;
 import com.qwazr.utils.WaitFor;
 import org.junit.Assert;
 import org.junit.Test;
@@ -25,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class WaitForTest {
 
-	static class Counter implements FunctionUtils.CallableEx<Boolean, InterruptedException> {
+	static class Counter implements WaitFor.UntilCondition {
 
 		final AtomicInteger count = new AtomicInteger();
 		final boolean returnedValue;
@@ -40,32 +39,38 @@ public class WaitForTest {
 			count.incrementAndGet();
 			return returnedValue;
 		}
-	}
 
-	private void checkWait(WaitFor.Builder builder) throws InterruptedException {
-		final Counter counter = new Counter(true);
-		builder.wait(counter);
-		Assert.assertEquals(1, counter.count.get());
+		void checkWait() {
+			Assert.assertEquals(1, count.get());
+		}
+
+		void checkTimeOut(long msWait) {
+			Assert.assertTrue(startTime + msWait <= System.currentTimeMillis());
+			Assert.assertTrue(count.get() > 1);
+		}
 	}
 
 	@Test
 	public void testWaitFullParams() throws InterruptedException {
-		checkWait(WaitFor.of().timeOut(TimeUnit.SECONDS, 10).pauseTime(TimeUnit.MILLISECONDS, 200));
+		WaitFor.of()
+				.timeOut(TimeUnit.SECONDS, 10)
+				.pauseTime(TimeUnit.MILLISECONDS, 200)
+				.until(new Counter(true))
+				.checkWait();
 	}
 
 	@Test
 	public void testWaitDefaultParams() throws InterruptedException {
-		checkWait(WaitFor.of());
+		WaitFor.of().until(new Counter(true)).checkWait();
 	}
 
 	private void checkTimeOut(WaitFor.Builder builder, long msWait) {
 		final Counter counter = new Counter(false);
 		try {
-			builder.wait(counter);
+			builder.until(counter);
 			Assert.fail("The InterruptedException has not be thrown");
 		} catch (InterruptedException e) {
-			Assert.assertTrue(counter.startTime + msWait <= System.currentTimeMillis());
-			Assert.assertTrue(counter.count.get() > 1);
+			counter.checkTimeOut(msWait);
 		}
 	}
 

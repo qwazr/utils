@@ -31,16 +31,18 @@ public class WaitFor {
 		this.pauseTimeDuration = builder.pauseTimeDuration;
 	}
 
-	public void wait(final FunctionUtils.CallableEx<Boolean, InterruptedException> callable)
-			throws InterruptedException {
+	public interface UntilCondition extends FunctionUtils.CallableEx<Boolean, InterruptedException> {
+	}
+
+	public <T extends UntilCondition> T until(final T condition) throws InterruptedException {
 		final long timeOut = timeOutUnit.toMillis(timeOutDuration) + System.currentTimeMillis();
 		final long pauseTime = pauseTimeUnit.toMillis(pauseTimeDuration);
 		while (System.currentTimeMillis() < timeOut) {
-			if (callable.call())
-				return;
+			if (condition.call())
+				return condition;
 			Thread.sleep(pauseTime);
 		}
-		throw new InterruptedException("TimeOut reached");
+		throw new InterruptedException("Time-out reached");
 	}
 
 	public static Builder of() {
@@ -70,8 +72,8 @@ public class WaitFor {
 			return new WaitFor(this);
 		}
 
-		public void wait(FunctionUtils.CallableEx<Boolean, InterruptedException> callable) throws InterruptedException {
-			build().wait(callable);
+		public <T extends UntilCondition> T until(T condition) throws InterruptedException {
+			return build().until(condition);
 		}
 	}
 }
