@@ -35,6 +35,10 @@ public abstract class PeriodicThread implements ThreadUtils.ExtendedRunnable {
 		this.shutdown = false;
 	}
 
+	public boolean isDaemon() {
+		return true;
+	}
+
 	protected abstract void runner();
 
 	@Override
