@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils.http;
 
+import com.qwazr.utils.concurrent.PeriodicThread;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.HttpClientConnectionManager;
@@ -131,15 +132,13 @@ public class HttpClients {
 			monitorThread.shutdown();
 	}
 
-	public static class IdleConnectionMonitorThread implements Runnable {
+	public static class IdleConnectionMonitorThread extends PeriodicThread {
 
 		private final ConcurrentHashMap<HttpClientConnectionManager, Integer> connectionManagers;
-		private final int msPeriod;
-		private volatile boolean shutdown;
 
 		public IdleConnectionMonitorThread(int msPeriod) {
+			super(msPeriod);
 			this.connectionManagers = new ConcurrentHashMap<>();
-			this.msPeriod = msPeriod;
 		}
 
 		public void add(final HttpClientConnectionManager connectionManager, final int idleTime) {
@@ -147,27 +146,11 @@ public class HttpClients {
 		}
 
 		@Override
-		public void run() {
-			try {
-				while (!shutdown) {
-					synchronized (this) {
-						wait(msPeriod);
-						connectionManagers.forEach((connectionManager, idleTime) -> {
-							connectionManager.closeExpiredConnections();
-							connectionManager.closeIdleConnections(idleTime, TimeUnit.SECONDS);
-						});
-					}
-				}
-			} catch (InterruptedException ex) {
-				// terminate
-			}
-		}
-
-		public void shutdown() {
-			shutdown = true;
-			synchronized (this) {
-				notifyAll();
-			}
+		public void runner() {
+			connectionManagers.forEach((connectionManager, idleTime) -> {
+				connectionManager.closeExpiredConnections();
+				connectionManager.closeIdleConnections(idleTime, TimeUnit.SECONDS);
+			});
 		}
 
 	}

@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,51 +20,53 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 
-public abstract class PeriodicThread extends Thread {
+public abstract class PeriodicThread implements Runnable {
 
-	protected final int monitoring_period;
+	private final int monitoringPeriod;
 
 	private volatile Long lastExecutionTime = null;
 
+	private volatile boolean shutdown;
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(PeriodicThread.class);
 
-	protected PeriodicThread(final String threadName, final int monitoring_period_seconds) {
-		super(threadName);
-		this.monitoring_period = monitoring_period_seconds * 1000;
+	protected PeriodicThread(final int monitoringPeriodSeconds) {
+		this.monitoringPeriod = monitoringPeriodSeconds * 1000;
+		this.shutdown = false;
 	}
 
 	protected abstract void runner();
 
 	@Override
 	public void run() {
-		// This loop is suppose to execute every minute
+		try {
+			while (!shutdown) {
+				long start = System.currentTimeMillis();
+				lastExecutionTime = start;
 
-		for (; ; ) {
-			long start = System.currentTimeMillis();
-			lastExecutionTime = start;
+				runner();
 
-			runner();
-
-			// Now we can wait until the next run
-			sleepMs(monitoring_period - (System.currentTimeMillis() - start));
+				synchronized (this) {
+					// Now we can wait until the next run
+					final long ms = monitoringPeriod - (System.currentTimeMillis() - start);
+					if (ms > 0)
+						wait(ms);
+				}
+			}
+		} catch (InterruptedException e) {
+			LOGGER.info(e.getMessage(), e);
 		}
 	}
 
-	protected void sleepMs(long sleepMs) {
-		if (sleepMs <= 0)
-			return;
-		try {
-			sleep(monitoring_period);
-		} catch (InterruptedException e) {
-			if (LOGGER.isWarnEnabled())
-				LOGGER.warn(e.getMessage(), e);
+	public void shutdown() {
+		shutdown = true;
+		synchronized (this) {
+			notifyAll();
 		}
 	}
 
 	public Date getLastExecutionDate() {
-		Long time = lastExecutionTime;
-		if (time == null)
-			return null;
-		return new Date(time);
+		final Long time = lastExecutionTime;
+		return time == null ? null : new Date(time);
 	}
 }

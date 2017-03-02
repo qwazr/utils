@@ -37,7 +37,7 @@ public class HttpTest {
 
 	@BeforeClass
 	public static void beforeClass() {
-		Assert.assertNotNull(HttpClients.startMonitorThread(null, 5000, 30000));
+		Assert.assertNotNull(HttpClients.startMonitorThread(null, 100, 30000));
 	}
 
 	@Test
