@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils.test;
 
+import com.qwazr.utils.concurrent.ThreadUtils;
 import com.qwazr.utils.http.HttpClients;
 import com.qwazr.utils.http.HttpRequest;
 import org.junit.AfterClass;
@@ -26,6 +27,8 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class HttpTest {
 
@@ -35,9 +38,12 @@ public class HttpTest {
 			"https://mixed-script.badssl.com/",
 			"https://very.badssl.com/" };
 
+	private static ExecutorService executorService;
+
 	@BeforeClass
 	public static void beforeClass() {
-		Assert.assertNotNull(HttpClients.startMonitorThread(null, 100, 30000));
+		executorService = Executors.newCachedThreadPool(new ThreadUtils.ExtendedThreadFactory());
+		Assert.assertNotNull(HttpClients.startMonitorThread(executorService, 100, 30000));
 	}
 
 	@Test
@@ -57,5 +63,6 @@ public class HttpTest {
 	@AfterClass
 	public static void afterClass() {
 		HttpClients.stopMonitorThread();
+		executorService.shutdown();
 	}
 }

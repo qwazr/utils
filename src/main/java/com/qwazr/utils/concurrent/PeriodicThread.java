@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 
-public abstract class PeriodicThread implements Runnable {
+public abstract class PeriodicThread implements ThreadUtils.ExtendedRunnable {
 
 	private final int monitoringPeriod;
 
@@ -46,11 +46,11 @@ public abstract class PeriodicThread implements Runnable {
 
 				runner();
 
-				synchronized (this) {
-					// Now we can wait until the next run
-					final long ms = monitoringPeriod - (System.currentTimeMillis() - start);
-					if (ms > 0)
+				final long ms = monitoringPeriod - (System.currentTimeMillis() - start);
+				if (ms > 0) {
+					synchronized (this) {
 						wait(ms);
+					}
 				}
 			}
 		} catch (InterruptedException e) {

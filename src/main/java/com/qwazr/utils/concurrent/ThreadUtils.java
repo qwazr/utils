@@ -109,4 +109,32 @@ public class ThreadUtils {
 
 	}
 
+	public interface ExtendedRunnable extends Runnable {
+
+		default String getName(final long threadId) {
+			return getClass().getName() + "-" + threadId;
+		}
+
+		default boolean isDaemon() {
+			return false;
+		}
+
+	}
+
+	public static class ExtendedThreadFactory implements ThreadFactory {
+
+		@Override
+		public Thread newThread(final Runnable runnable) {
+			final Thread thread = new Thread(runnable);
+			if (runnable instanceof ExtendedRunnable) {
+				final ExtendedRunnable runnableEx = (ExtendedRunnable) runnable;
+				final String name = runnableEx.getName(thread.getId());
+				if (name != null)
+					thread.setName(name);
+				thread.setDaemon(runnableEx.isDaemon());
+			}
+			return thread;
+		}
+	}
+
 }
