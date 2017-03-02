@@ -127,9 +127,11 @@ public class HttpClients {
 		return monitorThread;
 	}
 
-	public static void stopMonitorThread() {
-		if (monitorThread != null)
-			monitorThread.shutdown();
+	public synchronized static void stopMonitorThread() {
+		if (monitorThread == null)
+			return;
+		monitorThread.shutdown();
+		monitorThread = null;
 	}
 
 	public static class IdleConnectionMonitorThread extends PeriodicThread {
