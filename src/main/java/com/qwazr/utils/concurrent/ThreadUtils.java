@@ -115,10 +115,6 @@ public class ThreadUtils {
 			return getClass().getName() + "-" + threadId;
 		}
 
-		default boolean isDaemon() {
-			return false;
-		}
-
 	}
 
 	public static class ExtendedThreadFactory implements ThreadFactory {
@@ -131,7 +127,6 @@ public class ThreadUtils {
 				final String name = runnableEx.getName(thread.getId());
 				if (name != null)
 					thread.setName(name);
-				thread.setDaemon(runnableEx.isDaemon());
 			}
 			return thread;
 		}

@@ -119,10 +119,10 @@ public class HttpClients {
 		monitorThread = new IdleConnectionMonitorThread(msPeriod);
 		monitorThread.add(UNSECURE_CNX_MANAGER, msIdleTime);
 		monitorThread.add(CNX_MANAGER, msIdleTime);
-		Runtime.getRuntime().addShutdownHook(new Thread(monitorThread::shutdown));
-		if (executorService == null)
+		if (executorService == null) {
 			new Thread(monitorThread).start();
-		else
+			Runtime.getRuntime().addShutdownHook(new Thread(monitorThread::shutdown));
+		} else
 			executorService.submit(monitorThread);
 		return monitorThread;
 	}
