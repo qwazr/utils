@@ -39,11 +39,13 @@ public class HttpTest {
 			"https://very.badssl.com/" };
 
 	private static ExecutorService executorService;
+	private static HttpClients.IdleConnectionMonitorThread monitorThread;
 
 	@BeforeClass
 	public static void beforeClass() {
 		executorService = Executors.newCachedThreadPool(new ThreadUtils.ExtendedThreadFactory());
-		Assert.assertNotNull(HttpClients.startMonitorThread(executorService, 100, 30000));
+		monitorThread = HttpClients.getNewMonitorThread(100, 30000);
+		executorService.submit(monitorThread);
 	}
 
 	@Test
@@ -62,7 +64,7 @@ public class HttpTest {
 
 	@AfterClass
 	public static void afterClass() {
-		HttpClients.stopMonitorThread();
+		monitorThread.shutdown();
 		executorService.shutdown();
 	}
 }

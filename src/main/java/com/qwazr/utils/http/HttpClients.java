@@ -35,7 +35,6 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class HttpClients {
@@ -110,28 +109,11 @@ public class HttpClients {
 		}
 	}
 
-	private static IdleConnectionMonitorThread monitorThread;
-
-	public synchronized static IdleConnectionMonitorThread startMonitorThread(final ExecutorService executorService,
-			final int msPeriod, final int msIdleTime) {
-		if (monitorThread != null)
-			throw new RuntimeException("MonitorThread already started");
-		monitorThread = new IdleConnectionMonitorThread(msPeriod);
+	public static IdleConnectionMonitorThread getNewMonitorThread(final int msPeriod, final int msIdleTime) {
+		final IdleConnectionMonitorThread monitorThread = new IdleConnectionMonitorThread(msPeriod);
 		monitorThread.add(UNSECURE_CNX_MANAGER, msIdleTime);
 		monitorThread.add(CNX_MANAGER, msIdleTime);
-		if (executorService == null) {
-			new Thread(monitorThread).start();
-			Runtime.getRuntime().addShutdownHook(new Thread(monitorThread::shutdown));
-		} else
-			executorService.submit(monitorThread);
 		return monitorThread;
-	}
-
-	public synchronized static void stopMonitorThread() {
-		if (monitorThread == null)
-			return;
-		monitorThread.shutdown();
-		monitorThread = null;
 	}
 
 	public static class IdleConnectionMonitorThread extends PeriodicThread {
