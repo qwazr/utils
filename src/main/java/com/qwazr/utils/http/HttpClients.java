@@ -17,6 +17,7 @@ package com.qwazr.utils.http;
 
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
@@ -32,6 +33,9 @@ import javax.net.ssl.SSLContext;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class HttpClients {
 
@@ -103,5 +107,68 @@ public class HttpClients {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private static IdleConnectionMonitorThread monitorThread;
+
+	public synchronized static IdleConnectionMonitorThread startMonitorThread(final ExecutorService executorService,
+			final int msPeriod, final int msIdleTime) {
+		if (monitorThread != null)
+			throw new RuntimeException("MonitorThread already started");
+		monitorThread = new IdleConnectionMonitorThread(msPeriod);
+		monitorThread.add(UNSECURE_CNX_MANAGER, msIdleTime);
+		monitorThread.add(CNX_MANAGER, msIdleTime);
+		Runtime.getRuntime().addShutdownHook(new Thread(monitorThread::shutdown));
+		if (executorService == null)
+			new Thread(monitorThread).start();
+		else
+			executorService.submit(monitorThread);
+		return monitorThread;
+	}
+
+	public static void stopMonitorThread() {
+		if (monitorThread != null)
+			monitorThread.shutdown();
+	}
+
+	public static class IdleConnectionMonitorThread implements Runnable {
+
+		private final ConcurrentHashMap<HttpClientConnectionManager, Integer> connectionManagers;
+		private final int msPeriod;
+		private volatile boolean shutdown;
+
+		public IdleConnectionMonitorThread(int msPeriod) {
+			this.connectionManagers = new ConcurrentHashMap<>();
+			this.msPeriod = msPeriod;
+		}
+
+		public void add(final HttpClientConnectionManager connectionManager, final int idleTime) {
+			connectionManagers.put(connectionManager, idleTime);
+		}
+
+		@Override
+		public void run() {
+			try {
+				while (!shutdown) {
+					synchronized (this) {
+						wait(msPeriod);
+						connectionManagers.forEach((connectionManager, idleTime) -> {
+							connectionManager.closeExpiredConnections();
+							connectionManager.closeIdleConnections(idleTime, TimeUnit.SECONDS);
+						});
+					}
+				}
+			} catch (InterruptedException ex) {
+				// terminate
+			}
+		}
+
+		public void shutdown() {
+			shutdown = true;
+			synchronized (this) {
+				notifyAll();
+			}
+		}
+
 	}
 }
