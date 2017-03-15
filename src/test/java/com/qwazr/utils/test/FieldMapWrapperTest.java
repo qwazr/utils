@@ -16,6 +16,7 @@
 package com.qwazr.utils.test;
 
 import com.qwazr.utils.AnnotationsUtils;
+import com.qwazr.utils.CollectionsUtils;
 import com.qwazr.utils.FieldMapWrapper;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -27,7 +28,9 @@ import org.junit.runners.MethodSorters;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -50,7 +53,8 @@ public class FieldMapWrapperTest {
 
 	@Test
 	public void test200newMap() {
-		Record record = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10));
+		Record record = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10),
+				RandomStringUtils.randomAlphanumeric(3), RandomStringUtils.randomAlphanumeric(3));
 		Map<String, Object> map = wrapper.newMap(record);
 		Assert.assertNotNull(map);
 		Assert.assertEquals(record, map);
@@ -58,8 +62,10 @@ public class FieldMapWrapperTest {
 
 	@Test
 	public void test300newMapCollection() {
-		Record record1 = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10));
-		Record record2 = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10));
+		Record record1 = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10),
+				RandomStringUtils.randomAlphanumeric(3), RandomStringUtils.randomAlphanumeric(3));
+		Record record2 = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10),
+				RandomStringUtils.randomAlphanumeric(3), RandomStringUtils.randomAlphanumeric(3));
 		List<Map<String, Object>> mapCollection = wrapper.newMapCollection(Arrays.asList(record1, record2));
 		Assert.assertNotNull(mapCollection);
 		Assert.assertEquals(2, mapCollection.size());
@@ -69,7 +75,8 @@ public class FieldMapWrapperTest {
 
 	@Test
 	public void test400newMapArray() {
-		Record record = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10));
+		Record record = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10),
+				RandomStringUtils.randomAlphanumeric(3), RandomStringUtils.randomAlphanumeric(3));
 		Map<String, Object> map = wrapper.newMap(record);
 		Assert.assertNotNull(map);
 		Assert.assertEquals(record.title, map.get("title"));
@@ -117,10 +124,17 @@ public class FieldMapWrapperTest {
 
 		final Long id;
 		final String title;
+		final LinkedHashSet<String> tags;
 
-		Record(Long id, String title) {
+		Record(Long id, String title, String... tags) {
 			this.id = id;
 			this.title = title;
+			if (tags == null || tags.length == 0)
+				this.tags = null;
+			else {
+				this.tags = new LinkedHashSet<>();
+				Collections.addAll(this.tags, tags);
+			}
 		}
 
 		public Record() {
@@ -133,11 +147,13 @@ public class FieldMapWrapperTest {
 				return false;
 			if (object instanceof Record) {
 				Record r = (Record) object;
-				return Objects.equals(id, r.id) && Objects.equals(title, r.title);
+				return Objects.equals(id, r.id) && Objects.equals(title, r.title) && CollectionsUtils.equals(tags,
+						r.tags);
 			}
 			if (object instanceof Map) {
 				Map m = (Map) object;
-				return Objects.equals(id, m.get("id")) && Objects.equals(title, m.get("title"));
+				return Objects.equals(id, m.get("id")) && Objects.equals(title, m.get("title"))
+						&& CollectionsUtils.equals(tags, (Collection) m.get("tags"));
 			}
 			return false;
 		}
