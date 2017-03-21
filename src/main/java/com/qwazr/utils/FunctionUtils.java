@@ -20,6 +20,13 @@ import java.util.Map;
 public class FunctionUtils {
 
 	@FunctionalInterface
+	public interface FunctionEx<T, R, E extends Exception> {
+
+		R apply(T t) throws E;
+
+	}
+
+	@FunctionalInterface
 	public interface IntConsumerEx<E extends Exception> {
 
 		void accept(int value) throws E;
