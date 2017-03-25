@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Emmanuel Keller / QWAZR
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.qwazr.utils;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -22,7 +25,7 @@ import java.util.Objects;
 
 public class CollectionsUtils {
 
-	final public static <T> boolean equals(final Collection<T> coll1, final Collection<T> coll2) {
+	public static <T> boolean equals(final Collection<T> coll1, final Collection<T> coll2) {
 		if (coll1 == null)
 			return coll2 == null;
 		else if (coll2 == null)
@@ -36,7 +39,7 @@ public class CollectionsUtils {
 		return true;
 	}
 
-	final public static <K, V> boolean equals(final Map<K, V> map1, final Map<K, V> map2) {
+	public static <K, V> boolean equals(final Map<K, V> map1, final Map<K, V> map2) {
 		if (map1 == null)
 			return map2 == null;
 		else if (map2 == null)
@@ -51,5 +54,24 @@ public class CollectionsUtils {
 				return false;
 		}
 		return true;
+	}
+
+	public static String multiline(final Collection<Object> collection) throws IOException {
+		if (collection == null)
+			return null;
+		try (final StringWriter sw = new StringWriter()) {
+			try (final PrintWriter pw = new PrintWriter(sw)) {
+				boolean first = true;
+				for (Object line : collection) {
+					if (first)
+						first = false;
+					else
+						pw.println();
+					if (line != null)
+						pw.print(line.toString());
+				}
+			}
+			return sw.toString();
+		}
 	}
 }

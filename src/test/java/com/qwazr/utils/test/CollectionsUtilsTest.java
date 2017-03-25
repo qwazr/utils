@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Emmanuel Keller / QWAZR
+ * Copyright 2016-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,15 @@
 package com.qwazr.utils.test;
 
 import com.qwazr.utils.CollectionsUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class CollectionsUtilsTest {
 
@@ -46,6 +51,24 @@ public class CollectionsUtilsTest {
 	@Test
 	public void sameContent() {
 		Assert.assertTrue(CollectionsUtils.equals(Arrays.asList(1, 2, 3), Arrays.asList(1, 2, 3)));
+	}
+
+	@Test
+	public void sameMap() {
+		Map map1 = new HashMap<Integer, Integer>();
+		Map map2 = new TreeMap<Integer, Integer>();
+		for (int i = 0; i < 5; i++) {
+			int value = RandomUtils.nextInt();
+			map1.put(value, value);
+			map2.put(value, value);
+		}
+		Assert.assertTrue(CollectionsUtils.equals(map1, map2));
+	}
+
+	@Test
+	public void multilinePrint() throws IOException {
+		Assert.assertEquals(String.format("one%ntwo%n%nthree"),
+				CollectionsUtils.multiline(Arrays.asList("one", "two", null, "three")));
 	}
 }
 
