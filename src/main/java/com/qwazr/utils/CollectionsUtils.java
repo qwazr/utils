@@ -56,7 +56,7 @@ public class CollectionsUtils {
 		return true;
 	}
 
-	public static String multiline(final Collection<Object> collection) throws IOException {
+	public static <T> String multiline(final Collection<T> collection) throws IOException {
 		if (collection == null)
 			return null;
 		try (final StringWriter sw = new StringWriter()) {
