@@ -56,7 +56,7 @@ public class CollectionsUtils {
 		return true;
 	}
 
-	public static <T> String multiline(final Collection<T> collection) throws IOException {
+	public static <T> String multiline(final Collection<T> collection) {
 		if (collection == null)
 			return null;
 		try (final StringWriter sw = new StringWriter()) {
@@ -72,6 +72,8 @@ public class CollectionsUtils {
 				}
 			}
 			return sw.toString();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 }

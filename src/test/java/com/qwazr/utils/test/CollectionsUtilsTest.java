@@ -66,7 +66,7 @@ public class CollectionsUtilsTest {
 	}
 
 	@Test
-	public void multilinePrint() throws IOException {
+	public void multilinePrint()  {
 		Assert.assertEquals(String.format("one%ntwo%n%nthree"),
 				CollectionsUtils.multiline(Arrays.asList("one", "two", null, "three")));
 	}
