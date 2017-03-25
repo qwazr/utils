@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 public class CollectionsUtils {
 
@@ -56,24 +57,28 @@ public class CollectionsUtils {
 		return true;
 	}
 
-	public static <T> String multiline(final Collection<T> collection) {
+	public static <T> String multiline(final Collection<T> collection, final Function<T, String> toStringFunc) {
 		if (collection == null)
 			return null;
 		try (final StringWriter sw = new StringWriter()) {
 			try (final PrintWriter pw = new PrintWriter(sw)) {
 				boolean first = true;
-				for (Object line : collection) {
+				for (T object : collection) {
 					if (first)
 						first = false;
 					else
 						pw.println();
-					if (line != null)
-						pw.print(line.toString());
+					if (object != null)
+						pw.print(toStringFunc.apply(object));
 				}
 			}
 			return sw.toString();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static <T> String multiline(final Collection<T> collection) {
+		return multiline(collection, Object::toString);
 	}
 }
