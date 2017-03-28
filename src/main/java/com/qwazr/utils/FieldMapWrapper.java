@@ -26,24 +26,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 public class FieldMapWrapper<T> {
 
-	protected final Map<String, Field> fieldMap;
-	protected final Constructor<T> constructor;
+	public final Map<String, Field> fieldMap;
+	public final Constructor<T> constructor;
 
 	public FieldMapWrapper(final Map<String, Field> fieldMap, final Class<T> objectClass) throws NoSuchMethodException {
 		this.fieldMap = fieldMap;
 		this.constructor = objectClass.getDeclaredConstructor();
-	}
-
-	public T newInstance() throws ReflectiveOperationException {
-		return constructor.newInstance();
-	}
-
-	public void fields(final BiConsumer<String, Field> fieldConsumer) {
-		fieldMap.forEach(fieldConsumer::accept);
 	}
 
 	/**
@@ -54,7 +45,7 @@ public class FieldMapWrapper<T> {
 	 */
 	public Map<String, Object> newMap(final T row) {
 		final Map<String, Object> map = new HashMap<>();
-		fields((name, field) -> {
+		fieldMap.forEach((name, field) -> {
 			try {
 				Object value = field.get(row);
 				if (value == null)
@@ -118,7 +109,7 @@ public class FieldMapWrapper<T> {
 	public T toRecord(final Map<String, Object> fields) throws ReflectiveOperationException {
 		if (fields == null)
 			return null;
-		final T record = newInstance();
+		final T record = constructor.newInstance();
 		fields.forEach((fieldName, fieldValue) -> {
 			final Field field = fieldMap.get(fieldName);
 			if (field == null || fieldValue == null)
