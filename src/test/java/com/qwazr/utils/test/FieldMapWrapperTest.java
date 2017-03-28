@@ -38,20 +38,14 @@ import java.util.Objects;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class FieldMapWrapperTest {
 
-	private static FieldMapWrapper.Cache wrapperCache;
-	private static Wrapper wrapper;
+	private static FieldMapWrappers wrappers;
+	private static FieldMapWrapper<Record> wrapper;
 
 	@Test
 	public void test100createWrapper() {
-		Map<String, Field> fieldMap = new HashMap<>();
-		AnnotationsUtils.browseFieldsRecursive(Record.class, field -> {
-			field.setAccessible(true);
-			fieldMap.put(field.getName(), field);
-		});
-		wrapper = new Wrapper(fieldMap);
-		wrapperCache = new FieldMapWrapper.Cache(true);
-		wrapperCache.register(wrapper);
-		Assert.assertEquals(wrapper, wrapperCache.get(Record.class));
+		wrappers = new FieldMapWrappers();
+		wrapper = wrappers.get(Record.class);
+		Assert.assertNotNull(wrapper);
 	}
 
 	@Test
@@ -124,17 +118,10 @@ public class FieldMapWrapperTest {
 	}
 
 	@Test
-	public void test800cacheUnregister() {
-		wrapperCache.unregister(Record.class);
-		Assert.assertNull(wrapperCache.get(Record.class));
-	}
-
-	@Test
 	public void test801cacheClear() {
-		wrapperCache.register(wrapper);
-		Assert.assertEquals(wrapper, wrapperCache.get(Record.class));
-		wrapperCache.clear();
-		Assert.assertNull(wrapperCache.get(Record.class));
+		Assert.assertEquals(wrapper, wrappers.get(Record.class));
+		wrappers.clear();
+		Assert.assertNotEquals(wrapper, wrappers.get(Record.class));
 	}
 
 	public static class Record {
@@ -177,41 +164,20 @@ public class FieldMapWrapperTest {
 
 	}
 
-	class Wrapper extends FieldMapWrapper<Record> {
+	public static class FieldMapWrappers extends FieldMapWrapper.Cache {
 
-		Wrapper(Map<String, Field> fieldMap) {
-			super(fieldMap, Record.class);
+		public FieldMapWrappers() {
+			super(new HashMap<>());
 		}
 
 		@Override
-		protected Map<String, Object> newMap(final Record record) {
-			return super.newMap(record);
+		protected <C> FieldMapWrapper<C> newFieldMapWrapper(Class<C> objectClass) {
+			final Map<String, Field> fieldMap = new HashMap<>();
+			AnnotationsUtils.browseFieldsRecursive(objectClass, field -> {
+				field.setAccessible(true);
+				fieldMap.put(field.getName(), field);
+			});
+			return new FieldMapWrapper<>(fieldMap, objectClass);
 		}
-
-		@Override
-		protected List<Map<String, Object>> newMapCollection(final Collection<Record> records) {
-			return super.newMapCollection(records);
-		}
-
-		@Override
-		protected List<Map<String, Object>> newMapArray(final Record... records) {
-			return super.newMapArray(records);
-		}
-
-		@Override
-		protected Record toRecord(Map map) throws ReflectiveOperationException {
-			return super.toRecord(map);
-		}
-
-		@Override
-		protected List<Record> toRecords(Collection<Map<String, Object>> mapCollection) {
-			return super.toRecords(mapCollection);
-		}
-
-		@Override
-		protected List<Record> toRecords(Map<String, Object>... mapArray) {
-			return super.toRecords(mapArray);
-		}
-
 	}
 }

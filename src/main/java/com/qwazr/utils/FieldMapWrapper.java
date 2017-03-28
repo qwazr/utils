@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class FieldMapWrapper<T> {
 
@@ -196,24 +195,18 @@ public class FieldMapWrapper<T> {
 		return records;
 	}
 
-	public static class Cache {
+	public abstract static class Cache {
 
 		private final Map<Class<?>, FieldMapWrapper<?>> fieldMapWrappers;
 
-		public Cache(boolean concurrent) {
-			fieldMapWrappers = concurrent ? new ConcurrentHashMap<>() : new HashMap<>();
+		protected abstract <C> FieldMapWrapper<C> newFieldMapWrapper(final Class<C> objectClass);
+
+		public Cache(Map<Class<?>, FieldMapWrapper<?>> map) {
+			fieldMapWrappers = map;
 		}
 
-		public <T> void register(final FieldMapWrapper<T> fieldMapWrapper) {
-			fieldMapWrappers.put(fieldMapWrapper.objectClass, fieldMapWrapper);
-		}
-
-		public void unregister(final Class<?> clazz) {
-			fieldMapWrappers.remove(clazz);
-		}
-
-		public <T> FieldMapWrapper<T> get(final Class<T> clazz) {
-			return (FieldMapWrapper<T>) fieldMapWrappers.get(clazz);
+		public <C> FieldMapWrapper<C> get(final Class<C> objectClass) {
+			return (FieldMapWrapper<C>) fieldMapWrappers.computeIfAbsent(objectClass, cl -> newFieldMapWrapper(cl));
 		}
 
 		public void clear() {
