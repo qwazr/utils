@@ -171,7 +171,7 @@ public class FieldMapWrapperTest {
 		}
 
 		@Override
-		protected <C> FieldMapWrapper<C> newFieldMapWrapper(Class<C> objectClass) {
+		protected <C> FieldMapWrapper<C> newFieldMapWrapper(Class<C> objectClass) throws NoSuchMethodException {
 			final Map<String, Field> fieldMap = new HashMap<>();
 			AnnotationsUtils.browseFieldsRecursive(objectClass, field -> {
 				field.setAccessible(true);

@@ -18,6 +18,7 @@ package com.qwazr.utils;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -25,15 +26,24 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class FieldMapWrapper<T> {
 
 	protected final Map<String, Field> fieldMap;
-	protected final Class<T> objectClass;
+	protected final Constructor<T> constructor;
 
-	public FieldMapWrapper(final Map<String, Field> fieldMap, final Class<T> objectClass) {
+	public FieldMapWrapper(final Map<String, Field> fieldMap, final Class<T> objectClass) throws NoSuchMethodException {
 		this.fieldMap = fieldMap;
-		this.objectClass = objectClass;
+		this.constructor = objectClass.getDeclaredConstructor();
+	}
+
+	public T newInstance() throws ReflectiveOperationException {
+		return constructor.newInstance();
+	}
+
+	public void fields(final BiConsumer<String, Field> fieldConsumer) {
+		fieldMap.forEach(fieldConsumer::accept);
 	}
 
 	/**
@@ -44,7 +54,7 @@ public class FieldMapWrapper<T> {
 	 */
 	public Map<String, Object> newMap(final T row) {
 		final Map<String, Object> map = new HashMap<>();
-		fieldMap.forEach((name, field) -> {
+		fields((name, field) -> {
 			try {
 				Object value = field.get(row);
 				if (value == null)
@@ -108,7 +118,7 @@ public class FieldMapWrapper<T> {
 	public T toRecord(final Map<String, Object> fields) throws ReflectiveOperationException {
 		if (fields == null)
 			return null;
-		final T record = objectClass.newInstance();
+		final T record = newInstance();
 		fields.forEach((fieldName, fieldValue) -> {
 			final Field field = fieldMap.get(fieldName);
 			if (field == null || fieldValue == null)
@@ -199,14 +209,21 @@ public class FieldMapWrapper<T> {
 
 		private final Map<Class<?>, FieldMapWrapper<?>> fieldMapWrappers;
 
-		protected abstract <C> FieldMapWrapper<C> newFieldMapWrapper(final Class<C> objectClass);
+		protected abstract <C> FieldMapWrapper<C> newFieldMapWrapper(final Class<C> objectClass)
+				throws NoSuchMethodException;
 
 		public Cache(Map<Class<?>, FieldMapWrapper<?>> map) {
 			fieldMapWrappers = map;
 		}
 
 		public <C> FieldMapWrapper<C> get(final Class<C> objectClass) {
-			return (FieldMapWrapper<C>) fieldMapWrappers.computeIfAbsent(objectClass, cl -> newFieldMapWrapper(cl));
+			return (FieldMapWrapper<C>) fieldMapWrappers.computeIfAbsent(objectClass, cl -> {
+				try {
+					return newFieldMapWrapper(cl);
+				} catch (NoSuchMethodException e) {
+					throw new RuntimeException(e);
+				}
+			});
 		}
 
 		public void clear() {
