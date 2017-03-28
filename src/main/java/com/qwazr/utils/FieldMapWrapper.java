@@ -43,7 +43,7 @@ public class FieldMapWrapper<T> {
 	 * @param row the record
 	 * @return a new Map
 	 */
-	protected Map<String, Object> newMap(final T row) {
+	public Map<String, Object> newMap(final T row) {
 		final Map<String, Object> map = new HashMap<>();
 		fieldMap.forEach((name, field) -> {
 			try {
@@ -83,7 +83,7 @@ public class FieldMapWrapper<T> {
 	 * @param rows a collection of records
 	 * @return a new list of mapped objects
 	 */
-	protected List<Map<String, Object>> newMapCollection(final Collection<T> rows) {
+	public List<Map<String, Object>> newMapCollection(final Collection<T> rows) {
 		if (rows == null || rows.isEmpty())
 			return null;
 		final List<Map<String, Object>> list = new ArrayList<>(rows.size());
@@ -97,7 +97,7 @@ public class FieldMapWrapper<T> {
 	 * @param rows an array of records
 	 * @return a new list of mapped objects
 	 */
-	protected List<Map<String, Object>> newMapArray(final T... rows) {
+	public List<Map<String, Object>> newMapArray(final T... rows) {
 		if (rows == null || rows.length == 0)
 			return null;
 		final List<Map<String, Object>> list = new ArrayList<>(rows.length);
@@ -106,7 +106,7 @@ public class FieldMapWrapper<T> {
 		return list;
 	}
 
-	protected T toRecord(final Map<String, Object> fields) throws ReflectiveOperationException {
+	public T toRecord(final Map<String, Object> fields) throws ReflectiveOperationException {
 		if (fields == null)
 			return null;
 		final T record = objectClass.newInstance();
@@ -168,7 +168,7 @@ public class FieldMapWrapper<T> {
 		return record;
 	}
 
-	protected List<T> toRecords(final Collection<Map<String, Object>> docs) {
+	public List<T> toRecords(final Collection<Map<String, Object>> docs) {
 		if (docs == null)
 			return null;
 		final List<T> records = new ArrayList<>();
@@ -182,7 +182,7 @@ public class FieldMapWrapper<T> {
 		return records;
 	}
 
-	protected List<T> toRecords(final Map<String, Object>... docs) {
+	public List<T> toRecords(final Map<String, Object>... docs) {
 		if (docs == null)
 			return null;
 		final List<T> records = new ArrayList<>();
