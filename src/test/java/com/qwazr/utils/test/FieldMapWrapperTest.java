@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Emmanuel Keller / QWAZR
+ * Copyright 2016-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import java.util.Objects;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class FieldMapWrapperTest {
 
+	private static FieldMapWrapper.Cache wrapperCache;
 	private static Wrapper wrapper;
 
 	@Test
@@ -48,7 +49,9 @@ public class FieldMapWrapperTest {
 			fieldMap.put(field.getName(), field);
 		});
 		wrapper = new Wrapper(fieldMap);
-		Assert.assertNotNull(wrapper);
+		wrapperCache = new FieldMapWrapper.Cache(true);
+		wrapperCache.register(wrapper);
+		Assert.assertEquals(wrapper, wrapperCache.get(Record.class));
 	}
 
 	@Test
@@ -118,6 +121,20 @@ public class FieldMapWrapperTest {
 		Assert.assertEquals(2, records.size());
 		Assert.assertEquals(records.get(0), map1);
 		Assert.assertEquals(records.get(1), map2);
+	}
+
+	@Test
+	public void test800cacheUnregister() {
+		wrapperCache.unregister(Record.class);
+		Assert.assertNull(wrapperCache.get(Record.class));
+	}
+
+	@Test
+	public void test801cacheClear() {
+		wrapperCache.register(wrapper);
+		Assert.assertEquals(wrapper, wrapperCache.get(Record.class));
+		wrapperCache.clear();
+		Assert.assertNull(wrapperCache.get(Record.class));
 	}
 
 	public static class Record {

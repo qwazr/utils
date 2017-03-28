@@ -19,7 +19,13 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FieldMapWrapper<T> {
 
@@ -188,5 +194,31 @@ public class FieldMapWrapper<T> {
 			}
 		}
 		return records;
+	}
+
+	public static class Cache {
+
+		private final Map<Class<?>, FieldMapWrapper<?>> fieldMapWrappers;
+
+		public Cache(boolean concurrent) {
+			fieldMapWrappers = concurrent ? new ConcurrentHashMap<>() : new HashMap<>();
+		}
+
+		public <T> void register(final FieldMapWrapper<T> fieldMapWrapper) {
+			fieldMapWrappers.put(fieldMapWrapper.objectClass, fieldMapWrapper);
+		}
+
+		public void unregister(final Class<?> clazz) {
+			fieldMapWrappers.remove(clazz);
+		}
+
+		public <T> FieldMapWrapper<T> get(final Class<T> clazz) {
+			return (FieldMapWrapper<T>) fieldMapWrappers.get(clazz);
+		}
+
+		public void clear() {
+			fieldMapWrappers.clear();
+		}
+
 	}
 }
