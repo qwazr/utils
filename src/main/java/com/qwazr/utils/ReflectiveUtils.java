@@ -141,6 +141,7 @@ public class ReflectiveUtils {
 				bestParameterArray = parameters;
 				if (parameters.length == parameterMap.size())
 					break;
+				max = parameters.length;
 			}
 		}
 		return new InstanceFactory(bestMatchConstructor, bestParameterArray);
