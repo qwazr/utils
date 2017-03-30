@@ -24,28 +24,19 @@ public class ClassLoaderUtilsTest {
 
 	@Test
 	public void findClassNoClassLoader() throws ClassNotFoundException {
-		Assert.assertEquals(String.class, ClassLoaderUtils.findClass(null, String.class.getName()));
+		Assert.assertEquals(String.class, ClassLoaderUtils.findClass(String.class.getName()));
 	}
 
 	@Test
 	public void findClass() throws ClassNotFoundException {
 		Assert.assertEquals(ClassLoaderUtilsTest.class,
-				ClassLoaderUtils.findClass(Thread.currentThread().getContextClassLoader(),
-						ClassLoaderUtilsTest.class.getName()));
+				ClassLoaderUtils.findClass(ClassLoaderUtilsTest.class.getName()));
 	}
 
 	@Test
 	public void findClassList() throws ClassNotFoundException {
 		String[] prefixes = { "xxx.yyy.", "com.qwazr.utils.test." };
-		Assert.assertEquals(ClassLoaderUtilsTest.class,
-				ClassLoaderUtils.findClass(Thread.currentThread().getContextClassLoader(), "ClassLoaderUtilsTest",
-						prefixes));
-	}
-
-	@Test
-	public void defaultClassFactory() throws ReflectiveOperationException {
-		Assert.assertEquals(ClassLoaderUtilsTest.class,
-				ClassLoaderUtils.ClassFactory.DEFAULT.newInstance(ClassLoaderUtilsTest.class).getClass());
+		Assert.assertEquals(ClassLoaderUtilsTest.class, ClassLoaderUtils.findClass("ClassLoaderUtilsTest", prefixes));
 	}
 
 }

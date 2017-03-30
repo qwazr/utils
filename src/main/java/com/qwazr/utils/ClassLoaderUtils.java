@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,11 @@ public class ClassLoaderUtils {
 
 	public static <T> Class<T> findClass(final ClassLoader classLoader, final String className)
 			throws ClassNotFoundException {
-		if (classLoader != null)
-			return (Class<T>) classLoader.loadClass(className);
-		else
-			return (Class<T>) Class.forName(className);
+		return (Class<T>) classLoader.loadClass(className);
 	}
 
-	public static InputStream getResourceAsStream(final ClassLoader classLoader, final String name) {
-		if (classLoader != null)
-			return classLoader.getResourceAsStream(name);
-		else
-			return ClassLoaderUtils.class.getResourceAsStream(name);
+	public static <T> Class<T> findClass(final String className) throws ClassNotFoundException {
+		return findClass(Thread.currentThread().getContextClassLoader(), className);
 	}
 
 	public static <T> Class<T> findClass(final ClassLoader classLoader, final String classSuffix,
@@ -50,20 +44,17 @@ public class ClassLoaderUtils {
 		throw firstClassException;
 	}
 
-	public interface ClassFactory {
-
-		DefaultFactory DEFAULT = new DefaultFactory();
-
-		<T> T newInstance(Class<T> clazz) throws ReflectiveOperationException;
-
+	public static <T> Class<T> findClass(final String classSuffix, final String... classPrefixes)
+			throws ClassNotFoundException {
+		return findClass(Thread.currentThread().getContextClassLoader(), classSuffix, classPrefixes);
 	}
 
-	final public static class DefaultFactory implements ClassFactory {
+	public static InputStream getResourceAsStream(final ClassLoader classLoader, final String name) {
+		return classLoader.getResourceAsStream(name);
+	}
 
-		@Override
-		final public <T> T newInstance(final Class<T> clazz) throws ReflectiveOperationException {
-			return clazz.newInstance();
-		}
+	public static InputStream getResourceAsStream(final String name) {
+		return getResourceAsStream(Thread.currentThread().getContextClassLoader(), name);
 	}
 
 }
