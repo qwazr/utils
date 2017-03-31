@@ -20,6 +20,9 @@ import com.qwazr.utils.FunctionUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Map;
+import java.util.HashMap;
+
 public class FunctionUtilsTest {
 
 	private Integer functionEx(FunctionUtils.FunctionEx<String, Integer, NumberFormatException> funct, String value)
@@ -123,6 +126,21 @@ public class FunctionUtilsTest {
 		} catch (NumberFormatException e) {
 			Assert.assertTrue(true);
 		}
+	}
+
+	@Test
+	public void testMapForEach() {
+		Map<String, Integer> map = new HashMap<>();
+		map.put("10", 10);
+		map.put("9", 9);
+		FunctionUtils.forEachEx(map, (v1, v2) -> {
+			if (!Integer.toString(v2).equals(v1))
+				throw new NumberFormatException("Parameters are not equal");
+		});
+		FunctionUtils.forEachEx2(map, (v1, v2) -> {
+			if (!Integer.toString(v2).equals(v1))
+				throw new NumberFormatException("Parameters are not equal");
+		});
 	}
 
 }

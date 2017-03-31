@@ -73,12 +73,12 @@ public class FunctionUtils {
 		void run() throws E;
 	}
 
-	public static <K, V, E extends Exception> void forEach(Map<K, V> map, BiConsumerEx<K, V, E> consumer) throws E {
+	public static <K, V, E extends Exception> void forEachEx(Map<K, V> map, BiConsumerEx<K, V, E> consumer) throws E {
 		for (Map.Entry<K, V> entry : map.entrySet())
 			consumer.accept(entry.getKey(), entry.getValue());
 	}
 
-	public static <K, V, E1 extends Exception, E2 extends Exception> void forEach(Map<K, V> map,
+	public static <K, V, E1 extends Exception, E2 extends Exception> void forEachEx2(Map<K, V> map,
 			BiConsumerEx2<K, V, E1, E2> consumer) throws E1, E2 {
 		for (Map.Entry<K, V> entry : map.entrySet())
 			consumer.accept(entry.getKey(), entry.getValue());
