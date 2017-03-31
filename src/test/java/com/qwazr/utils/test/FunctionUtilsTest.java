@@ -27,8 +27,15 @@ public class FunctionUtilsTest {
 		return funct.apply(value);
 	}
 
+	private Integer functionEx2(
+			FunctionUtils.FunctionEx2<String, Integer, NumberFormatException, IllegalAccessException> funct,
+			String value) throws NumberFormatException, IllegalAccessException {
+		return funct.apply(value);
+	}
+
 	@Test
 	public void testFunction() {
+		Assert.assertEquals(Integer.valueOf(10), functionEx(Integer::valueOf, "10"));
 		Assert.assertEquals(Integer.valueOf(10), functionEx(Integer::valueOf, "10"));
 	}
 
@@ -72,4 +79,50 @@ public class FunctionUtilsTest {
 			Assert.assertTrue(true);
 		}
 	}
+
+	private void biConsumerEx(FunctionUtils.BiConsumerEx<String, Integer, NumberFormatException> funct, String value1,
+			Integer value2) throws NumberFormatException {
+		funct.accept(value1, value2);
+	}
+
+	private void biConsumerEx2(
+			FunctionUtils.BiConsumerEx2<String, Integer, NumberFormatException, NullPointerException> funct,
+			String value1, Integer value2) throws NumberFormatException, NullPointerException {
+		funct.accept(value1, value2);
+	}
+
+	@Test
+	public void testBiConsumer() {
+		biConsumerEx((v1, v2) -> {
+			if (!Integer.toString(v2).equals(v1))
+				throw new NumberFormatException("Parameters are not equal");
+		}, "10", 10);
+		biConsumerEx2((v1, v2) -> {
+			if (!Integer.toString(v2).equals(v1))
+				throw new NumberFormatException("Parameters are not equal");
+		}, "10", 10);
+	}
+
+	@Test
+	public void testBiConsumerError() {
+		try {
+			biConsumerEx((v1, v2) -> {
+				if (!Integer.toString(v2).equals(v1))
+					throw new NumberFormatException("Parameters are not equal");
+			}, "10", 9);
+			Assert.fail("No exception thrown: NumberFormatException");
+		} catch (NumberFormatException e) {
+			Assert.assertTrue(true);
+		}
+		try {
+			biConsumerEx2((v1, v2) -> {
+				if (!Integer.toString(v2).equals(v1))
+					throw new NumberFormatException("Parameters are not equal");
+			}, "10", 9);
+			Assert.fail("No exception thrown: NumberFormatException");
+		} catch (NumberFormatException e) {
+			Assert.assertTrue(true);
+		}
+	}
+
 }
