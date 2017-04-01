@@ -24,41 +24,67 @@ import org.junit.Test;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReadWriteSemaphoresTest {
 
+	final class TestContext {
+
+		final AtomicInteger executionCount = new AtomicInteger(0);
+		final ExecutorService executorService;
+		final int threads;
+		final AtomicBoolean done = new AtomicBoolean(false);
+
+		TestContext(Integer maxRead, Integer maxWrite) {
+			threads = maxRead != null && maxWrite != null ? maxRead + maxWrite : 10;
+			executorService = Executors.newFixedThreadPool(threads * 5);
+		}
+	}
+
+	final class TestCounter {
+
+		final Integer maxExpected;
+		final AtomicInteger maxConcurrentCount = new AtomicInteger(0);
+		final AtomicInteger concurrentCount = new AtomicInteger(0);
+		final AtomicInteger maxCountReached = new AtomicInteger(0);
+
+		TestCounter(Integer maxExpected) {
+			this.maxExpected = maxExpected == null ? 1 : maxExpected;
+		}
+	}
+
 	void doTest(final ReadWriteSemaphores semaphores, final Integer maxRead, final Integer maxWrite)
 			throws InterruptedException {
-		final int threads = maxRead != null && maxWrite != null ? maxRead + maxWrite : 10;
-		final ExecutorService executorService = Executors.newFixedThreadPool(threads * 5);
-		final AtomicInteger executionCount = new AtomicInteger(0);
-		final AtomicInteger maxReadCount = new AtomicInteger(0);
-		final AtomicInteger maxWriteCount = new AtomicInteger(0);
-		final AtomicInteger concurrentReadCount = new AtomicInteger(0);
-		final AtomicInteger concurrentWritecount = new AtomicInteger(0);
-		final int count = RandomUtils.nextInt(threads * 10, threads * 20);
-		for (int i = 0; i < count; i++) {
+
+		final TestContext context = new TestContext(maxRead, maxWrite);
+		final TestCounter readCounter = new TestCounter(maxRead);
+		final TestCounter writeCounter = new TestCounter(maxWrite);
+
+		int count = 0;
+		long end = System.currentTimeMillis() + 1000 * 60 * 3;
+		while (System.currentTimeMillis() < end) {
 			try {
 				final Action action;
 				if (RandomUtils.nextBoolean())
-					action = new Action(semaphores.acquireReadSemaphore(), concurrentReadCount, executionCount,
-							maxReadCount);
+					action = new Action(semaphores.acquireReadSemaphore(), context, readCounter);
 				else
-					action = new Action(semaphores.acquireWriteSemaphore(), concurrentWritecount, executionCount,
-							maxWriteCount);
-				executorService.submit(action);
+					action = new Action(semaphores.acquireWriteSemaphore(), context, writeCounter);
+				context.executorService.submit(action);
+				count++;
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
+			if (readCounter.maxCountReached.get() >= 4 && writeCounter.maxCountReached.get() >= 4)
+				break;
 		}
-		executorService.shutdown();
-		executorService.awaitTermination(3, TimeUnit.MINUTES);
-		Assert.assertEquals(count, executionCount.get());
+		context.executorService.shutdown();
+		context.executorService.awaitTermination(3, TimeUnit.MINUTES);
+		Assert.assertEquals(count, context.executionCount.get());
 		if (maxRead != null)
-			Assert.assertEquals(maxRead.intValue(), maxReadCount.get());
+			Assert.assertEquals(maxRead.intValue(), readCounter.maxConcurrentCount.get());
 		if (maxWrite != null)
-			Assert.assertEquals(maxWrite.intValue(), maxWriteCount.get());
+			Assert.assertEquals(maxWrite.intValue(), writeCounter.maxConcurrentCount.get());
 	}
 
 	@Test
@@ -78,28 +104,29 @@ public class ReadWriteSemaphoresTest {
 	class Action implements Runnable {
 
 		private final ReadWriteSemaphores.Lock semaphoreLock;
-		private final AtomicInteger concurrentCount;
-		private final AtomicInteger executionCount;
+		private final TestContext context;
+		private final TestCounter counter;
 
-		Action(final ReadWriteSemaphores.Lock semaphoreLock, final AtomicInteger concurrentCount,
-				final AtomicInteger executionCount, final AtomicInteger maxConcurrentCount) {
+		Action(final ReadWriteSemaphores.Lock semaphoreLock, final TestContext context, final TestCounter counter) {
 			this.semaphoreLock = semaphoreLock;
-			this.concurrentCount = concurrentCount;
-			this.executionCount = executionCount;
-			final int cc = concurrentCount.incrementAndGet();
-			if (cc > maxConcurrentCount.get())
-				maxConcurrentCount.set(cc);
+			this.context = context;
+			this.counter = counter;
+			final int cc = counter.concurrentCount.incrementAndGet();
+			if (cc > counter.maxConcurrentCount.get())
+				counter.maxConcurrentCount.set(cc);
+			if (counter.maxExpected != null && cc >= counter.maxExpected)
+				counter.maxCountReached.incrementAndGet();
 		}
 
 		@Override
 		public void run() {
 			try {
-				executionCount.incrementAndGet();
+				context.executionCount.incrementAndGet();
 				Thread.sleep(RandomUtils.nextInt(250, 500));
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			} finally {
-				concurrentCount.decrementAndGet();
+				counter.concurrentCount.decrementAndGet();
 				semaphoreLock.close();
 			}
 		}
