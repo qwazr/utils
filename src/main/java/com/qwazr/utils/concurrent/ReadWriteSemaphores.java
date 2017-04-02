@@ -36,15 +36,19 @@ public class ReadWriteSemaphores {
 		writeSemaphore = maxConcurrentWrite == null ? null : new Semaphore(maxConcurrentWrite);
 	}
 
-	private static Lock atomicAquire(final Semaphore semaphore) throws InterruptedException {
-		return semaphore == null ? SemaphoreLock.EMPTY : new SemaphoreLock(semaphore);
+	private static Lock atomicAquire(final Semaphore semaphore) throws AcquireException {
+		try {
+			return semaphore == null ? SemaphoreLock.EMPTY : new SemaphoreLock(semaphore);
+		} catch (InterruptedException e) {
+			throw new AcquireException(e);
+		}
 	}
 
-	public Lock acquireReadSemaphore() throws InterruptedException {
+	public Lock acquireReadSemaphore() throws AcquireException {
 		return atomicAquire(readSemaphore);
 	}
 
-	public Lock acquireWriteSemaphore() throws InterruptedException {
+	public Lock acquireWriteSemaphore() throws AcquireException {
 		return atomicAquire(writeSemaphore);
 	}
 
@@ -71,5 +75,12 @@ public class ReadWriteSemaphores {
 			semaphore.release();
 		}
 
+	}
+
+	public static class AcquireException extends RuntimeException {
+
+		AcquireException(Exception cause) {
+			super(cause);
+		}
 	}
 }
