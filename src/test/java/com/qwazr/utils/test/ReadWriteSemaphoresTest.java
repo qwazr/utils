@@ -57,6 +57,9 @@ public class ReadWriteSemaphoresTest {
 	void doTest(final ReadWriteSemaphores semaphores, final Integer maxRead, final Integer maxWrite)
 			throws InterruptedException {
 
+		semaphores.setReadSize(maxRead);
+		semaphores.setWriteSize(maxWrite);
+
 		final TestContext context = new TestContext(maxRead, maxWrite);
 		final TestCounter readCounter = new TestCounter(maxRead);
 		final TestCounter writeCounter = new TestCounter(maxWrite);
@@ -85,16 +88,15 @@ public class ReadWriteSemaphoresTest {
 
 	@Test
 	public void test() throws InterruptedException {
-		Integer maxRead = null;
-		Integer maxWrite = null;
-		final ReadWriteSemaphores semaphores = new ReadWriteSemaphores(maxRead, maxWrite);
-		for (int i = 0; i < 3; i++) {
-			doTest(semaphores, maxRead, maxWrite);
-			maxRead = RandomUtils.nextInt(1, 10);
-			maxWrite = RandomUtils.nextInt(1, 4);
-			semaphores.setReadSize(maxRead);
-			semaphores.setWriteSize(maxWrite);
-		}
+		final ReadWriteSemaphores semaphores = new ReadWriteSemaphores(null, null);
+		// Start with empty size
+		doTest(semaphores, null, null);
+		// Small values
+		doTest(semaphores, 1, 1);
+		// Keep same write size
+		doTest(semaphores, 2, 1);
+		// Largest size
+		doTest(semaphores, 5, 2);
 	}
 
 	class Action implements Runnable {

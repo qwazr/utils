@@ -16,10 +16,13 @@
 package com.qwazr.utils.concurrent;
 
 import java.io.Closeable;
+import java.util.Objects;
 import java.util.concurrent.Semaphore;
 
 public class ReadWriteSemaphores {
 
+	private volatile Integer readPermits;
+	private volatile Integer writePermits;
 	private volatile Semaphore readSemaphore;
 	private volatile Semaphore writeSemaphore;
 
@@ -28,12 +31,21 @@ public class ReadWriteSemaphores {
 		setWriteSize(maxConcurrentWrite);
 	}
 
+	private static Semaphore checkNewSemaphore(final Semaphore oldSemaphore, final Integer oldSize,
+			final Integer newSize) {
+		if (oldSemaphore != null && Objects.equals(oldSize, newSize))
+			return oldSemaphore;
+		return newSize == null ? null : new Semaphore(newSize);
+	}
+
 	public synchronized void setReadSize(final Integer maxConcurrentRead) {
-		readSemaphore = maxConcurrentRead == null ? null : new Semaphore(maxConcurrentRead);
+		readSemaphore = checkNewSemaphore(readSemaphore, readPermits, maxConcurrentRead);
+		readPermits = maxConcurrentRead;
 	}
 
 	public synchronized void setWriteSize(final Integer maxConcurrentWrite) {
-		writeSemaphore = maxConcurrentWrite == null ? null : new Semaphore(maxConcurrentWrite);
+		writeSemaphore = checkNewSemaphore(writeSemaphore, writePermits, maxConcurrentWrite);
+		writePermits = maxConcurrentWrite;
 	}
 
 	private static Lock atomicAquire(final Semaphore semaphore) throws AcquireException {
