@@ -64,17 +64,13 @@ public class ReadWriteSemaphoresTest {
 		int count = 0;
 		long end = System.currentTimeMillis() + 1000 * 60 * 3;
 		while (System.currentTimeMillis() < end) {
-			try {
-				final Action action;
-				if (RandomUtils.nextBoolean())
-					action = new Action(semaphores.acquireReadSemaphore(), context, readCounter);
-				else
-					action = new Action(semaphores.acquireWriteSemaphore(), context, writeCounter);
-				context.executorService.submit(action);
-				count++;
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
-			}
+			final Action action;
+			if (RandomUtils.nextBoolean())
+				action = new Action(semaphores.acquireReadSemaphore(), context, readCounter);
+			else
+				action = new Action(semaphores.acquireWriteSemaphore(), context, writeCounter);
+			context.executorService.submit(action);
+			count++;
 			if (readCounter.maxCountReached.get() >= 4 && writeCounter.maxCountReached.get() >= 4)
 				break;
 		}
