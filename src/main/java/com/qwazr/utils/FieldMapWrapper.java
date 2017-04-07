@@ -106,93 +106,118 @@ public class FieldMapWrapper<T> {
 		return list;
 	}
 
-	public T toRecord(final Map<String, Object> fields) throws ReflectiveOperationException {
+	public void toField(final Object value, final Field field, final T record)
+			throws ReflectiveOperationException, IOException {
+
+		final Class<?> fieldType = field.getType();
+		final Class<?> fieldValueType = value.getClass();
+
+		if (fieldType.isAssignableFrom(fieldValueType)) {
+			field.set(record, value);
+			return;
+		}
+
+		if (value instanceof Number) {
+
+			final Number numberValue = (Number) value;
+			if (fieldType == Long.class)
+				field.set(record, numberValue.longValue());
+			else if (fieldType == Integer.class)
+				field.set(record, numberValue.intValue());
+			else if (fieldType == Float.class)
+				field.set(record, numberValue.floatValue());
+			else if (fieldType == Double.class)
+				field.set(record, numberValue.doubleValue());
+			return;
+
+		}
+
+		if (value instanceof Collection) {
+			final Collection<?> fieldValues = (Collection<?>) value;
+			if (fieldValues.isEmpty())
+				return;
+			field.set(record, fieldValues.iterator().next());
+			return;
+		}
+
+		if (fieldValueType.isArray()) {
+			final int length = Array.getLength(value);
+			if (length == 0)
+				return;
+			if (Collection.class.isAssignableFrom(fieldType)) {
+				final Collection fieldValues = (Collection) fieldType.newInstance();
+				for (int i = 0; i < length; i++)
+					fieldValues.add(Array.get(value, i));
+				field.set(record, fieldValues);
+			} else
+				field.set(record, Array.get(value, 0));
+			return;
+		}
+
+		if (value instanceof String && Number.class.isAssignableFrom(fieldType)) {
+
+			if (fieldType == Integer.class) {
+				field.set(record, Integer.valueOf((String) value));
+				return;
+			}
+			if (fieldType == Long.class) {
+				field.set(record, Long.valueOf((String) value));
+				return;
+			}
+			if (fieldType == Double.class) {
+				field.set(record, Double.valueOf((String) value));
+				return;
+			}
+			if (fieldType == Float.class) {
+				field.set(record, Float.valueOf((String) value));
+				return;
+			}
+			if (fieldType == Short.class) {
+				field.set(record, Short.valueOf((String) value));
+				return;
+			}
+		}
+
+		if (Serializable.class.isAssignableFrom(fieldType)) {
+			field.set(record, SerializationUtils.fromExternalizorBytes(Base64.getDecoder().decode((String) value),
+					(Class<? extends Serializable>) fieldType));
+			return;
+		}
+		throw new UnsupportedOperationException(
+				"Field " + field.getName() + " not assignable: " + fieldType + " -> " + fieldValueType);
+	}
+
+	public T toRecord(final Map<String, Object> fields) throws ReflectiveOperationException, IOException {
 		if (fields == null)
 			return null;
 		final T record = constructor.newInstance();
-		fields.forEach((fieldName, fieldValue) -> {
-			final Field field = fieldMap.get(fieldName);
-			if (field == null || fieldValue == null)
-				return;
-			final Class<?> fieldType = field.getType();
-			final Class<?> fieldValueType = fieldValue.getClass();
-			try {
-				if (fieldType.isAssignableFrom(fieldValueType)) {
-					field.set(record, fieldValue);
-					return;
-				}
-				if (fieldValue instanceof Number) {
-					final Number finalValueNumber = (Number) fieldValue;
-					if (fieldType.isAssignableFrom(Long.class))
-						field.set(record, finalValueNumber.longValue());
-					else if (fieldType.isAssignableFrom(Integer.class))
-						field.set(record, finalValueNumber.intValue());
-					else if (fieldType.isAssignableFrom(Float.class))
-						field.set(record, finalValueNumber.floatValue());
-					else if (fieldType.isAssignableFrom(Double.class))
-						field.set(record, finalValueNumber.doubleValue());
-					return;
-				}
-				if (fieldValue instanceof Collection) {
-					final Collection<?> fieldValues = (Collection<?>) fieldValue;
-					if (fieldValues.isEmpty())
+		final FunctionUtils.BiConsumerEx2<String, Object, ReflectiveOperationException, IOException> consumer =
+				(name, value) -> {
+					final Field field = fieldMap.get(name);
+					if (field == null || value == null)
 						return;
-					field.set(record, fieldValues.iterator().next());
-					return;
-				}
-				if (fieldValueType.isArray()) {
-					final int length = Array.getLength(fieldValue);
-					if (length == 0)
-						return;
-					if (Collection.class.isAssignableFrom(fieldType)) {
-						final Collection fieldValues = (Collection) fieldType.newInstance();
-						for (int i = 0; i < length; i++)
-							fieldValues.add(Array.get(fieldValue, i));
-						field.set(record, fieldValues);
-					} else
-						field.set(record, Array.get(fieldValue, 0));
-					return;
-				}
-				if (Serializable.class.isAssignableFrom(fieldType)) {
-					field.set(record,
-							SerializationUtils.fromExternalizorBytes(Base64.getDecoder().decode((String) fieldValue),
-									(Class<? extends Serializable>) fieldType));
-					return;
-				}
-				throw new UnsupportedOperationException(
-						"Field " + fieldName + " not assignable: " + fieldType + " -> " + fieldValueType);
-			} catch (ReflectiveOperationException | IOException e) {
-				throw new IllegalStateException(e);
-			}
-		});
+					toField(value, field, record);
+				};
+		FunctionUtils.forEachEx2(fields, consumer);
 		return record;
 	}
 
-	public List<T> toRecords(final Collection<Map<String, Object>> docs) {
+	public List<T> toRecords(final Collection<Map<String, Object>> docs)
+			throws IOException, ReflectiveOperationException {
 		if (docs == null)
 			return null;
 		final List<T> records = new ArrayList<>();
-		docs.forEach(doc -> {
-			try {
-				records.add(toRecord(doc));
-			} catch (ReflectiveOperationException e) {
-				throw new RuntimeException(e);
-			}
-		});
+		for (final Map<String, Object> doc : docs)
+			records.add(toRecord(doc));
 		return records;
 	}
 
-	public List<T> toRecords(final Map<String, Object>... docs) {
+	public List<T> toRecords(final Map<String, Object>... docs) throws IOException, ReflectiveOperationException {
 		if (docs == null)
 			return null;
 		final List<T> records = new ArrayList<>();
-		for (Map<String, Object> doc : docs) {
-			try {
-				records.add(toRecord(doc));
-			} catch (ReflectiveOperationException e) {
-				throw new RuntimeException(e);
-			}
-		}
+		for (Map<String, Object> doc : docs)
+			records.add(toRecord(doc));
 		return records;
 	}
 

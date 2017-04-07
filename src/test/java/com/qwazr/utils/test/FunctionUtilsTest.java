@@ -21,8 +21,8 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 public class FunctionUtilsTest {
 
@@ -69,9 +69,15 @@ public class FunctionUtilsTest {
 		funct.accept(value);
 	}
 
+	private void consumerEx2(FunctionUtils.ConsumerEx2<String, NumberFormatException, NullPointerException> funct,
+			String value) throws NullPointerException {
+		funct.accept(value);
+	}
+
 	@Test
 	public void testConsumer() {
 		consumerEx(Integer::valueOf, "10");
+		consumerEx2(Integer::valueOf, "10");
 	}
 
 	@Test

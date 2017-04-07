@@ -25,6 +25,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,7 +51,7 @@ public class FieldMapWrapperTest {
 
 	@Test
 	public void test200newMap() {
-		Record record = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10),
+		Record record = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10), RandomUtils.nextDouble(),
 				RandomStringUtils.randomAlphanumeric(3), RandomStringUtils.randomAlphanumeric(3));
 		Map<String, Object> map = wrapper.newMap(record);
 		Assert.assertNotNull(map);
@@ -59,9 +60,9 @@ public class FieldMapWrapperTest {
 
 	@Test
 	public void test300newMapCollection() {
-		Record record1 = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10),
+		Record record1 = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10), RandomUtils.nextDouble(),
 				RandomStringUtils.randomAlphanumeric(3), RandomStringUtils.randomAlphanumeric(3));
-		Record record2 = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10),
+		Record record2 = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10), RandomUtils.nextDouble(),
 				RandomStringUtils.randomAlphanumeric(3), RandomStringUtils.randomAlphanumeric(3));
 		List<Map<String, Object>> mapCollection = wrapper.newMapCollection(Arrays.asList(record1, record2));
 		Assert.assertNotNull(mapCollection);
@@ -72,7 +73,7 @@ public class FieldMapWrapperTest {
 
 	@Test
 	public void test400newMapArray() {
-		Record record = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10),
+		Record record = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10), RandomUtils.nextDouble(),
 				RandomStringUtils.randomAlphanumeric(3), RandomStringUtils.randomAlphanumeric(3));
 		Map<String, Object> map = wrapper.newMap(record);
 		Assert.assertNotNull(map);
@@ -84,11 +85,12 @@ public class FieldMapWrapperTest {
 		Map<String, Object> map = new HashMap<>();
 		map.put("id", RandomUtils.nextLong());
 		map.put("title", RandomStringUtils.randomAscii(10));
+		map.put("price", RandomStringUtils.randomNumeric(3));
 		return map;
 	}
 
 	@Test
-	public void test500toRecord() throws ReflectiveOperationException {
+	public void test500toRecord() throws ReflectiveOperationException, IOException {
 		Map map = getRandom();
 		Record record = wrapper.toRecord(map);
 		Assert.assertNotNull(record);
@@ -96,7 +98,7 @@ public class FieldMapWrapperTest {
 	}
 
 	@Test
-	public void test600collectionToRecords() {
+	public void test600collectionToRecords() throws IOException, ReflectiveOperationException {
 		Map<String, Object> map1 = getRandom();
 		Map<String, Object> map2 = getRandom();
 		List<Record> records = wrapper.toRecords(Arrays.asList(map1, map2));
@@ -107,7 +109,7 @@ public class FieldMapWrapperTest {
 	}
 
 	@Test
-	public void test700arrayToRecords() {
+	public void test700arrayToRecords() throws IOException, ReflectiveOperationException {
 		Map<String, Object> map1 = getRandom();
 		Map<String, Object> map2 = getRandom();
 		List<Record> records = wrapper.toRecords(map1, map2);
@@ -128,11 +130,13 @@ public class FieldMapWrapperTest {
 
 		final Long id;
 		final String title;
+		final Double price;
 		final LinkedHashSet<String> tags;
 
-		Record(Long id, String title, String... tags) {
+		Record(Long id, String title, Double price, String... tags) {
 			this.id = id;
 			this.title = title;
+			this.price = price;
 			if (tags == null || tags.length == 0)
 				this.tags = null;
 			else {
@@ -142,7 +146,7 @@ public class FieldMapWrapperTest {
 		}
 
 		public Record() {
-			this(null, null);
+			this(null, null, null);
 		}
 
 		@Override

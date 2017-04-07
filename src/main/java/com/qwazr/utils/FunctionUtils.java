@@ -48,6 +48,13 @@ public class FunctionUtils {
 	}
 
 	@FunctionalInterface
+	public interface ConsumerEx2<T, E1 extends Exception, E2 extends Exception> {
+
+		void accept(T t) throws E1, E2;
+
+	}
+
+	@FunctionalInterface
 	public interface BiConsumerEx<K, V, E extends Exception> {
 
 		void accept(K k, V v) throws E;
