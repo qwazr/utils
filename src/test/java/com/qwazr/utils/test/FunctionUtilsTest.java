@@ -17,6 +17,7 @@
 package com.qwazr.utils.test;
 
 import com.qwazr.utils.FunctionUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -94,8 +95,21 @@ public class FunctionUtilsTest {
 		funct.accept(value1, value2);
 	}
 
+	private void biConsumerEx3(
+			FunctionUtils.BiConsumerEx3<String, Integer, NumberFormatException, NullPointerException, IllegalAccessException> funct,
+			String value1, Integer value2) throws NumberFormatException, NullPointerException, IllegalAccessException {
+		funct.accept(value1, value2);
+	}
+
+	private void biConsumerEx4(
+			FunctionUtils.BiConsumerEx4<String, Integer, NumberFormatException, NullPointerException, IllegalAccessException, NotImplementedException> funct,
+			String value1, Integer value2)
+			throws NumberFormatException, NullPointerException, IllegalAccessException, NotImplementedException {
+		funct.accept(value1, value2);
+	}
+
 	@Test
-	public void testBiConsumer() {
+	public void testBiConsumer() throws IllegalAccessException {
 		biConsumerEx((v1, v2) -> {
 			if (!Integer.toString(v2).equals(v1))
 				throw new NumberFormatException("Parameters are not equal");
@@ -104,10 +118,18 @@ public class FunctionUtilsTest {
 			if (!Integer.toString(v2).equals(v1))
 				throw new NumberFormatException("Parameters are not equal");
 		}, "10", 10);
+		biConsumerEx3((v1, v2) -> {
+			if (!Integer.toString(v2).equals(v1))
+				throw new NumberFormatException("Parameters are not equal");
+		}, "10", 10);
+		biConsumerEx4((v1, v2) -> {
+			if (!Integer.toString(v2).equals(v1))
+				throw new NumberFormatException("Parameters are not equal");
+		}, "10", 10);
 	}
 
 	@Test
-	public void testBiConsumerError() {
+	public void testBiConsumerError() throws IllegalAccessException {
 		try {
 			biConsumerEx((v1, v2) -> {
 				if (!Integer.toString(v2).equals(v1))
@@ -119,6 +141,24 @@ public class FunctionUtilsTest {
 		}
 		try {
 			biConsumerEx2((v1, v2) -> {
+				if (!Integer.toString(v2).equals(v1))
+					throw new NumberFormatException("Parameters are not equal");
+			}, "10", 9);
+			Assert.fail("No exception thrown: NumberFormatException");
+		} catch (NumberFormatException e) {
+			Assert.assertTrue(true);
+		}
+		try {
+			biConsumerEx3((v1, v2) -> {
+				if (!Integer.toString(v2).equals(v1))
+					throw new NumberFormatException("Parameters are not equal");
+			}, "10", 9);
+			Assert.fail("No exception thrown: NumberFormatException");
+		} catch (NumberFormatException e) {
+			Assert.assertTrue(true);
+		}
+		try {
+			biConsumerEx4((v1, v2) -> {
 				if (!Integer.toString(v2).equals(v1))
 					throw new NumberFormatException("Parameters are not equal");
 			}, "10", 9);
@@ -138,6 +178,14 @@ public class FunctionUtilsTest {
 				throw new NumberFormatException("Parameters are not equal");
 		});
 		FunctionUtils.forEachEx2(map, (v1, v2) -> {
+			if (!Integer.toString(v2).equals(v1))
+				throw new NumberFormatException("Parameters are not equal");
+		});
+		FunctionUtils.forEachEx3(map, (v1, v2) -> {
+			if (!Integer.toString(v2).equals(v1))
+				throw new NumberFormatException("Parameters are not equal");
+		});
+		FunctionUtils.forEachEx4(map, (v1, v2) -> {
 			if (!Integer.toString(v2).equals(v1))
 				throw new NumberFormatException("Parameters are not equal");
 		});

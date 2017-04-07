@@ -62,6 +62,20 @@ public class FunctionUtils {
 	}
 
 	@FunctionalInterface
+	public interface BiConsumerEx3<K, V, E1 extends Exception, E2 extends Exception, E3 extends Exception> {
+
+		void accept(K k, V v) throws E1, E2, E3;
+
+	}
+
+	@FunctionalInterface
+	public interface BiConsumerEx4<K, V, E1 extends Exception, E2 extends Exception, E3 extends Exception, E4 extends Exception> {
+
+		void accept(K k, V v) throws E1, E2, E3, E4;
+
+	}
+
+	@FunctionalInterface
 	public interface CallableEx<V, E extends Exception> {
 
 		V call() throws E;
@@ -80,6 +94,18 @@ public class FunctionUtils {
 
 	public static <K, V, E1 extends Exception, E2 extends Exception> void forEachEx2(Map<K, V> map,
 			BiConsumerEx2<K, V, E1, E2> consumer) throws E1, E2 {
+		for (Map.Entry<K, V> entry : map.entrySet())
+			consumer.accept(entry.getKey(), entry.getValue());
+	}
+
+	public static <K, V, E1 extends Exception, E2 extends Exception, E3 extends Exception> void forEachEx3(
+			Map<K, V> map, BiConsumerEx3<K, V, E1, E2, E3> consumer) throws E1, E2, E3 {
+		for (Map.Entry<K, V> entry : map.entrySet())
+			consumer.accept(entry.getKey(), entry.getValue());
+	}
+
+	public static <K, V, E1 extends Exception, E2 extends Exception, E3 extends Exception, E4 extends Exception> void forEachEx4(
+			Map<K, V> map, BiConsumerEx4<K, V, E1, E2, E3, E4> consumer) throws E1, E2, E3, E4 {
 		for (Map.Entry<K, V> entry : map.entrySet())
 			consumer.accept(entry.getKey(), entry.getValue());
 	}
