@@ -117,6 +117,7 @@ public class FieldMapWrapper<T> {
 			return;
 		}
 
+		// Check number
 		if (value instanceof Number) {
 
 			final Number numberValue = (Number) value;
@@ -130,6 +131,20 @@ public class FieldMapWrapper<T> {
 				field.set(record, numberValue.doubleValue());
 			return;
 
+		}
+
+		// Check collection
+		if (Collection.class.isAssignableFrom(fieldType)) {
+			Collection fieldValue = (Collection) field.get(record);
+			if (fieldValue == null) {
+				fieldValue = (Collection) fieldType.newInstance();
+				field.set(record, fieldValue);
+			}
+			if (value instanceof Collection)
+				fieldValue.addAll((Collection) value);
+			else
+				fieldValue.add(value);
+			return;
 		}
 
 		if (value instanceof Collection) {

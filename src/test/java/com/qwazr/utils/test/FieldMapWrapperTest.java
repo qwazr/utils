@@ -98,6 +98,35 @@ public class FieldMapWrapperTest {
 	}
 
 	@Test
+	public void test501toRecordStringToCollection() throws ReflectiveOperationException, IOException {
+		Map map = getRandom();
+		map.put("tags", RandomStringUtils.randomAlphanumeric(5));
+		Record record = wrapper.toRecord(map);
+		Assert.assertNotNull(record);
+		Assert.assertEquals(record, map);
+	}
+
+	@Test
+	public void test502toRecordCollectionToCollection() throws ReflectiveOperationException, IOException {
+		Map map = getRandom();
+		map.put("tags",
+				Arrays.asList(RandomStringUtils.randomAlphanumeric(5), RandomStringUtils.randomAlphanumeric(5)));
+		Record record = wrapper.toRecord(map);
+		Assert.assertNotNull(record);
+		Assert.assertEquals(record, map);
+	}
+
+	@Test
+	public void test503toRecordArrayToCollection() throws ReflectiveOperationException, IOException {
+		Map map = getRandom();
+		map.put("tags",
+				new String[] { RandomStringUtils.randomAlphanumeric(5), RandomStringUtils.randomAlphanumeric(5) });
+		Record record = wrapper.toRecord(map);
+		Assert.assertNotNull(record);
+		Assert.assertEquals(record, map);
+	}
+
+	@Test
 	public void test600collectionToRecords() throws IOException, ReflectiveOperationException {
 		Map<String, Object> map1 = getRandom();
 		Map<String, Object> map2 = getRandom();
@@ -160,8 +189,15 @@ public class FieldMapWrapperTest {
 			}
 			if (object instanceof Map) {
 				Map m = (Map) object;
-				return Objects.equals(id, m.get("id")) && Objects.equals(title, m.get("title"))
-						&& CollectionsUtils.equals(tags, (Collection) m.get("tags"));
+				if (!Objects.equals(id, m.get("id")) && Objects.equals(title, m.get("title")))
+					return false;
+				Object mtags = m.get("tags");
+				if (mtags == null)
+					return tags == null || tags.isEmpty();
+				if (mtags instanceof Collection)
+					return CollectionsUtils.equals(tags, (Collection) mtags);
+				return tags.size() == 1 && Objects.equals(mtags, tags.iterator().next());
+
 			}
 			return false;
 		}
