@@ -119,7 +119,6 @@ public class FieldMapWrapper<T> {
 
 		// Check number
 		if (value instanceof Number) {
-
 			final Number numberValue = (Number) value;
 			if (fieldType == Long.class)
 				field.set(record, numberValue.longValue());
@@ -130,7 +129,20 @@ public class FieldMapWrapper<T> {
 			else if (fieldType == Double.class)
 				field.set(record, numberValue.doubleValue());
 			return;
+		}
 
+		if (fieldValueType.isArray()) {
+			final int length = Array.getLength(value);
+			if (length == 0)
+				return;
+			if (Collection.class.isAssignableFrom(fieldType)) {
+				final Collection fieldValues = (Collection) fieldType.newInstance();
+				for (int i = 0; i < length; i++)
+					fieldValues.add(Array.get(value, i));
+				field.set(record, fieldValues);
+			} else
+				field.set(record, Array.get(value, 0));
+			return;
 		}
 
 		// Check collection
@@ -152,20 +164,6 @@ public class FieldMapWrapper<T> {
 			if (fieldValues.isEmpty())
 				return;
 			field.set(record, fieldValues.iterator().next());
-			return;
-		}
-
-		if (fieldValueType.isArray()) {
-			final int length = Array.getLength(value);
-			if (length == 0)
-				return;
-			if (Collection.class.isAssignableFrom(fieldType)) {
-				final Collection fieldValues = (Collection) fieldType.newInstance();
-				for (int i = 0; i < length; i++)
-					fieldValues.add(Array.get(value, i));
-				field.set(record, fieldValues);
-			} else
-				field.set(record, Array.get(value, 0));
 			return;
 		}
 

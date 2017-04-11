@@ -20,8 +20,8 @@ import org.apache.commons.lang3.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -35,7 +35,7 @@ public class CollectionsUtilsTest {
 
 	@Test
 	public void firstIsNull() {
-		Assert.assertFalse(CollectionsUtils.equals(Arrays.asList(1, 2, 3), null));
+		Assert.assertFalse(CollectionsUtils.equals(Arrays.asList(1, 2, 3), (Collection) null));
 	}
 
 	@Test
@@ -49,8 +49,13 @@ public class CollectionsUtilsTest {
 	}
 
 	@Test
-	public void sameContent() {
+	public void sameContentCollColl() {
 		Assert.assertTrue(CollectionsUtils.equals(Arrays.asList(1, 2, 3), Arrays.asList(1, 2, 3)));
+	}
+
+	@Test
+	public void sameContentCollArray() {
+		Assert.assertTrue(CollectionsUtils.equals(Arrays.asList(1, 2, 3), new Integer[] { 1, 2, 3 }));
 	}
 
 	@Test
@@ -66,7 +71,7 @@ public class CollectionsUtilsTest {
 	}
 
 	@Test
-	public void multilinePrint()  {
+	public void multilinePrint() {
 		Assert.assertEquals(String.format("one%ntwo%n%nthree"),
 				CollectionsUtils.multiline(Arrays.asList("one", "two", null, "three")));
 	}

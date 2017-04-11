@@ -40,6 +40,20 @@ public class CollectionsUtils {
 		return true;
 	}
 
+	public static <T> boolean equals(final Collection<T> coll, final T[] array) {
+		if (coll == null)
+			return array == null;
+		else if (array == null)
+			return false;
+		if (coll.size() != array.length)
+			return false;
+		Iterator<T> i = coll.iterator();
+		for (T o : array)
+			if (!Objects.equals(o, i.next()))
+				return false;
+		return true;
+	}
+
 	public static <K, V> boolean equals(final Map<K, V> map1, final Map<K, V> map2) {
 		if (map1 == null)
 			return map2 == null;

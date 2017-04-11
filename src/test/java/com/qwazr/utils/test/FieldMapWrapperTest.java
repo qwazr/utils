@@ -196,7 +196,9 @@ public class FieldMapWrapperTest {
 					return tags == null || tags.isEmpty();
 				if (mtags instanceof Collection)
 					return CollectionsUtils.equals(tags, (Collection) mtags);
-				return tags.size() == 1 && Objects.equals(mtags, tags.iterator().next());
+				if (mtags instanceof String)
+					return tags.size() == 1 && tags.iterator().next().equals(mtags);
+				return CollectionsUtils.equals(tags, (String[]) mtags);
 
 			}
 			return false;
