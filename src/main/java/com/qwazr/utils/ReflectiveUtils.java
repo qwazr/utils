@@ -120,7 +120,7 @@ public class ReflectiveUtils {
 	 * @param parameterMap the available parameters (may be null or empty)
 	 * @param <T>          the type of the class
 	 * @return the best matching constructor
-	 * @throws NoSuchMethodException
+	 * @throws NoSuchMethodException if no matching method is found
 	 */
 	public static <T> InstanceFactory<T> findBestMatchingConstructor(final Map<Class<?>, ?> parameterMap,
 			final Class<T> objectClass) throws NoSuchMethodException {
@@ -144,6 +144,10 @@ public class ReflectiveUtils {
 				max = parameters.length;
 			}
 		}
+		if (bestParameterArray == null) {
+			final Constructor<T> constructor = objectClass.getDeclaredConstructor();
+			return constructor == null ? null : new InstanceFactory(constructor, null);
+		}
 		return new InstanceFactory(bestMatchConstructor, bestParameterArray);
 	}
 
@@ -158,7 +162,9 @@ public class ReflectiveUtils {
 		}
 
 		public T newInstance() throws IllegalAccessException, InvocationTargetException, InstantiationException {
-			return constructor.newInstance(parameters);
+			return parameters == null || parameters.length == 0 ?
+					constructor.newInstance() :
+					constructor.newInstance(parameters);
 		}
 
 	}
