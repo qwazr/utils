@@ -110,7 +110,7 @@ public class ReflectiveUtils {
 				return null;
 			parameterList.add(parameter);
 		}
-		return parameterList.toArray(new Object[parameters.size()]);
+		return parameterList.toArray(new Object[parameterList.size()]);
 	}
 
 	/**
