@@ -124,7 +124,7 @@ public class ReflectiveUtils {
 	 */
 	public static <T> InstanceFactory<T> findBestMatchingConstructor(final Map<Class<?>, ?> parameterMap,
 			final Class<T> objectClass) throws NoSuchMethodException {
-		final Constructor<T>[] constructors = (Constructor<T>[]) objectClass.getDeclaredConstructors();
+		final Constructor<T>[] constructors = (Constructor<T>[]) objectClass.getConstructors();
 		if (constructors == null)
 			return null;
 		if (parameterMap == null || parameterMap.size() == 0) {
