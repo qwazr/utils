@@ -26,7 +26,7 @@ public class ConstructorParametersImpl implements ConstructorParameters {
 
 	private final Map<Class<?>, Object> map;
 
-	ConstructorParametersImpl(Map<Class<?>, Object> map) {
+	protected ConstructorParametersImpl(Map<Class<?>, Object> map) {
 		this.map = map;
 	}
 
