@@ -177,7 +177,7 @@ public class ReflectiveUtils {
 
 		Object unregisterConstructorParameter(final Object object);
 
-		<T> T unregisterConstructorParameter(final Class<?> objectClass);
+		<T> T unregisterConstructorParameter(final Class<? extends T> objectClass);
 	}
 
 	public static class ParameterHashMap extends HashMap<Class<?>, Object> implements ParameterMap {
@@ -196,7 +196,7 @@ public class ReflectiveUtils {
 			return remove(object.getClass());
 		}
 
-		public <T> T unregisterConstructorParameter(final Class<?> objectClass) {
+		public <T> T unregisterConstructorParameter(final Class<? extends T> objectClass) {
 			return (T) remove(objectClass);
 		}
 
