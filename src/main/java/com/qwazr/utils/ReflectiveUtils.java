@@ -168,4 +168,24 @@ public class ReflectiveUtils {
 		}
 
 	}
+
+	public interface ParameterMap extends Map<Class<?>, Object> {
+
+		default Object register(final Object object) {
+			return put(object.getClass(), object);
+		}
+
+		default <T> Object register(final Class<? extends T> objectClass, final T object) {
+			return put(objectClass, object);
+		}
+
+		default Object unregister(final Object object) {
+			return remove(object.getClass());
+		}
+
+		default <T> T unregister(final Class<?> objectClass) {
+			return (T) remove(objectClass);
+		}
+	}
+
 }
