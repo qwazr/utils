@@ -193,25 +193,21 @@ public class ReflectiveUtilsTest {
 		Assert.assertNotNull(result.newInstance());
 	}
 
-	static class ParametersMap extends HashMap<Class<?>, Object> implements ReflectiveUtils.ParameterMap {
-
-	}
-
 	@Test
 	public void testParameterMap() {
 
-		ParametersMap map = new ParametersMap();
+		ReflectiveUtils.ParameterHashMap map = new ReflectiveUtils.ParameterHashMap();
 
-		map.register(Integer.valueOf(1));
-		map.register(Long.class, Long.valueOf(2));
+		map.registerConstructorParameter(Integer.valueOf(1));
+		map.registerConstructorParameter(Long.class, Long.valueOf(2));
 
 		Assert.assertEquals(1, map.get(Integer.class));
 		Assert.assertEquals(2L, map.get(Long.class));
 
-		map.unregister(Integer.valueOf(1));
+		map.unregisterConstructorParameter(Integer.valueOf(1));
 		Assert.assertNull(map.get(Integer.class));
 
-		map.unregister(Long.class);
+		map.unregisterConstructorParameter(Long.class);
 		Assert.assertNull(map.get(Long.class));
 
 	}

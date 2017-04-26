@@ -169,23 +169,37 @@ public class ReflectiveUtils {
 
 	}
 
-	public interface ParameterMap extends Map<Class<?>, Object> {
+	public interface ParameterMap {
 
-		default Object register(final Object object) {
+		Object registerConstructorParameter(final Object object);
+
+		<T> Object registerConstructorParameter(final Class<? extends T> objectClass, final T object);
+
+		Object unregisterConstructorParameter(final Object object);
+
+		<T> T unregisterConstructorParameter(final Class<?> objectClass);
+	}
+
+	public static class ParameterHashMap extends HashMap<Class<?>, Object> implements ParameterMap {
+
+		@Override
+		public Object registerConstructorParameter(final Object object) {
 			return put(object.getClass(), object);
 		}
 
-		default <T> Object register(final Class<? extends T> objectClass, final T object) {
+		@Override
+		public <T> Object registerConstructorParameter(final Class<? extends T> objectClass, final T object) {
 			return put(objectClass, object);
 		}
 
-		default Object unregister(final Object object) {
+		public Object unregisterConstructorParameter(final Object object) {
 			return remove(object.getClass());
 		}
 
-		default <T> T unregister(final Class<?> objectClass) {
+		public <T> T unregisterConstructorParameter(final Class<?> objectClass) {
 			return (T) remove(objectClass);
 		}
+
 	}
 
 }
