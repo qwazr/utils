@@ -38,19 +38,17 @@ public interface ConstructorParameters {
 	 * Fill a parameter map from the given parameters collection
 	 *
 	 * @param parameters the parameters to check
-	 * @return return the map
 	 */
 	default void registerConstructorParameters(final Collection<?> parameters) {
 		if (parameters == null)
 			return;
-		parameters.forEach(parameter -> registerConstructorParameter(parameter));
+		parameters.forEach(this::registerConstructorParameter);
 	}
 
 	/**
 	 * Fill a parameter map from the given parameters
 	 *
 	 * @param parameters the parameters to check
-	 * @return return the map
 	 */
 	default void registerConstructorParameters(final Object... parameters) {
 		if (parameters == null)

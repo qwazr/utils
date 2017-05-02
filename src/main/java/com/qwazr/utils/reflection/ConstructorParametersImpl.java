@@ -20,13 +20,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class ConstructorParametersImpl implements ConstructorParameters {
+public class ConstructorParametersImpl extends InstancesSupplier.Impl implements ConstructorParameters {
 
 	private static Object[] NO_PARAMS = new Object[0];
 
 	private final Map<Class<?>, Object> map;
 
 	protected ConstructorParametersImpl(Map<Class<?>, Object> map) {
+		super(map);
 		this.map = map;
 	}
 
@@ -44,7 +45,7 @@ public class ConstructorParametersImpl implements ConstructorParameters {
 			return null;
 		if (map.size() == 0) {
 			final Constructor<T> constructor = objectClass.getDeclaredConstructor();
-			return constructor == null ? null : new InstanceFactory(constructor, null);
+			return constructor == null ? null : new InstanceFactory<>(constructor, null);
 		}
 		int max = -1;
 		Constructor<T> bestMatchConstructor = null;
@@ -61,9 +62,9 @@ public class ConstructorParametersImpl implements ConstructorParameters {
 		}
 		if (bestParameterArray == null) {
 			final Constructor<T> constructor = objectClass.getDeclaredConstructor();
-			return constructor == null ? null : new InstanceFactory(constructor, null);
+			return constructor == null ? null : new InstanceFactory<>(constructor, null);
 		}
-		return new InstanceFactory(bestMatchConstructor, bestParameterArray);
+		return new InstanceFactory<>(bestMatchConstructor, bestParameterArray);
 	}
 
 	/**
@@ -89,12 +90,12 @@ public class ConstructorParametersImpl implements ConstructorParameters {
 
 	@Override
 	public <T> Object registerConstructorParameter(Class<? extends T> objectClass, T object) {
-		return map.put(objectClass, object);
+		return registerInstance(objectClass, object);
 	}
 
 	@Override
 	public <T> T unregisterConstructorParameter(Class<? extends T> objectClass) {
-		return (T) map.remove(objectClass);
+		return unregisterInstance(objectClass);
 	}
 
 }
