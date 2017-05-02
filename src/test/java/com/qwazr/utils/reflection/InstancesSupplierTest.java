@@ -40,7 +40,7 @@ public class InstancesSupplierTest {
 	}
 
 	@Test
-	public void unegisterInstance() {
+	public void unregisterInstance() {
 		final String instance = "test";
 		Assert.assertEquals(0, instancesSupplier.size());
 		Assert.assertNull(instancesSupplier.unregisterInstance(String.class));
