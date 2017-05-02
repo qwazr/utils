@@ -19,15 +19,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.concurrent.ConcurrentHashMap;
-
 public class InstancesSupplierTest {
 
-	private InstancesSupplier.Impl instancesSupplier;
+	private InstancesSupplier instancesSupplier;
 
 	@Before
 	public void setup() {
-		instancesSupplier = new InstancesSupplier.Impl(new ConcurrentHashMap<>());
+		instancesSupplier = InstancesSupplier.withConcurrentMap();
 	}
 
 	@Test

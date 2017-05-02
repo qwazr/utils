@@ -17,6 +17,7 @@ package com.qwazr.utils.reflection;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface InstancesSupplier {
 
@@ -64,5 +65,13 @@ public interface InstancesSupplier {
 			return instances.size();
 		}
 
+	}
+
+	static InstancesSupplier withMap(Map<Class<?>, Object> map) {
+		return new Impl(map);
+	}
+
+	static InstancesSupplier withConcurrentMap() {
+		return withMap(new ConcurrentHashMap<>());
 	}
 }
