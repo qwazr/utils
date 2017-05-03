@@ -95,4 +95,10 @@ public class CollectionsUtils {
 	public static <T> String multiline(final Collection<T> collection) {
 		return multiline(collection, Object::toString);
 	}
+
+	public static <T, C extends Collection<T>> C copyIfNotEmpty(final Collection<T> source,
+			final Function<Collection<T>, C> supplier) {
+		return source == null || source.isEmpty() ? null : supplier.apply(source);
+	}
+
 }

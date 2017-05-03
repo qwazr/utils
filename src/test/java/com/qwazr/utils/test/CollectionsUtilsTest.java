@@ -20,9 +20,11 @@ import org.apache.commons.lang3.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -73,7 +75,14 @@ public class CollectionsUtilsTest {
 	@Test
 	public void multilinePrint() {
 		Assert.assertEquals(String.format("one%ntwo%n%nthree"),
-				CollectionsUtils.multiline(Arrays.asList("one", "two", null, "three")));
+							CollectionsUtils.multiline(Arrays.asList("one", "two", null, "three")));
+	}
+
+	@Test
+	public void copyIfNotEmpty() {
+		final List<Integer> list = Arrays.asList(1, 2, 3, 4);
+		final ArrayList<Integer> list2 = CollectionsUtils.copyIfNotEmpty(list, ArrayList::new);
+		Assert.assertArrayEquals(list.toArray(), list2.toArray());
 	}
 }
 
