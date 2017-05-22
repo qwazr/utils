@@ -39,8 +39,7 @@ public class FileUtilsTest {
 		Assert.assertEquals(newDir1, newDir2);
 	}
 
-	@Test
-	public void testDeleteDirectory() throws IOException {
+	Path prepareDirectory() throws IOException {
 		Path parentDir = Files.createTempDirectory("FileUtilsTest");
 		Path subdir1 = parentDir.resolve("sub1");
 		Path subdir2 = subdir1.resolve("sub2");
@@ -49,11 +48,22 @@ public class FileUtilsTest {
 		Files.createDirectories(subdir2);
 		IOUtils.writeStringAsFile("Test", file1);
 		IOUtils.writeStringAsFile("Test", file2);
+		return parentDir;
+	}
 
+	@Test
+	public void testDeleteDirectory() throws IOException {
+		Path parentDir = prepareDirectory();
 		Assert.assertEquals(5L, Files.walk(parentDir).count(), 0);
+		Assert.assertEquals(5, FileUtils.deleteDirectory(parentDir));
+		Assert.assertFalse(Files.exists(parentDir));
+	}
 
-		FileUtils.deleteDirectory(parentDir);
-
+	@Test
+	public void testDeleteDirectoryQuietly() throws IOException {
+		Path parentDir = prepareDirectory();
+		Assert.assertEquals(5L, Files.walk(parentDir).count(), 0);
+		Assert.assertNull(FileUtils.deleteDirectoryQuietly(parentDir));
 		Assert.assertFalse(Files.exists(parentDir));
 	}
 }

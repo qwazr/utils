@@ -23,6 +23,8 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class FileUtils extends org.apache.commons.io.FileUtils {
 
@@ -38,21 +40,74 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 		return directoryFile;
 	}
 
-	public static Path deleteDirectory(final Path directoryPath) throws IOException {
-		
-		return Files.walkFileTree(Objects.requireNonNull(directoryPath), new SimpleFileVisitor<Path>() {
+	/**
+	 * Delete a directory and its content
+	 *
+	 * @param directoryPath the path of the directory
+	 * @return the number of item deleted
+	 * @throws IOException if any I/O error occurs
+	 */
+	public static int deleteDirectory(final Path directoryPath) throws IOException {
+
+		AtomicInteger counter = new AtomicInteger();
+
+		Files.walkFileTree(Objects.requireNonNull(directoryPath), new SimpleFileVisitor<Path>() {
 
 			@Override
 			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 				Files.delete(file);
+				counter.incrementAndGet();
 				return FileVisitResult.CONTINUE;
 			}
 
 			@Override
 			public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
 				Files.delete(dir);
+				counter.incrementAndGet();
 				return FileVisitResult.CONTINUE;
 			}
 		});
+
+		return counter.get();
+	}
+
+	/**
+	 * Quietly delete a directory and its content without throwing any IOException
+	 *
+	 * @param directoryPath the path of the directory
+	 * @return the first IOException which occured (if any)
+	 */
+	public static IOException deleteDirectoryQuietly(final Path directoryPath) {
+
+		AtomicReference<IOException> firstException = new AtomicReference<>();
+
+		try {
+			Files.walkFileTree(Objects.requireNonNull(directoryPath), new SimpleFileVisitor<Path>() {
+
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					try {
+						Files.delete(file);
+					} catch (IOException e) {
+						firstException.compareAndSet(null, e);
+					}
+					return FileVisitResult.CONTINUE;
+				}
+
+				@Override
+				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+					try {
+						Files.delete(dir);
+					} catch (IOException e) {
+						firstException.compareAndSet(null, e);
+					}
+					return FileVisitResult.CONTINUE;
+				}
+			});
+		} catch (IOException e) {
+			firstException.compareAndSet(null, e);
+		}
+
+		return firstException.get();
 	}
 }
