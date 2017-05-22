@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Emmanuel Keller / QWAZR
+ * Copyright 2016-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.qwazr.utils.test;
 
 import com.qwazr.utils.FileUtils;
+import com.qwazr.utils.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,6 +24,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class FileUtilsTest {
 
@@ -36,6 +38,23 @@ public class FileUtilsTest {
 		Assert.assertTrue(newDir2.isDirectory());
 		Assert.assertEquals(newDir1, newDir2);
 	}
-}
 
+	@Test
+	public void testDeleteDirectory() throws IOException {
+		Path parentDir = Files.createTempDirectory("FileUtilsTest");
+		Path subdir1 = parentDir.resolve("sub1");
+		Path subdir2 = subdir1.resolve("sub2");
+		File file1 = subdir1.resolve("file1").toFile();
+		File file2 = subdir2.resolve("file1").toFile();
+		Files.createDirectories(subdir2);
+		IOUtils.writeStringAsFile("Test", file1);
+		IOUtils.writeStringAsFile("Test", file2);
+
+		Assert.assertEquals(5L, Files.walk(parentDir).count(), 0);
+
+		FileUtils.deleteDirectory(parentDir);
+
+		Assert.assertFalse(Files.exists(parentDir));
+	}
+}
 
