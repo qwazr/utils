@@ -55,15 +55,15 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 
 			@Override
 			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				Files.delete(file);
-				counter.incrementAndGet();
+				if (Files.deleteIfExists(file))
+					counter.incrementAndGet();
 				return FileVisitResult.CONTINUE;
 			}
 
 			@Override
 			public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-				Files.delete(dir);
-				counter.incrementAndGet();
+				if (Files.deleteIfExists(dir))
+					counter.incrementAndGet();
 				return FileVisitResult.CONTINUE;
 			}
 		});
@@ -87,7 +87,7 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 					try {
-						Files.delete(file);
+						Files.deleteIfExists(file);
 					} catch (IOException e) {
 						firstException.compareAndSet(null, e);
 					}
@@ -97,7 +97,7 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 				@Override
 				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
 					try {
-						Files.delete(dir);
+						Files.deleteIfExists(dir);
 					} catch (IOException e) {
 						firstException.compareAndSet(null, e);
 					}
