@@ -54,21 +54,46 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 		Files.walkFileTree(Objects.requireNonNull(directoryPath), new SimpleFileVisitor<Path>() {
 
 			@Override
+			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+				checkExistsAndEnforceWritable(dir);
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
 			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				if (Files.deleteIfExists(file))
-					counter.incrementAndGet();
+				if (checkExistsAndEnforceWritable(file))
+					if (Files.deleteIfExists(file))
+						counter.incrementAndGet();
 				return FileVisitResult.CONTINUE;
 			}
 
 			@Override
 			public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-				if (Files.deleteIfExists(dir))
-					counter.incrementAndGet();
+				if (checkExistsAndEnforceWritable(dir))
+					if (Files.deleteIfExists(dir))
+						counter.incrementAndGet();
 				return FileVisitResult.CONTINUE;
 			}
 		});
 
 		return counter.get();
+	}
+
+	/**
+	 * Check that a file exists and that that it is writable. If not, it will try to make it writable.
+	 *
+	 * @param filePath the path to the file
+	 * @return true if the file exists and is writable.
+	 */
+	public static boolean checkExistsAndEnforceWritable(Path filePath) throws IOException {
+		if (!Files.exists(filePath))
+			return false;
+		if (Files.isWritable(filePath))
+			return true;
+		final File file = filePath.toFile();
+		if (!file.setWritable(true))
+			throw new IOException("Cannot set the file writable: " + file);
+		return true;
 	}
 
 	/**
@@ -85,9 +110,16 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 			Files.walkFileTree(Objects.requireNonNull(directoryPath), new SimpleFileVisitor<Path>() {
 
 				@Override
-				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+					checkExistsAndEnforceWritable(dir);
+					return FileVisitResult.CONTINUE;
+				}
+
+				@Override
+				final public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 					try {
-						Files.deleteIfExists(file);
+						if (checkExistsAndEnforceWritable(file))
+							Files.deleteIfExists(file);
 					} catch (IOException e) {
 						firstException.compareAndSet(null, e);
 					}
@@ -95,9 +127,10 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 				}
 
 				@Override
-				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+				final public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
 					try {
-						Files.deleteIfExists(dir);
+						if (checkExistsAndEnforceWritable(dir))
+							Files.deleteIfExists(dir);
 					} catch (IOException e) {
 						firstException.compareAndSet(null, e);
 					}

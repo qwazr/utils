@@ -48,6 +48,8 @@ public class FileUtilsTest {
 		Files.createDirectories(subdir2);
 		IOUtils.writeStringAsFile("Test", file1);
 		IOUtils.writeStringAsFile("Test", file2);
+		Assert.assertTrue(subdir2.toFile().setReadOnly());
+		Assert.assertTrue(file2.setReadOnly());
 		return parentDir;
 	}
 
