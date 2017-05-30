@@ -24,6 +24,8 @@ public interface ConstructorParameters {
 
 	<T> Object registerConstructorParameter(final Class<? extends T> objectClass, final T object);
 
+	<T> InstanceFactory<T> findBestMatchingConstructor(final Class<T> objectClass) throws NoSuchMethodException;
+
 	default Object registerConstructorParameter(final Object object) {
 		return registerConstructorParameter(object.getClass(), object);
 	}
