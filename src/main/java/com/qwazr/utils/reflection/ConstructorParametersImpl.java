@@ -24,7 +24,7 @@ public class ConstructorParametersImpl extends InstancesSupplier.Impl implements
 
 	private static Object[] NO_PARAMS = new Object[0];
 
-	private final Map<Class<?>, Object> map;
+	protected final Map<Class<?>, Object> map;
 
 	protected ConstructorParametersImpl(Map<Class<?>, Object> map) {
 		super(map);
