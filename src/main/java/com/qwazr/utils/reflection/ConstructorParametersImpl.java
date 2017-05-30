@@ -39,7 +39,6 @@ public class ConstructorParametersImpl extends InstancesSupplier.Impl implements
 	 * @return the best matching constructor
 	 * @throws NoSuchMethodException if no matching method is found
 	 */
-	@Override
 	public <T> InstanceFactory<T> findBestMatchingConstructor(final Class<T> objectClass) throws NoSuchMethodException {
 		final Constructor<T>[] constructors = (Constructor<T>[]) objectClass.getConstructors();
 		if (constructors == null)
