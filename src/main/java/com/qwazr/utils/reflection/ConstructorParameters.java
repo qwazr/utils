@@ -28,6 +28,8 @@ public interface ConstructorParameters {
 		return registerConstructorParameter(object.getClass(), object);
 	}
 
+	Map<Class<?>, Object> getMap();
+
 	<T> T unregisterConstructorParameter(final Class<? extends T> objectClass);
 
 	default Object unregisterConstructorParameter(final Object object) {
@@ -68,5 +70,5 @@ public interface ConstructorParameters {
 	static ConstructorParametersImpl withConcurrentMap() {
 		return withMap(new ConcurrentHashMap<>());
 	}
-	
+
 }

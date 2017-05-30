@@ -24,7 +24,7 @@ public class ConstructorParametersImpl extends InstancesSupplier.Impl implements
 
 	private static Object[] NO_PARAMS = new Object[0];
 
-	protected final Map<Class<?>, Object> map;
+	private final Map<Class<?>, Object> map;
 
 	protected ConstructorParametersImpl(Map<Class<?>, Object> map) {
 		super(map);
@@ -91,6 +91,11 @@ public class ConstructorParametersImpl extends InstancesSupplier.Impl implements
 	@Override
 	public <T> Object registerConstructorParameter(Class<? extends T> objectClass, T object) {
 		return registerInstance(objectClass, object);
+	}
+
+	@Override
+	public Map<Class<?>, Object> getMap() {
+		return map;
 	}
 
 	@Override
