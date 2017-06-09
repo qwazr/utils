@@ -15,11 +15,12 @@
  */
 package com.qwazr.utils.test;
 
-import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.concurrent.ReadWriteLock;
 import com.qwazr.utils.concurrent.ThreadUtils;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
@@ -32,20 +33,20 @@ import static java.lang.System.currentTimeMillis;
 
 public class ReadWriteLockTest {
 
+	final static Logger LOGGER = LoggerFactory.getLogger(ReadWriteLockTest.class);
+
 	abstract class Read implements Runnable {
 
-		final LockUtils.ReadWriteLock lock;
+		final ReadWriteLock lock;
 		long time;
 
-		Read(LockUtils.ReadWriteLock lock) {
+		Read(ReadWriteLock lock) {
 			this.lock = lock;
 		}
 
 		@Override
 		public void run() {
-			lock.read(() -> {
-				time = currentTimeMillis();
-			});
+			lock.read(() -> time = currentTimeMillis());
 		}
 	}
 
@@ -97,16 +98,16 @@ public class ReadWriteLockTest {
 
 	@Test
 	public void benchmarkTest() throws InterruptedException {
-		final int count = 10000000;
-		for (int i = 0; i < 10; i++) {
+		final int count = 5000000;
+		for (int i = 0; i < 5; i++) {
 			TreeMap<Long, String> results = new TreeMap<>();
 			results.put(benchmark(ReadWriteLock.reentrant(false), count), "Unfair");
 			results.put(benchmark(ReadWriteLock.reentrant(true), count), "Fair");
 			results.put(benchmark(ReadWriteLock.of(new StampedLock().asReadWriteLock()), count), "StampedAsRw");
 			results.put(benchmark(ReadWriteLock.stamped(), count), "Stamped");
-			results.forEach((key, value) -> System.out.print(
-					" | " + value + " => " + key + " (" + (float) (key / count) + ")"));
-			System.out.println();
+			StringBuilder sb = new StringBuilder();
+			results.forEach((key, value) -> sb.append(value + " => " + key + " (" + (float) (key / count) + ") - "));
+			LOGGER.info(sb.toString());
 		}
 	}
 }
