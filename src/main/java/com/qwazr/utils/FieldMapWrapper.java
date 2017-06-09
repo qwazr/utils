@@ -29,6 +29,7 @@ import java.util.Map;
 
 /**
  * Will be replaced by the qwazr-binder package
+ *
  * @param <T>
  */
 @Deprecated
@@ -122,20 +123,6 @@ public class FieldMapWrapper<T> {
 			return;
 		}
 
-		// Check number
-		if (value instanceof Number) {
-			final Number numberValue = (Number) value;
-			if (fieldType == Long.class)
-				field.set(record, numberValue.longValue());
-			else if (fieldType == Integer.class)
-				field.set(record, numberValue.intValue());
-			else if (fieldType == Float.class)
-				field.set(record, numberValue.floatValue());
-			else if (fieldType == Double.class)
-				field.set(record, numberValue.doubleValue());
-			return;
-		}
-
 		if (fieldValueType.isArray()) {
 			final int length = Array.getLength(value);
 			if (length == 0)
@@ -161,6 +148,20 @@ public class FieldMapWrapper<T> {
 				fieldValue.addAll((Collection) value);
 			else
 				fieldValue.add(value);
+			return;
+		}
+
+		// Check number
+		if (value instanceof Number) {
+			final Number numberValue = (Number) value;
+			if (fieldType == Long.class)
+				field.set(record, numberValue.longValue());
+			else if (fieldType == Integer.class)
+				field.set(record, numberValue.intValue());
+			else if (fieldType == Float.class)
+				field.set(record, numberValue.floatValue());
+			else if (fieldType == Double.class)
+				field.set(record, numberValue.doubleValue());
 			return;
 		}
 
