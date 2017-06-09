@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.qwazr.utils.concurrent;
 
 import java.util.Collection;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ThreadUtils {
@@ -65,6 +66,14 @@ public class ThreadUtils {
 			Thread.sleep(200);
 		}
 		return true;
+	}
+
+	public static void sleep(final long duration, final TimeUnit unit) {
+		try {
+			Thread.sleep(unit.toMillis(duration));
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public static <T> void parallel(Collection<T> collection, ParallelConsumer<T> consumer) throws Exception {
