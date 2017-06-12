@@ -22,33 +22,22 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.TreeMap;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
-
-import static java.lang.System.currentTimeMillis;
+import java.util.function.Function;
 
 public class ReadWriteLockTest {
 
 	final static Logger LOGGER = LoggerFactory.getLogger(ReadWriteLockTest.class);
 
-	abstract class Read implements Runnable {
-
-		final ReadWriteLock lock;
-		long time;
-
-		Read(ReadWriteLock lock) {
-			this.lock = lock;
-		}
-
-		@Override
-		public void run() {
-			lock.read(() -> time = currentTimeMillis());
-		}
-	}
 
 	private void test(ReadWriteLock rwl) throws InterruptedException {
 		final AtomicLong writeTime = new AtomicLong();
@@ -75,39 +64,125 @@ public class ReadWriteLockTest {
 		test(ReadWriteLock.stamped());
 	}
 
-	private long benchmark(ReadWriteLock rwl, final int count) throws InterruptedException {
-		final ExecutorService executor = Executors.newSingleThreadExecutor();
-		final long startTime = System.currentTimeMillis();
+	private class Benchmark {
+
+		final String name;
+		final ReadWriteLock rwl;
+		final long timeLimit;
+		final long readSleep;
+		final long writeSleep;
 		final AtomicLong writeCount = new AtomicLong();
 		final AtomicLong readCount = new AtomicLong();
-		executor.submit(() -> {
-			for (int i = 0; i < count; i++)
-				rwl.writeEx(writeCount::incrementAndGet);
-		});
-		executor.submit(() -> {
-			for (int i = 0; i < count; i++)
-				rwl.readEx(readCount::incrementAndGet);
-		});
-		executor.shutdown();
-		executor.awaitTermination(1, TimeUnit.MINUTES);
-		final long timeSpent = System.currentTimeMillis() - startTime;
-		Assert.assertEquals(count, writeCount.get());
-		Assert.assertEquals(count, readCount.get());
-		return timeSpent;
+		final AtomicLong writeLockTime = new AtomicLong();
+		final AtomicLong readLockTime = new AtomicLong();
+		final long totalTime;
+
+		Benchmark(String name, ReadWriteLock rwl, Duration duration, long readSleep, long writeSleep)
+				throws InterruptedException {
+			this.name = name;
+			this.rwl = rwl;
+			this.readSleep = readSleep;
+			this.writeSleep = writeSleep;
+
+			final long startTime = System.currentTimeMillis();
+			timeLimit = startTime + duration.toMillis();
+			execute();
+			totalTime = System.currentTimeMillis() - startTime;
+		}
+
+		private void doRead() {
+			final long startTime = System.nanoTime();
+			rwl.readEx(() -> {
+				readLockTime.addAndGet(System.nanoTime() - startTime);
+				if (readSleep != 0)
+					ThreadUtils.sleep(readSleep, TimeUnit.MILLISECONDS);
+				readCount.incrementAndGet();
+			});
+		}
+
+		private void doWrite() {
+			final long startTime = System.nanoTime();
+			rwl.writeEx(() -> {
+				writeLockTime.addAndGet(System.nanoTime() - startTime);
+				if (writeSleep != 0)
+					ThreadUtils.sleep(writeSleep, TimeUnit.MILLISECONDS);
+				writeCount.incrementAndGet();
+			});
+		}
+
+		private void execute() throws InterruptedException {
+			final ExecutorService executor = Executors.newCachedThreadPool();
+
+			for (int i = 0; i < 10; i++) {
+				executor.submit(() -> {
+					while (System.currentTimeMillis() < timeLimit) {
+						doRead();
+						doWrite();
+					}
+				});
+			}
+
+			executor.shutdown();
+			executor.awaitTermination(1, TimeUnit.MINUTES);
+		}
+
+		float getReadRate() {
+			return (float) readCount.get() * 1000 / totalTime;
+		}
+
+		float getWriteRate() {
+			return (float) writeCount.get() * 1000 / totalTime;
+		}
+
+		@Override
+		public String toString() {
+			return " | " + name + " => " + getReadRate();
+		}
+	}
+
+	private void benchmarkSuite(Duration duration, long readSleep, long writeSleep) throws InterruptedException {
+		for (int i = 0; i < 5; i++) {
+			List<Benchmark> results = new ArrayList<>();
+			results.add(new Benchmark("Unfair", ReadWriteLock.reentrant(false), duration, readSleep, writeSleep));
+			results.add(new Benchmark("Fair", ReadWriteLock.reentrant(true), duration, readSleep, writeSleep));
+			results.add(new Benchmark("StampedAsRw", ReadWriteLock.of(new StampedLock().asReadWriteLock()), duration,
+					readSleep, writeSleep));
+			results.add(new Benchmark("Stamped", ReadWriteLock.stamped(), duration, readSleep, writeSleep));
+
+			if (readSleep == 0 || writeSleep != 0)
+				dumpResult("READ: ", results, b -> " | " + b.name + " => " + +b.getReadRate(),
+						(o1, o2) -> Double.compare(o2.getReadRate(), o1.getReadRate()));
+			if (writeSleep == 0 || readSleep != 0)
+				dumpResult("WRITE: ", results, b -> " | " + b.name + " => " + b.getWriteRate(),
+						(o1, o2) -> Double.compare(o2.getWriteRate(), o1.getWriteRate()));
+		}
+	}
+
+	private void dumpResult(String prefix, List<Benchmark> results, Function<Benchmark, String> display,
+			Comparator<Benchmark> comparator) {
+		Collections.sort(results, comparator);
+		StringBuilder sb = new StringBuilder(prefix);
+		results.forEach(b -> sb.append(display.apply(b)));
+		LOGGER.info(sb.toString());
 	}
 
 	@Test
-	public void benchmarkTest() throws InterruptedException {
-		final int count = 5000000;
-		for (int i = 0; i < 5; i++) {
-			TreeMap<Long, String> results = new TreeMap<>();
-			results.put(benchmark(ReadWriteLock.reentrant(false), count), "Unfair");
-			results.put(benchmark(ReadWriteLock.reentrant(true), count), "Fair");
-			results.put(benchmark(ReadWriteLock.of(new StampedLock().asReadWriteLock()), count), "StampedAsRw");
-			results.put(benchmark(ReadWriteLock.stamped(), count), "Stamped");
-			StringBuilder sb = new StringBuilder();
-			results.forEach((key, value) -> sb.append(value + " => " + key + " (" + (float) (key / count) + ") - "));
-			LOGGER.info(sb.toString());
-		}
+	public void benchmarkNoSleep() throws InterruptedException {
+		benchmarkSuite(Duration.ofSeconds(1), 0, 0);
+	}
+
+	@Test
+	public void benchmarkWithSleepBestRead() throws InterruptedException {
+		benchmarkSuite(Duration.ofSeconds(1), 0, 20);
+	}
+
+	@Test
+	public void benchmarkWithSleepBestWrite() throws InterruptedException {
+		benchmarkSuite(Duration.ofSeconds(1), 20, 0);
+	}
+
+	@Test
+	public void benchmarkWithRealSleep() throws InterruptedException {
+		benchmarkSuite(Duration.ofSeconds(1), 5, 20);
 	}
 }
