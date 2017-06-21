@@ -89,7 +89,7 @@ public class FieldMapWrapperTest {
 		Map<String, Object> map = new HashMap<>();
 		map.put("id", RandomUtils.nextLong());
 		map.put("title", RandomUtils.alphanumeric(10));
-		map.put("price", RandomUtils.alphanumeric(3));
+		map.put("price", RandomUtils.nextDouble());
 		if (tagsArray != null) {
 			if (tagsArray) {
 				String[] tags = new String[tagsNumber];
