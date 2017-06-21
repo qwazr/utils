@@ -15,15 +15,25 @@
  */
 package com.qwazr.utils;
 
-import org.apache.commons.text.CharacterPredicates;
+import org.apache.commons.text.CharacterPredicate;
 import org.apache.commons.text.RandomStringGenerator;
 
 public class RandomUtils extends org.apache.commons.lang3.RandomUtils {
 
-	final public static RandomStringGenerator DIGITS_LETTERS = new RandomStringGenerator.Builder().filteredBy(
-			CharacterPredicates.DIGITS, CharacterPredicates.LETTERS).build();
+	public enum Predicates implements CharacterPredicate {
+
+		ALPHABETIC {
+			@Override
+			public boolean test(int codePoint) {
+				return Character.isAlphabetic(codePoint);
+			}
+		}
+	}
+
+	final public static RandomStringGenerator ALPHABETIC = new RandomStringGenerator.Builder().filteredBy(
+			Predicates.ALPHABETIC).build();
 
 	public static String alphanumeric(int length) {
-		return DIGITS_LETTERS.generate(length);
+		return ALPHABETIC.generate(length);
 	}
 }
