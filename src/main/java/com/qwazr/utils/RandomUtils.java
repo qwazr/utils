@@ -22,18 +22,18 @@ public class RandomUtils extends org.apache.commons.lang3.RandomUtils {
 
 	public enum Predicates implements CharacterPredicate {
 
-		ALPHABETIC {
+		LETTER_OR_DIGIT {
 			@Override
 			public boolean test(int codePoint) {
-				return Character.isAlphabetic(codePoint);
+				return Character.isLetterOrDigit(codePoint);
 			}
 		}
 	}
 
-	final public static RandomStringGenerator ALPHABETIC = new RandomStringGenerator.Builder().filteredBy(
-			Predicates.ALPHABETIC).build();
+	final public static RandomStringGenerator LETTER_OR_DIGIT = new RandomStringGenerator.Builder().filteredBy(
+			Predicates.LETTER_OR_DIGIT).withinRange(31, 255).build();
 
 	public static String alphanumeric(int length) {
-		return ALPHABETIC.generate(length);
+		return LETTER_OR_DIGIT.generate(length);
 	}
 }
