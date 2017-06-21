@@ -31,7 +31,7 @@ public class RandomUtils extends org.apache.commons.lang3.RandomUtils {
 	}
 
 	final public static RandomStringGenerator LETTER_OR_DIGIT = new RandomStringGenerator.Builder().filteredBy(
-			Predicates.LETTER_OR_DIGIT).withinRange(31, 255).build();
+			Predicates.LETTER_OR_DIGIT).withinRange(31, 127).build();
 
 	public static String alphanumeric(int length) {
 		return LETTER_OR_DIGIT.generate(length);
