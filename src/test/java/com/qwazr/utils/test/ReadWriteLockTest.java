@@ -15,12 +15,11 @@
  */
 package com.qwazr.utils.test;
 
+import com.qwazr.utils.LoggerUtils;
 import com.qwazr.utils.concurrent.ReadWriteLock;
 import com.qwazr.utils.concurrent.ThreadUtils;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -33,11 +32,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 public class ReadWriteLockTest {
 
-	final static Logger LOGGER = LoggerFactory.getLogger(ReadWriteLockTest.class);
-
+	final static Logger LOGGER = LoggerUtils.getLogger(ReadWriteLockTest.class);
 
 	private void test(ReadWriteLock rwl) throws InterruptedException {
 		final AtomicLong writeTime = new AtomicLong();

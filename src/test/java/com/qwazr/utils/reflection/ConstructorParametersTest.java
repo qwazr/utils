@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,7 @@
  */
 package com.qwazr.utils.reflection;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import com.qwazr.utils.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -69,9 +68,7 @@ public class ConstructorParametersTest {
 		final ConstructorParametersImpl cpi = ConstructorParameters.withHashMap();
 		final InstanceFactory<EmptyConstructor> result = cpi.findBestMatchingConstructor(EmptyConstructor.class);
 		Assert.assertNotNull(result);
-		Assert.assertEquals(EmptyConstructor.class,
-							result.newInstance()
-									.getClass());
+		Assert.assertEquals(EmptyConstructor.class, result.newInstance().getClass());
 	}
 
 	@Test
@@ -80,9 +77,7 @@ public class ConstructorParametersTest {
 		cpi.registerConstructorParameters("Test", Integer.valueOf(1));
 		final InstanceFactory<EmptyConstructor> result = cpi.findBestMatchingConstructor(EmptyConstructor.class);
 		Assert.assertNotNull(result);
-		Assert.assertEquals(EmptyConstructor.class,
-							result.newInstance()
-									.getClass());
+		Assert.assertEquals(EmptyConstructor.class, result.newInstance().getClass());
 	}
 
 	public static class ManyNoEmptyConstructor {
@@ -121,20 +116,18 @@ public class ConstructorParametersTest {
 				return false;
 			final ManyNoEmptyConstructor e = (ManyNoEmptyConstructor) o;
 			return Objects.equals(string, e.string) && Objects.equals(integer, e.integer) && Objects.equals(empty,
-																											e.empty);
+					e.empty);
 		}
 	}
 
 	@Test
 	public void checkManyNoEmptyConstructor() throws ReflectiveOperationException {
 		final ConstructorParametersImpl cpi = ConstructorParameters.withConcurrentMap();
-		final ManyNoEmptyConstructor
-				exFull =
-				new ManyNoEmptyConstructor(RandomStringUtils.randomAlphanumeric(5), RandomUtils.nextInt());
+		final ManyNoEmptyConstructor exFull = new ManyNoEmptyConstructor(RandomUtils.alphanumeric(5),
+				RandomUtils.nextInt());
 		cpi.registerConstructorParameters(exFull.integer, exFull.string);
-		final InstanceFactory<ManyNoEmptyConstructor>
-				result =
-				cpi.findBestMatchingConstructor(ManyNoEmptyConstructor.class);
+		final InstanceFactory<ManyNoEmptyConstructor> result = cpi.findBestMatchingConstructor(
+				ManyNoEmptyConstructor.class);
 		Assert.assertNotNull(result);
 		Assert.assertFalse(exFull == result.newInstance());
 		Assert.assertEquals(exFull, result.newInstance());
@@ -158,15 +151,11 @@ public class ConstructorParametersTest {
 	@Test
 	public void checkManyAndEmptyConstructorThreeParameters() throws ReflectiveOperationException {
 		final ConstructorParametersImpl cpi = ConstructorParameters.withConcurrentMap();
-		final ManyAndEmptyConstructor
-				exFull =
-				new ManyAndEmptyConstructor(RandomStringUtils.randomAlphanumeric(5),
-											RandomUtils.nextInt(),
-											new EmptyConstructor());
+		final ManyAndEmptyConstructor exFull = new ManyAndEmptyConstructor(RandomUtils.alphanumeric(5),
+				RandomUtils.nextInt(), new EmptyConstructor());
 		cpi.registerConstructorParameters(exFull.integer, exFull.empty, exFull.string);
-		final InstanceFactory<ManyNoEmptyConstructor>
-				result =
-				cpi.findBestMatchingConstructor(ManyNoEmptyConstructor.class);
+		final InstanceFactory<ManyNoEmptyConstructor> result = cpi.findBestMatchingConstructor(
+				ManyNoEmptyConstructor.class);
 		Assert.assertNotNull(result);
 		Assert.assertFalse(exFull == result.newInstance());
 		Assert.assertEquals(exFull, result.newInstance());
@@ -175,13 +164,11 @@ public class ConstructorParametersTest {
 	@Test
 	public void checkManyAndEmptyConstructorTwoParameters() throws ReflectiveOperationException {
 		final ConstructorParametersImpl cpi = ConstructorParameters.withConcurrentMap();
-		final ManyAndEmptyConstructor
-				exFull =
-				new ManyAndEmptyConstructor(RandomStringUtils.randomAlphanumeric(5), new EmptyConstructor());
+		final ManyAndEmptyConstructor exFull = new ManyAndEmptyConstructor(RandomUtils.alphanumeric(5),
+				new EmptyConstructor());
 		cpi.registerConstructorParameters(exFull.empty, exFull.string);
-		final InstanceFactory<ManyAndEmptyConstructor>
-				result =
-				cpi.findBestMatchingConstructor(ManyAndEmptyConstructor.class);
+		final InstanceFactory<ManyAndEmptyConstructor> result = cpi.findBestMatchingConstructor(
+				ManyAndEmptyConstructor.class);
 		Assert.assertNotNull(result);
 		Assert.assertFalse(exFull == result.newInstance());
 		Assert.assertEquals(exFull, result.newInstance());
@@ -190,9 +177,8 @@ public class ConstructorParametersTest {
 	@Test
 	public void checkManyAndEmptyConstructorNoParameters() throws ReflectiveOperationException {
 		final ConstructorParametersImpl cpi = ConstructorParameters.withHashMap();
-		final InstanceFactory<ManyAndEmptyConstructor>
-				result =
-				cpi.findBestMatchingConstructor(ManyAndEmptyConstructor.class);
+		final InstanceFactory<ManyAndEmptyConstructor> result = cpi.findBestMatchingConstructor(
+				ManyAndEmptyConstructor.class);
 		Assert.assertNotNull(result);
 		Assert.assertNotNull(result.newInstance());
 	}

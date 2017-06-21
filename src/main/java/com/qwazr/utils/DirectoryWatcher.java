@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.utils;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -25,10 +22,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 
-	private final static Logger LOGGER = LoggerFactory.getLogger(DirectoryWatcher.class);
+	private final static Logger LOGGER = LoggerUtils.getLogger(DirectoryWatcher.class);
 
 	private final Path rootPath;
 	private final WatchService watcher;
@@ -63,8 +62,7 @@ public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 
 			DirectoryWatcher watcher = watchers.get(rootPath);
 			if (watcher == null) {
-				if (LOGGER.isInfoEnabled())
-					LOGGER.info("New directory watcher: " + rootPath);
+				LOGGER.info(() -> "New directory watcher: " + rootPath);
 				watcher = new DirectoryWatcher(rootPath);
 				watchers.put(rootPath, watcher);
 			}
@@ -142,11 +140,9 @@ public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 				}
 			}
 		} catch (ClosedWatchServiceException e1) {
-			if (LOGGER.isDebugEnabled())
-				LOGGER.debug("Directory watcher ends: " + rootPath, e1);
+			LOGGER.log(Level.FINER, e1, () -> "Directory watcher ends: " + rootPath);
 		} catch (IOException | InterruptedException e2) {
-			if (LOGGER.isWarnEnabled())
-				LOGGER.warn("Directory watcher ends: " + rootPath, e2);
+			LOGGER.log(Level.WARNING, e2, () -> "Directory watcher ends: " + rootPath);
 		}
 	}
 

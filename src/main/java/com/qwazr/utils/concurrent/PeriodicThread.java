@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,11 @@
  */
 package com.qwazr.utils.concurrent;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.qwazr.utils.LoggerUtils;
 
 import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public abstract class PeriodicThread implements ThreadUtils.ExtendedRunnable {
 
@@ -28,7 +29,7 @@ public abstract class PeriodicThread implements ThreadUtils.ExtendedRunnable {
 
 	private volatile boolean shutdown;
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(PeriodicThread.class);
+	private static final Logger LOGGER = LoggerUtils.getLogger(PeriodicThread.class);
 
 	protected PeriodicThread(final int monitoringPeriodSeconds) {
 		this.monitoringPeriod = monitoringPeriodSeconds * 1000;
@@ -54,7 +55,7 @@ public abstract class PeriodicThread implements ThreadUtils.ExtendedRunnable {
 				}
 			}
 		} catch (InterruptedException e) {
-			LOGGER.info(e.getMessage(), e);
+			LOGGER.log(Level.INFO, e.getMessage(), e);
 		}
 	}
 

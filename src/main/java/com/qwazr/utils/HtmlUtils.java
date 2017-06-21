@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.qwazr.utils;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.lang3.text.WordUtils;
+import org.apache.commons.text.StringEscapeUtils;
+import org.apache.commons.text.WordUtils;
 import org.w3c.dom.Node;
 
 import java.util.Arrays;
@@ -28,8 +28,8 @@ import java.util.regex.Pattern;
 public class HtmlUtils {
 
 	private final static Pattern removeTagPattern = Pattern.compile("<[^>]*>");
-	private final static Pattern removeBrPattern1 =
-			Pattern.compile("\\.\\p{Space}+<br\\p{Space}*/?>", Pattern.CASE_INSENSITIVE);
+	private final static Pattern removeBrPattern1 = Pattern.compile("\\.\\p{Space}+<br\\p{Space}*/?>",
+			Pattern.CASE_INSENSITIVE);
 	private final static Pattern removeEndTagBlockPattern1 = Pattern.compile(
 			"\\.\\p{Space}+</(p|td|div|h1|h2|h3|h4|h5|h6|hr|li|option|pre|select|table|tbody|td|textarea|tfoot|thead|th|title|tr|ul)>",
 			Pattern.CASE_INSENSITIVE);
@@ -37,8 +37,8 @@ public class HtmlUtils {
 			"</(p|td|div|h1|h2|h3|h4|h5|h6|hr|li|option|pre|select|table|tbody|td|textarea|tfoot|thead|th|title|tr|ul)>",
 			Pattern.CASE_INSENSITIVE);
 	private final static Pattern removeBrPattern2 = Pattern.compile("<br\\p{Space}*/?>", Pattern.CASE_INSENSITIVE);
-	private final static Pattern removeScriptObjectStylePattern =
-			Pattern.compile("<(script|object|style)[^>]*>[^<]*</(script|object|style)>", Pattern.CASE_INSENSITIVE);
+	private final static Pattern removeScriptObjectStylePattern = Pattern.compile(
+			"<(script|object|style)[^>]*>[^<]*</(script|object|style)>", Pattern.CASE_INSENSITIVE);
 
 	public static final String removeTag(String text) {
 		if (StringUtils.isEmpty(text))
@@ -160,8 +160,8 @@ public class HtmlUtils {
 			}
 		}
 
-		DomUtils.iterator(node.getChildNodes())
-				.forEach(child -> domTextExtractor(child, recursion - 1, buffer, output));
+		DomUtils.iterator(node.getChildNodes()).forEach(
+				child -> domTextExtractor(child, recursion - 1, buffer, output));
 
 		if (nodeName == null || buffer.length() == 0)
 			return;

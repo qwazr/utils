@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.qwazr.utils;
 
-import org.slf4j.Logger;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ExceptionUtils extends org.apache.commons.lang3.exception.ExceptionUtils {
 
@@ -102,8 +102,8 @@ public class ExceptionUtils extends org.apache.commons.lang3.exception.Exception
 		 * @param newException the new exception to old
 		 */
 		public void switchAndWarn(final Exception newException) {
-			if (holdException != null && logger != null && logger.isWarnEnabled())
-				logger.warn(holdException.getMessage(), holdException);
+			if (holdException != null && logger != null)
+				logger.log(Level.WARNING, holdException.getMessage(), holdException);
 			holdException = newException;
 		}
 

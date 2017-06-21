@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@ package com.qwazr.utils.test;
 
 import com.qwazr.utils.FileUtils;
 import com.qwazr.utils.IOUtils;
-import org.apache.commons.lang3.RandomStringUtils;
+import com.qwazr.utils.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,7 +31,7 @@ public class FileUtilsTest {
 	@Test
 	public void createDirectory() throws IOException {
 		File parentDir = Files.createTempDirectory("FileUtilsTest").toFile();
-		File newDir1 = new File(parentDir, RandomStringUtils.randomAlphanumeric(5));
+		File newDir1 = new File(parentDir, RandomUtils.alphanumeric(5));
 		File newDir2 = FileUtils.createDirectory(newDir1);
 		Assert.assertNotNull(newDir2);
 		Assert.assertTrue(newDir2.exists());

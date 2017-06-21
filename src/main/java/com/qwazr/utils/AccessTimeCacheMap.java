@@ -1,5 +1,5 @@
-/**
- * Copyright 2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2016-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.qwazr.utils;
 
+import com.qwazr.utils.concurrent.ReadWriteLock;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -24,7 +26,7 @@ public class AccessTimeCacheMap<K, V> {
 	private volatile int size;
 
 	private final EldestMap entryMap;
-	private final LockUtils.ReadWriteLock rwl = new LockUtils.ReadWriteLock();
+	private final ReadWriteLock rwl = ReadWriteLock.stamped();
 
 	private final long msTimeOut;
 

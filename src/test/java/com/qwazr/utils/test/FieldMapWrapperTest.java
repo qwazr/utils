@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,7 @@ package com.qwazr.utils.test;
 import com.qwazr.utils.AnnotationsUtils;
 import com.qwazr.utils.CollectionsUtils;
 import com.qwazr.utils.FieldMapWrapper;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import com.qwazr.utils.RandomUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
@@ -52,9 +51,9 @@ public class FieldMapWrapperTest {
 
 	@Test
 	public void test200newMap() {
-		Record record = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10), RandomUtils.nextDouble(),
-				RandomStringUtils.randomAlphanumeric(RandomUtils.nextInt(2, 5)),
-				RandomStringUtils.randomAlphanumeric(RandomUtils.nextInt(2, 5)));
+		Record record = new Record(RandomUtils.nextLong(), RandomUtils.alphanumeric(10), RandomUtils.nextDouble(),
+				RandomUtils.alphanumeric(RandomUtils.nextInt(2, 5)),
+				RandomUtils.alphanumeric(RandomUtils.nextInt(2, 5)));
 		Map<String, Object> map = wrapper.newMap(record);
 		Assert.assertNotNull(map);
 		Assert.assertEquals(record, map);
@@ -62,12 +61,12 @@ public class FieldMapWrapperTest {
 
 	@Test
 	public void test300newMapCollection() {
-		Record record1 = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10), RandomUtils.nextDouble(),
-				RandomStringUtils.randomAlphanumeric(RandomUtils.nextInt(2, 5)),
-				RandomStringUtils.randomAlphanumeric(RandomUtils.nextInt(2, 5)));
-		Record record2 = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10), RandomUtils.nextDouble(),
-				RandomStringUtils.randomAlphanumeric(RandomUtils.nextInt(2, 5)),
-				RandomStringUtils.randomAlphanumeric(RandomUtils.nextInt(2, 5)));
+		Record record1 = new Record(RandomUtils.nextLong(), RandomUtils.alphanumeric(10), RandomUtils.nextDouble(),
+				RandomUtils.alphanumeric(RandomUtils.nextInt(2, 5)),
+				RandomUtils.alphanumeric(RandomUtils.nextInt(2, 5)));
+		Record record2 = new Record(RandomUtils.nextLong(), RandomUtils.alphanumeric(10), RandomUtils.nextDouble(),
+				RandomUtils.alphanumeric(RandomUtils.nextInt(2, 5)),
+				RandomUtils.alphanumeric(RandomUtils.nextInt(2, 5)));
 		List<Map<String, Object>> mapCollection = wrapper.newMapCollection(Arrays.asList(record1, record2));
 		Assert.assertNotNull(mapCollection);
 		Assert.assertEquals(2, mapCollection.size());
@@ -77,9 +76,9 @@ public class FieldMapWrapperTest {
 
 	@Test
 	public void test400newMapArray() {
-		Record record = new Record(RandomUtils.nextLong(), RandomStringUtils.randomAscii(10), RandomUtils.nextDouble(),
-				RandomStringUtils.randomAlphanumeric(RandomUtils.nextInt(2, 5)),
-				RandomStringUtils.randomAlphanumeric(RandomUtils.nextInt(2, 5)));
+		Record record = new Record(RandomUtils.nextLong(), RandomUtils.alphanumeric(10), RandomUtils.nextDouble(),
+				RandomUtils.alphanumeric(RandomUtils.nextInt(2, 5)),
+				RandomUtils.alphanumeric(RandomUtils.nextInt(2, 5)));
 		Map<String, Object> map = wrapper.newMap(record);
 		Assert.assertNotNull(map);
 		Assert.assertEquals(record.title, map.get("title"));
@@ -89,14 +88,14 @@ public class FieldMapWrapperTest {
 	private Map<String, Object> getRandom(Boolean tagsArray, int tagsNumber) {
 		Map<String, Object> map = new HashMap<>();
 		map.put("id", RandomUtils.nextLong());
-		map.put("title", RandomStringUtils.randomAscii(10));
-		map.put("price", RandomStringUtils.randomNumeric(3));
+		map.put("title", RandomUtils.alphanumeric(10));
+		map.put("price", RandomUtils.alphanumeric(3));
 		if (tagsArray != null) {
 			if (tagsArray) {
 				String[] tags = new String[tagsNumber];
 				Integer[] tagLength = new Integer[tagsNumber];
 				for (int i = 0; i < tagsNumber; i++) {
-					final String tag = RandomStringUtils.randomAlphanumeric(RandomUtils.nextInt(2, 5));
+					final String tag = RandomUtils.alphanumeric(RandomUtils.nextInt(2, 5));
 					tags[i] = tag;
 					tagLength[i] = tag.length();
 				}
@@ -106,7 +105,7 @@ public class FieldMapWrapperTest {
 				ArrayList<String> tags = new ArrayList<>();
 				ArrayList<Integer> tagLength = new ArrayList<>();
 				for (int i = 0; i < tagsNumber; i++) {
-					final String tag = RandomStringUtils.randomAlphanumeric(RandomUtils.nextInt(2, 5));
+					final String tag = RandomUtils.alphanumeric(RandomUtils.nextInt(2, 5));
 					tags.add(tag);
 					tagLength.add(tag.length());
 				}
@@ -129,7 +128,7 @@ public class FieldMapWrapperTest {
 	@Test
 	public void test501toRecordStringToCollection() throws ReflectiveOperationException, IOException {
 		Map map = getRandom(null, 0);
-		final String tag = RandomStringUtils.randomAlphanumeric(RandomUtils.nextInt(2, 5));
+		final String tag = RandomUtils.alphanumeric(RandomUtils.nextInt(2, 5));
 		map.put("tags", tag);
 		map.put("tagLength", tag.length());
 		Record record = wrapper.toRecord(map);

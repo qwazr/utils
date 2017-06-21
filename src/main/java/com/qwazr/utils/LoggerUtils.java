@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,12 @@
  */
 package com.qwazr.utils;
 
-import com.qwazr.utils.concurrent.readwritelock.ReadWriteLockImpl;
+import java.util.logging.Logger;
 
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+public class LoggerUtils {
 
-/**
- * @use com.qwazr.utils.concurrent.ReadWriteLock
- */
-@Deprecated
-final public class LockUtils {
-
-	final static public class ReadWriteLock extends ReadWriteLockImpl {
-
-		public ReadWriteLock() {
-			super(new ReentrantReadWriteLock(true));
-		}
-
+	public static Logger getLogger(final Class<?> clazz) {
+		return Logger.getLogger(clazz.getName());
 	}
 
 }
