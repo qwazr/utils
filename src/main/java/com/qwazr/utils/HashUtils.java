@@ -31,8 +31,8 @@ import java.util.UUID;
 
 public class HashUtils {
 
-	public static final int getMurmur3Mod(final String hashString, Charset charset, final int mod) {
-		HashFunction m3 = Hashing.murmur3_128();
+	public static int getMurmur3Mod(final String hashString, Charset charset, final int mod) {
+		final HashFunction m3 = Hashing.murmur3_128();
 		if (charset == null)
 			charset = Charset.defaultCharset();
 		return (Math.abs(m3.hashString(hashString, charset).asInt()) % mod);

@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,9 +62,9 @@ public class WordCount {
 	}
 
 	public static float compare(WordCount dic1, WordCount dic2) {
-		HashSet<String> wordSet = new HashSet<>(dic1.wordCount.keySet());
+		final HashSet<String> wordSet = new HashSet<>(dic1.wordCount.keySet());
 		wordSet.addAll(dic2.wordCount.keySet());
-		AtomicDouble similarity = new AtomicDouble();
+		final AtomicDouble similarity = new AtomicDouble();
 		wordSet.forEach(word -> {
 			final AtomicInteger c1 = dic1.wordCount.get(word);
 			final AtomicInteger c2 = dic2.wordCount.get(word);
