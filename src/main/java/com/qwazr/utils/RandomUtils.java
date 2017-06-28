@@ -36,4 +36,16 @@ public class RandomUtils extends org.apache.commons.lang3.RandomUtils {
 	public static String alphanumeric(int length) {
 		return LETTER_OR_DIGIT.generate(length);
 	}
+
+	public static short nextShort() {
+		return (short) nextInt();
+	}
+
+	public static byte nextByte() {
+		return nextBytes(1)[0];
+	}
+
+	public static char nextAlphanumericChar() {
+		return alphanumeric(1).charAt(0);
+	}
 }

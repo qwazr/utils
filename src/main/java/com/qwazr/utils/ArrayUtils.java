@@ -1,5 +1,5 @@
-/**
- * Copyright 2015-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
  */
 package com.qwazr.utils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -36,18 +33,42 @@ public class ArrayUtils extends org.apache.commons.lang3.ArrayUtils {
 		return true;
 	}
 
-	public static double[] toPrimitiveDouble(Collection<Double> collection) {
-		double[] array = new double[collection.size()];
+	public static boolean[] toPrimitiveBoolean(Collection<Boolean> collection) {
+		final boolean[] array = new boolean[collection.size()];
 		int i = 0;
-		for (double val : collection)
+		for (boolean val : collection)
+			array[i++] = val;
+		return array;
+	}
+
+	public static byte[] toPrimitiveByte(Collection<Byte> collection) {
+		final byte[] array = new byte[collection.size()];
+		int i = 0;
+		for (byte val : collection)
+			array[i++] = val;
+		return array;
+	}
+
+	public static char[] toPrimitiveChar(Collection<Character> collection) {
+		final char[] array = new char[collection.size()];
+		int i = 0;
+		for (char val : collection)
 			array[i++] = val;
 		return array;
 	}
 
 	public static int[] toPrimitiveInt(Collection<Integer> collection) {
-		int[] array = new int[collection.size()];
+		final int[] array = new int[collection.size()];
 		int i = 0;
 		for (int val : collection)
+			array[i++] = val;
+		return array;
+	}
+
+	public static short[] toPrimitiveShort(Collection<Short> collection) {
+		final short[] array = new short[collection.size()];
+		int i = 0;
+		for (Short val : collection)
 			array[i++] = val;
 		return array;
 	}
@@ -60,8 +81,16 @@ public class ArrayUtils extends org.apache.commons.lang3.ArrayUtils {
 		return array;
 	}
 
+	public static double[] toPrimitiveDouble(Collection<Double> collection) {
+		final double[] array = new double[collection.size()];
+		int i = 0;
+		for (double val : collection)
+			array[i++] = val;
+		return array;
+	}
+
 	public static float[] toPrimitiveFloat(Collection<Float> collection) {
-		float[] array = new float[collection.size()];
+		final float[] array = new float[collection.size()];
 		int i = 0;
 		for (float val : collection)
 			array[i++] = val;
@@ -77,7 +106,7 @@ public class ArrayUtils extends org.apache.commons.lang3.ArrayUtils {
 	public static String[] toArray(Collection<String> collection) {
 		if (collection == null)
 			return null;
-		String[] array = new String[collection.size()];
+		final String[] array = new String[collection.size()];
 		int i = 0;
 		for (String val : collection)
 			array[i++] = val;
@@ -87,7 +116,7 @@ public class ArrayUtils extends org.apache.commons.lang3.ArrayUtils {
 	public static String[] toStringArray(Collection<Object> collection) {
 		if (collection == null)
 			return null;
-		String[] array = new String[collection.size()];
+		final String[] array = new String[collection.size()];
 		int i = 0;
 		for (Object val : collection)
 			array[i++] = val == null ? null : val.toString();

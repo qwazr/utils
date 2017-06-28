@@ -30,4 +30,11 @@ public class RandomUtilsTest {
 			if (!Character.isDigit(c) && !Character.isLetter(c))
 				Assert.fail("Bad character: " + s);
 	}
+
+	@Test
+	public void testRandoms() {
+		RandomUtils.nextShort();
+		RandomUtils.nextByte();
+		RandomUtils.nextAlphanumericChar();
+	}
 }
