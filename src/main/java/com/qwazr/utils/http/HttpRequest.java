@@ -1,5 +1,5 @@
-/**
- * Copyright 2015-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,19 @@
 package com.qwazr.utils.http;
 
 import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.*;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpOptions;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.HttpTrace;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
@@ -26,74 +36,91 @@ import org.apache.http.entity.StringEntity;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.util.Arrays;
 
 public abstract class HttpRequest<T extends HttpRequestBase> {
 
-	final public static Base<HttpHead> Head(final String uri) {
+	public static Base<HttpHead> Head(final String uri) {
 		return new Base(new HttpHead(uri));
 	}
 
-	final public static Base<HttpHead> Head(final URI uri) {
+	public static Base<HttpHead> Head(final URI uri) {
 		return new Base(new HttpHead(uri));
 	}
 
-	final public static Base<HttpGet> Get(final String uri) {
+	public static Base<HttpGet> Get(final String uri) {
 		return new Base(new HttpGet(uri));
 	}
 
-	final public static Base<HttpGet> Get(final URI uri) {
+	public static Base<HttpGet> Get(final URI uri) {
 		return new Base(new HttpGet(uri));
 	}
 
-	final public static Base<HttpDelete> Delete(final String uri) {
+	public static Base<HttpDelete> Delete(final String uri) {
 		return new Base(new HttpDelete(uri));
 	}
 
-	final public static Base<HttpDelete> Delete(final URI uri) {
+	public static Base<HttpDelete> Delete(final URI uri) {
 		return new Base(new HttpDelete(uri));
 	}
 
-	final public static Base<HttpTrace> Trace(final String uri) {
+	public static Base<HttpTrace> Trace(final String uri) {
 		return new Base(new HttpTrace(uri));
 	}
 
-	final public static Base<HttpTrace> Trace(final URI uri) {
+	public static Base<HttpTrace> Trace(final URI uri) {
 		return new Base(new HttpTrace(uri));
 	}
 
-	final public static Base<HttpOptions> Options(final String uri) {
+	public static Base<HttpOptions> Options(final String uri) {
 		return new Base(new HttpOptions(uri));
 	}
 
-	final public static Base<HttpOptions> Options(final URI uri) {
+	public static Base<HttpOptions> Options(final URI uri) {
 		return new Base(new HttpOptions(uri));
 	}
 
-	final public static Entity<HttpPost> Post(final String uri) {
+	public static Entity<HttpPost> Post(final String uri) {
 		return new Entity(new HttpPost(uri));
 	}
 
-	final public static Entity<HttpPost> Post(final URI uri) {
+	public static Entity<HttpPost> Post(final URI uri) {
 		return new Entity(new HttpPost(uri));
 	}
 
-	final public static Entity<HttpPut> Put(final String uri) {
+	private static Base<HttpPost> formEntity(HttpPost post, final NameValuePair... parameters)
+			throws UnsupportedEncodingException {
+		post.setEntity(new UrlEncodedFormEntity(Arrays.asList(parameters)));
+		return new Base<>(post);
+	}
+
+	public static Base<HttpPost> Post(final String uri, final NameValuePair... parameters)
+			throws UnsupportedEncodingException {
+		return formEntity(new HttpPost(uri), parameters);
+	}
+
+	public static Base<HttpPost> Post(final URI uri, final NameValuePair... parameters)
+			throws UnsupportedEncodingException {
+		return formEntity(new HttpPost(uri), parameters);
+	}
+
+	public static Entity<HttpPut> Put(final String uri) {
 		return new Entity(new HttpPut(uri));
 	}
 
-	final public static Entity<HttpPut> Put(final URI uri) {
+	public static Entity<HttpPut> Put(final URI uri) {
 		return new Entity(new HttpPut(uri));
 	}
 
-	final public static Entity<HttpPatch> Patch(final String uri) {
+	public static Entity<HttpPatch> Patch(final String uri) {
 		return new Entity(new HttpPatch(uri));
 	}
 
-	final public static Entity<HttpPatch> Patch(final URI uri) {
+	public static Entity<HttpPatch> Patch(final URI uri) {
 		return new Entity(new HttpPatch(uri));
 	}
-
 
 	public final T request;
 
