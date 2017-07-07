@@ -1,5 +1,5 @@
-/**
- * Copyright 2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2016-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,24 @@
  */
 package com.qwazr.utils.process;
 
+import com.qwazr.utils.LoggerUtils;
+import com.sun.tools.attach.AttachNotSupportedException;
+import com.sun.tools.attach.VirtualMachine;
+import com.sun.tools.attach.VirtualMachineDescriptor;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ProcessUtils {
 
 	public final static String NOT_SUPPORTED_ERROR = "Process command unsupported on this operating system";
+
+	final static Logger LOGGER = LoggerUtils.getLogger(ProcessUtils.class);
 
 	public static Integer kill(Number pid) throws IOException, InterruptedException {
 		if (pid == null)
@@ -85,6 +94,28 @@ public class ProcessUtils {
 			builder.environment().putAll(env);
 		builder.inheritIO();
 		return builder.start();
+	}
+
+	public static VirtualMachine findJvm(final Predicate<VirtualMachine> predicate) {
+		for (VirtualMachineDescriptor vmd : VirtualMachine.list()) {
+			VirtualMachine vm = null;
+			try {
+				vm = VirtualMachine.attach(vmd);
+				if (predicate.test(vm))
+					return vm;
+			} catch (AttachNotSupportedException | IOException e) {
+				LOGGER.log(Level.WARNING, e.getMessage(), e);
+			} finally {
+				if (vm != null) {
+					try {
+						vm.detach();
+					} catch (IOException e) {
+						LOGGER.log(Level.WARNING, e.getMessage(), e);
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 }
