@@ -30,6 +30,7 @@ public class PIDFile {
 	public final static String PID_PATH_ENV_VAR = "QWAZR_PID_PATH";
 	public final static String PID_PROPERTY = "com.qwazr.pid";
 	public final static String PID_ENV_VAR = "QWAZR_PID";
+	public final static String DEFAULT_PID_PATH = "qwazr.pid";
 
 	private final Integer pid;
 	private final File pidFile;
@@ -84,12 +85,12 @@ public class PIDFile {
 	 * @return a file instance where to store the PID
 	 */
 	public static File getPidFile() {
-		String pid_path = System.getProperty(PID_PATH_PROPERTY);
-		if (pid_path == null)
-			pid_path = System.getenv(PID_PATH_ENV_VAR);
-		if (pid_path == null)
-			return null;
-		return new File(pid_path);
+		String pidPath = System.getProperty(PID_PATH_PROPERTY);
+		if (pidPath == null)
+			pidPath = System.getenv(PID_PATH_ENV_VAR);
+		if (pidPath == null)
+			pidPath = DEFAULT_PID_PATH;
+		return new File(pidPath);
 	}
 
 	/**
