@@ -40,7 +40,7 @@ public class PIDFile {
 		this.pidFile = pidFile;
 	}
 
-	public PIDFile() throws IOException {
+	public PIDFile() {
 		this(PIDFile.getPidFile());
 	}
 
