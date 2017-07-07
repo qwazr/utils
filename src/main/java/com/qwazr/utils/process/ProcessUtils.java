@@ -16,16 +16,11 @@
 package com.qwazr.utils.process;
 
 import com.qwazr.utils.LoggerUtils;
-import com.sun.tools.attach.AttachNotSupportedException;
-import com.sun.tools.attach.VirtualMachine;
-import com.sun.tools.attach.VirtualMachineDescriptor;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.function.Predicate;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ProcessUtils {
@@ -94,28 +89,6 @@ public class ProcessUtils {
 			builder.environment().putAll(env);
 		builder.inheritIO();
 		return builder.start();
-	}
-
-	public static VirtualMachine findJvm(final Predicate<VirtualMachine> predicate) {
-		for (VirtualMachineDescriptor vmd : VirtualMachine.list()) {
-			VirtualMachine vm = null;
-			try {
-				vm = VirtualMachine.attach(vmd);
-				if (predicate.test(vm))
-					return vm;
-			} catch (AttachNotSupportedException | IOException e) {
-				LOGGER.log(Level.WARNING, e.getMessage(), e);
-			} finally {
-				if (vm != null) {
-					try {
-						vm.detach();
-					} catch (IOException e) {
-						LOGGER.log(Level.WARNING, e.getMessage(), e);
-					}
-				}
-			}
-		}
-		return null;
 	}
 
 }

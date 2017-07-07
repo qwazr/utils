@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,21 @@ import java.nio.charset.Charset;
 
 public class PIDFile {
 
+	public final static String PID_PATH_PROPERTY = "com.qwazr.pid.path";
+	public final static String PID_PATH_ENV_VAR = "QWAZR_PID_PATH";
+	public final static String PID_PROPERTY = "com.qwazr.pid";
+	public final static String PID_ENV_VAR = "QWAZR_PID";
+
 	private final Integer pid;
 	private final File pidFile;
 
-	public PIDFile() throws IOException {
+	public PIDFile(File pidFile) {
 		pid = PIDFile.getPid();
-		pidFile = PIDFile.getPidFile();
+		this.pidFile = pidFile;
+	}
+
+	public PIDFile() throws IOException {
+		this(PIDFile.getPidFile());
 	}
 
 	/**
@@ -50,12 +59,9 @@ public class PIDFile {
 	 * @throws IOException if any I/O error occurs
 	 */
 	public PIDFile savePidToFile() throws IOException {
-		FileOutputStream fos = new FileOutputStream(pidFile);
-		try {
+		try (final FileOutputStream fos = new FileOutputStream(pidFile)) {
 			IOUtils.write(pid.toString(), fos, Charset.defaultCharset());
 			return this;
-		} finally {
-			fos.close();
 		}
 	}
 
@@ -78,9 +84,9 @@ public class PIDFile {
 	 * @return a file instance where to store the PID
 	 */
 	public static File getPidFile() {
-		String pid_path = System.getProperty("com.qwazr.pid.path");
+		String pid_path = System.getProperty(PID_PATH_PROPERTY);
 		if (pid_path == null)
-			pid_path = System.getenv("QWAZR_PID_PATH");
+			pid_path = System.getenv(PID_PATH_ENV_VAR);
 		if (pid_path == null)
 			return null;
 		return new File(pid_path);
@@ -95,9 +101,9 @@ public class PIDFile {
 	 * @return the PID of the process
 	 */
 	public static Integer getPid() {
-		String pid = System.getProperty("com.qwazr.pid");
+		String pid = System.getProperty(PID_PROPERTY);
 		if (!StringUtils.isEmpty(pid))
-			pid = System.getenv("QWAZR_PID");
+			pid = System.getenv(PID_ENV_VAR);
 		if (!StringUtils.isEmpty(pid))
 			return Integer.parseInt(pid);
 		return getPidFromMxBean();
@@ -107,7 +113,7 @@ public class PIDFile {
 	 * @return the PID using the RuntimeMXBean method
 	 */
 	public static Integer getPidFromMxBean() {
-		String name = ManagementFactory.getRuntimeMXBean().getName();
+		final String name = ManagementFactory.getRuntimeMXBean().getName();
 		if (name == null)
 			return null;
 		int i = name.indexOf('@');
