@@ -1,5 +1,5 @@
-/**
- * Copyright 2015-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,16 +53,13 @@ public class HttpClients {
 				sslcontext = SSLContext.getInstance(SSLConnectionSocketFactory.TLS);
 				sslcontext.init(null, null, null);
 				ssl = new SSLConnectionSocketFactory(sslcontext);
-			} catch (final SecurityException ignore) {
-			} catch (final KeyManagementException ignore) {
-			} catch (final NoSuchAlgorithmException ignore) {
+			} catch (final SecurityException | KeyManagementException | NoSuchAlgorithmException ignore) {
 			}
 		}
 
 		final Registry<ConnectionSocketFactory> sfr = RegistryBuilder.<ConnectionSocketFactory>create().register("http",
-				PlainConnectionSocketFactory.getSocketFactory())
-				.register("https", ssl != null ? ssl : SSLConnectionSocketFactory.getSocketFactory())
-				.build();
+				PlainConnectionSocketFactory.getSocketFactory()).register("https",
+				ssl != null ? ssl : SSLConnectionSocketFactory.getSocketFactory()).build();
 
 		CNX_MANAGER = new PoolingHttpClientConnectionManager(sfr);
 		CNX_MANAGER.setDefaultMaxPerRoute(100);
@@ -88,8 +85,8 @@ public class HttpClients {
 		try {
 			SSLContext sslContext = SSLContextBuilder.create().loadTrustMaterial(null, (arg0, arg1) -> true).build();
 
-			SSLConnectionSocketFactory sslSocketFactory =
-					new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+			SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext,
+					NoopHostnameVerifier.INSTANCE);
 
 			Registry<ConnectionSocketFactory> sfr = RegistryBuilder.<ConnectionSocketFactory>create().register("http",
 					PlainConnectionSocketFactory.getSocketFactory()).register("https", sslSocketFactory).build();
@@ -99,10 +96,8 @@ public class HttpClients {
 			UNSECURE_CNX_MANAGER.setMaxTotal(200);
 			UNSECURE_CNX_MANAGER.setValidateAfterInactivity(1000);
 
-			UNSECURE_HTTP_CLIENT = HttpClientBuilder.create()
-					.setSSLContext(sslContext)
-					.setConnectionManager(UNSECURE_CNX_MANAGER)
-					.build();
+			UNSECURE_HTTP_CLIENT = HttpClientBuilder.create().setSSLContext(sslContext).setConnectionManager(
+					UNSECURE_CNX_MANAGER).build();
 
 		} catch (Exception e) {
 			throw new RuntimeException(e);
