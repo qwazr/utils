@@ -73,7 +73,7 @@ public class FileInstanceCache<T> {
 	 * @param instance
 	 * @throws IOException
 	 */
-	public FileInstanceCache set(T instance) throws IOException {
+	public FileInstanceCache<T> set(T instance) throws IOException {
 		if (writer == null)
 			throw new IOException("This file cache instance is read only");
 		synchronized (file) {
