@@ -143,4 +143,21 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 
 		return firstException.get();
 	}
+
+	/**
+	 * Check if the child Path is child or equals the parent Path
+	 *
+	 * @param parent
+	 * @param child
+	 * @return
+	 * @throws IOException
+	 */
+	public static boolean isParent(final Path parent, Path child) throws IOException {
+		while (child != null) {
+			if (Files.isSameFile(child, parent))
+				return true;
+			child = child.getParent();
+		}
+		return false;
+	}
 }

@@ -68,5 +68,14 @@ public class FileUtilsTest {
 		Assert.assertNull(FileUtils.deleteDirectoryQuietly(parentDir));
 		Assert.assertFalse(Files.exists(parentDir));
 	}
+
+	@Test
+	public void testIsParent() throws IOException {
+		Path parentDir = Files.createTempDirectory("FileUtilsTest");
+		Path childDir = parentDir.resolve("child");
+		Files.createDirectories(childDir);
+		Assert.assertTrue(FileUtils.isParent(parentDir, childDir));
+		Assert.assertFalse(FileUtils.isParent(childDir, parentDir));
+	}
 }
 
