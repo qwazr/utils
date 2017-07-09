@@ -72,10 +72,13 @@ public class FileUtilsTest {
 	@Test
 	public void testIsParent() throws IOException {
 		Path parentDir = Files.createTempDirectory("FileUtilsTest");
-		Path childDir = parentDir.resolve("child");
-		Files.createDirectories(childDir);
-		Assert.assertTrue(FileUtils.isParent(parentDir, childDir));
-		Assert.assertFalse(FileUtils.isParent(childDir, parentDir));
+		Path child1Dir = parentDir.resolve("child1");
+		Files.createDirectories(child1Dir);
+		Assert.assertTrue(FileUtils.isParent(parentDir, child1Dir));
+		Assert.assertFalse(FileUtils.isParent(child1Dir, parentDir));
+		Path child2Dir = parentDir.resolve("child2");
+		Assert.assertTrue(FileUtils.isParent(parentDir, child2Dir));
+		Assert.assertFalse(FileUtils.isParent(child2Dir, parentDir));
 	}
 }
 

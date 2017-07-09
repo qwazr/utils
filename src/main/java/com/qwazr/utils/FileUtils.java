@@ -154,7 +154,7 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 	 */
 	public static boolean isParent(final Path parent, Path child) throws IOException {
 		while (child != null) {
-			if (Files.isSameFile(child, parent))
+			if (child.equals(parent))
 				return true;
 			child = child.getParent();
 		}
