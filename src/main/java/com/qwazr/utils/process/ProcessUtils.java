@@ -69,7 +69,7 @@ public class ProcessUtils {
 		return res == 0;
 	}
 
-	public static Integer run(String commandLine) throws InterruptedException, IOException {
+	public static Integer run(final String commandLine) throws InterruptedException, IOException {
 		final Process process = Runtime.getRuntime().exec(commandLine);
 		try {
 			return process.waitFor();
@@ -80,15 +80,23 @@ public class ProcessUtils {
 		}
 	}
 
-	public static Process java(final Class<?> javaClass, final Map<String, String> env) throws IOException {
-		final String javaHome = System.getProperty("java.home");
-		final String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
-		final String classpath = System.getProperty("java.class.path");
-		final ProcessBuilder builder = new ProcessBuilder(javaBin, "-cp", classpath, javaClass.getCanonicalName());
+	public static Process run(final File workingDirectory, final Map<String, String> env, final String... commandLine)
+			throws IOException {
+		final ProcessBuilder builder = new ProcessBuilder(commandLine);
+		if (workingDirectory != null)
+			builder.directory(workingDirectory);
 		if (env != null)
 			builder.environment().putAll(env);
 		builder.inheritIO();
 		return builder.start();
+	}
+
+	public static Process java(final Class<?> javaClass, final Map<String, String> env) throws IOException {
+		final String javaHome = System.getProperty("java.home");
+		final String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
+		final String classpath = System.getProperty("java.class.path");
+		final String[] commandLine = new String[] { javaBin, "-cp", classpath, javaClass.getCanonicalName() };
+		return run(null, env, commandLine);
 	}
 
 }
