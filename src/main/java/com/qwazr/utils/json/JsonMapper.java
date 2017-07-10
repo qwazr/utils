@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 
 import java.util.ArrayList;
 import java.util.TreeMap;
@@ -31,7 +32,12 @@ public class JsonMapper extends ObjectMapper {
 		configure(SerializationFeature.INDENT_OUTPUT, true);
 	}
 
-	public final static JsonMapper MAPPER = new JsonMapper();
+	public final static JsonMapper MAPPER;
+
+	static {
+		MAPPER = new JsonMapper();
+		MAPPER.registerModule(new ParameterNamesModule());
+	}
 
 	public final static TypeReference<TreeMap<String, String>> MapStringStringTypeRef =
 			new TypeReference<TreeMap<String, String>>() {
