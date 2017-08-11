@@ -27,13 +27,13 @@ import java.util.function.Function;
 public class CollectionsUtils {
 
 	public static <T> boolean equals(final Collection<T> coll1, final Collection<T> coll2) {
-		if (coll1 == null)
-			return coll2 == null;
-		else if (coll2 == null)
+		if (coll1 == coll2)
+			return true;
+		if (coll1 == null || coll2 == null)
 			return false;
 		if (coll1.size() != coll2.size())
 			return false;
-		Iterator<T> i = coll2.iterator();
+		final Iterator<T> i = coll2.iterator();
 		for (T o : coll1)
 			if (!Objects.equals(o, i.next()))
 				return false;
@@ -47,7 +47,7 @@ public class CollectionsUtils {
 			return false;
 		if (coll.size() != array.length)
 			return false;
-		Iterator<T> i = coll.iterator();
+		final Iterator<T> i = coll.iterator();
 		for (T o : array)
 			if (!Objects.equals(o, i.next()))
 				return false;
@@ -55,9 +55,9 @@ public class CollectionsUtils {
 	}
 
 	public static <K, V> boolean equals(final Map<K, V> map1, final Map<K, V> map2) {
-		if (map1 == null)
-			return map2 == null;
-		else if (map2 == null)
+		if (map1 == map2)
+			return true;
+		if (map1 == null || map2 == null)
 			return false;
 		if (map1.size() != map2.size())
 			return false;
