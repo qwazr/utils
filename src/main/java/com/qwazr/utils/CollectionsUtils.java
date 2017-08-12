@@ -21,6 +21,7 @@ import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -99,5 +100,28 @@ public class CollectionsUtils {
 	public static <T, C extends Collection<T>> C copyIfNotEmpty(final Collection<T> source,
 			final Function<Collection<T>, C> supplier) {
 		return source == null || source.isEmpty() ? null : supplier.apply(source);
+	}
+
+	public static class EldestFixedSizeMap<K, V> extends LinkedHashMap<K, V> {
+
+		private volatile int maxSize;
+
+		public EldestFixedSizeMap(int maxSize) {
+			this.maxSize = maxSize;
+		}
+
+		public void setNewMaxSize(int newMaxSize) {
+			this.maxSize = newMaxSize;
+		}
+
+		public int getMaxSize() {
+			return maxSize;
+		}
+
+		@Override
+		protected boolean removeEldestEntry(Map.Entry<K, V> entry) {
+			return size() > maxSize;
+		}
+
 	}
 }

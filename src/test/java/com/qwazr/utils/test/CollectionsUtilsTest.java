@@ -123,6 +123,27 @@ public class CollectionsUtilsTest {
 		final ArrayList<Integer> list2 = CollectionsUtils.copyIfNotEmpty(list, ArrayList::new);
 		Assert.assertArrayEquals(list.toArray(), list2.toArray());
 	}
+
+	@Test
+	public void eldestFixedSizeMap() {
+		CollectionsUtils.EldestFixedSizeMap<Integer, Integer> map = new CollectionsUtils.EldestFixedSizeMap<>(10);
+		Assert.assertEquals(10, map.getMaxSize());
+		map.setNewMaxSize(5);
+		Assert.assertEquals(5, map.getMaxSize());
+		for (int i = 1; i <= 5; i++) {
+			map.put(i, i);
+			Assert.assertEquals(i, map.size());
+			Assert.assertEquals(i, (Object) map.get(i));
+		}
+		for (int i = 6; i <= 10; i++) {
+			map.put(i, i);
+			Assert.assertEquals(5, map.size());
+			Assert.assertEquals(i, (Object) map.get(i));
+		}
+		for (int i = 1; i <= 5; i++)
+			Assert.assertNull(map.get(i));
+		for (int i = 6; i <= 10; i++)
+			Assert.assertEquals(i, (Object) map.get(i));
+	}
+
 }
-
-
