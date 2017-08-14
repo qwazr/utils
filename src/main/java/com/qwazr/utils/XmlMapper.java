@@ -17,12 +17,14 @@ package com.qwazr.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * Uses ObjectMappers.XML_MAPPER
+ *
+ * @see ObjectMappers
+ */
+@Deprecated
 public class XmlMapper {
 
-	public final static ObjectMapper MAPPER;
-
-	static {
-		MAPPER = new com.fasterxml.jackson.dataformat.xml.XmlMapper();
-	}
+	public final static ObjectMapper MAPPER = ObjectMappers.XML_MAPPER;
 
 }

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.qwazr.utils;
+package com.qwazr.utils.json;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.qwazr.utils.json.JsonMapper;
+import com.qwazr.utils.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -36,7 +36,6 @@ public class JsonMapperTest {
 		Item item1 = new Item(RandomUtils.nextInt(), RandomUtils.alphanumeric(10), null);
 		JsonMapper.MAPPER.writeValue(jsonFile, item1);
 		Item item2 = JsonMapper.MAPPER.readValue(jsonFile, Item.class);
-		System.out.println(IOUtils.readFileAsString(jsonFile));
 		Assert.assertEquals(item1, item2);
 	}
 
@@ -70,4 +69,5 @@ public class JsonMapperTest {
 					i.nullValue);
 		}
 	}
+
 }
