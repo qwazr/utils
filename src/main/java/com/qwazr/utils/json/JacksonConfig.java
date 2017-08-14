@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.qwazr.utils.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.qwazr.utils.ObjectMappers;
 
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
@@ -28,6 +29,6 @@ public class JacksonConfig implements ContextResolver<ObjectMapper> {
 
 	@Override
 	public ObjectMapper getContext(Class<?> objectType) {
-		return JsonMapper.MAPPER;
+		return ObjectMappers.JSON_MAPPER;
 	}
 }

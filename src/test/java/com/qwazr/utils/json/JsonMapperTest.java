@@ -32,10 +32,11 @@ public class JsonMapperTest {
 
 	@Test
 	public void writeReadTest() throws IOException {
+		JsonMapper mapper = new JsonMapper();
 		File jsonFile = Files.createTempFile("test", ".json").toFile();
 		Item item1 = new Item(RandomUtils.nextInt(), RandomUtils.alphanumeric(10), null);
-		JsonMapper.MAPPER.writeValue(jsonFile, item1);
-		Item item2 = JsonMapper.MAPPER.readValue(jsonFile, Item.class);
+		mapper.writeValue(jsonFile, item1);
+		Item item2 = mapper.readValue(jsonFile, Item.class);
 		Assert.assertEquals(item1, item2);
 	}
 

@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.qwazr.utils.ObjectMappers;
 
 import java.util.ArrayList;
 import java.util.TreeMap;
@@ -31,8 +30,6 @@ public class JsonMapper extends ObjectMapper {
 		configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 		configure(SerializationFeature.INDENT_OUTPUT, true);
 	}
-
-	public final static JsonMapper MAPPER = ObjectMappers.JSON_MAPPER;
 
 	public final static TypeReference<TreeMap<String, String>> MapStringStringTypeRef =
 			new TypeReference<TreeMap<String, String>>() {

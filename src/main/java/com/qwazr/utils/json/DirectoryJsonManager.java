@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils.json;
 
+import com.qwazr.utils.ObjectMappers;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -66,7 +67,7 @@ public class DirectoryJsonManager<T> {
 	}
 
 	private Pair<Long, T> loadItem(String name, File file, long lastModified) throws IOException {
-		T item = JsonMapper.MAPPER.readValue(file, instanceClass);
+		T item = ObjectMappers.JSON_MAPPER.readValue(file, instanceClass);
 		return put(name, lastModified, item);
 	}
 
@@ -104,7 +105,7 @@ public class DirectoryJsonManager<T> {
 		rwl.writeLock().lock();
 		try {
 			File destFile = getFile(name);
-			JsonMapper.MAPPER.writeValue(destFile, instance);
+			ObjectMappers.JSON_MAPPER.writeValue(destFile, instance);
 			put(name, destFile.lastModified(), instance);
 			buildCache();
 		} finally {

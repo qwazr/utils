@@ -16,6 +16,7 @@
 package com.qwazr.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.qwazr.utils.json.JsonMapper;
 import org.apache.commons.lang3.tuple.Pair;
@@ -29,12 +30,17 @@ import java.util.List;
 
 public class ObjectMappers {
 
-	public final static JsonMapper JSON_MAPPER = new JsonMapper();
+	public final static JsonMapper JSON_MAPPER;
 
-	public final static ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
+	public final static ObjectMapper YAML_MAPPER;
 
-	public final static com.fasterxml.jackson.dataformat.xml.XmlMapper XML_MAPPER =
-			new com.fasterxml.jackson.dataformat.xml.XmlMapper();
+	public final static XmlMapper XML_MAPPER;
+
+	static {
+		JSON_MAPPER = new JsonMapper();
+		YAML_MAPPER = new ObjectMapper(new YAMLFactory());
+		XML_MAPPER = new XmlMapper();
+	}
 
 	private final Pair<String, ObjectMapper>[] objectMappers;
 
