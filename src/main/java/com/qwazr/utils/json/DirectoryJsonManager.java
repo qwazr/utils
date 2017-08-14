@@ -67,7 +67,7 @@ public class DirectoryJsonManager<T> {
 	}
 
 	private Pair<Long, T> loadItem(String name, File file, long lastModified) throws IOException {
-		T item = ObjectMappers.JSON_MAPPER.readValue(file, instanceClass);
+		T item = ObjectMappers.JSON.readValue(file, instanceClass);
 		return put(name, lastModified, item);
 	}
 
@@ -105,7 +105,7 @@ public class DirectoryJsonManager<T> {
 		rwl.writeLock().lock();
 		try {
 			File destFile = getFile(name);
-			ObjectMappers.JSON_MAPPER.writeValue(destFile, instance);
+			ObjectMappers.JSON.writeValue(destFile, instance);
 			put(name, destFile.lastModified(), instance);
 			buildCache();
 		} finally {

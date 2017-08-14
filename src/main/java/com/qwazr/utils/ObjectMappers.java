@@ -30,16 +30,16 @@ import java.util.List;
 
 public class ObjectMappers {
 
-	public final static JsonMapper JSON_MAPPER;
+	public final static JsonMapper JSON;
 
-	public final static ObjectMapper YAML_MAPPER;
+	public final static ObjectMapper YAML;
 
-	public final static XmlMapper XML_MAPPER;
+	public final static XmlMapper XML;
 
 	static {
-		JSON_MAPPER = new JsonMapper();
-		YAML_MAPPER = new ObjectMapper(new YAMLFactory());
-		XML_MAPPER = new XmlMapper();
+		JSON = new JsonMapper();
+		YAML = new ObjectMapper(new YAMLFactory());
+		XML = new XmlMapper();
 	}
 
 	private final Pair<String, ObjectMapper>[] objectMappers;

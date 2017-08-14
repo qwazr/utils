@@ -29,6 +29,6 @@ public class JacksonConfig implements ContextResolver<ObjectMapper> {
 
 	@Override
 	public ObjectMapper getContext(Class<?> objectType) {
-		return ObjectMappers.JSON_MAPPER;
+		return ObjectMappers.JSON;
 	}
 }
