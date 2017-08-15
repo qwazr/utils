@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,15 @@
  */
 package com.qwazr.utils;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class TimeTracker {
 
@@ -77,42 +81,60 @@ public class TimeTracker {
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public static class Status {
 
-		final public Date start_time;
+		@JsonProperty("start_time")
+		final public Date startTime;
 
-		final public Long total_time;
+		@JsonProperty("total_time")
+		final public Long totalTime;
 
-		final public Long unknown_time;
+		@JsonProperty("unknown_time")
+		final public Long unknownTime;
 
 		final public LinkedHashMap<String, Long> durations;
 
-		public Status() {
-			start_time = null;
-			total_time = null;
-			unknown_time = null;
-			durations = null;
+		@JsonCreator
+		Status(@JsonProperty("start_time") Date startTime, @JsonProperty("total_time") Long totalTime,
+				@JsonProperty("unknown_time") Long unknownTime,
+				@JsonProperty("durations") LinkedHashMap<String, Long> durations) {
+			this.startTime = startTime;
+			this.totalTime = totalTime;
+			this.unknownTime = unknownTime;
+			this.durations = durations;
 		}
 
 		private Status(TimeTracker timeTracker) {
-			start_time = new Date(timeTracker.startTime);
-			total_time = timeTracker.time - timeTracker.startTime;
-			unknown_time = timeTracker.unknownTime;
-			durations = timeTracker.buildCache();
+			this(new Date(timeTracker.startTime), timeTracker.time - timeTracker.startTime, timeTracker.unknownTime,
+					timeTracker.buildCache());
 		}
 
-		public Date getStart_time() {
-			return start_time;
+		@JsonIgnore
+		public Date getStartTime() {
+			return startTime;
 		}
 
-		public Long getTotal_time() {
-			return total_time;
+		@JsonIgnore
+		public Long getTotalTime() {
+			return totalTime;
 		}
 
-		public Long getUnknown_time() {
-			return unknown_time;
+		@JsonIgnore
+		public Long getUnknownTime() {
+			return unknownTime;
 		}
 
 		public Map<String, Long> getDurations() {
 			return durations;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (o == null || !(o instanceof Status))
+				return false;
+			if (o == this)
+				return true;
+			final Status s = (Status) o;
+			return Objects.equals(startTime, s.startTime) && Objects.equals(totalTime, s.totalTime) &&
+					Objects.equals(unknownTime, s.unknownTime) && CollectionsUtils.equals(durations, s.durations);
 		}
 	}
 }

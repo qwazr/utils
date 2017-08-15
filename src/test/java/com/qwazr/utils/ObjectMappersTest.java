@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.qwazr.utils;
 
 import org.junit.Assert;
@@ -31,10 +30,8 @@ public class ObjectMappersTest {
 	@Test
 	public void loadYamlOrJson() throws IOException {
 
-		ObjectMappers mappers = ObjectMappers.of()
-				.add("yaml", ObjectMappers.YAML)
-				.add("json", ObjectMappers.JSON)
-				.build();
+		ObjectMappers mappers =
+				ObjectMappers.of().add("yaml", ObjectMappers.YAML).add("json", ObjectMappers.JSON).build();
 
 		final MapperTest test = mappers.readFileValue(DIRECTORY, "test", DEFAULT_TEST, MapperTest.class);
 		Assert.assertNotNull(test);
@@ -47,10 +44,8 @@ public class ObjectMappersTest {
 	@Test
 	public void loadJsonOrYaml() throws IOException {
 
-		ObjectMappers mappers = ObjectMappers.of()
-				.add("json", ObjectMappers.JSON)
-				.add("yaml", ObjectMappers.YAML)
-				.build();
+		ObjectMappers mappers =
+				ObjectMappers.of().add("json", ObjectMappers.JSON).add("yaml", ObjectMappers.YAML).build();
 
 		final MapperTest test = mappers.readFileValue(DIRECTORY, "test", DEFAULT_TEST, MapperTest.class);
 		Assert.assertNotNull(test);
@@ -63,10 +58,8 @@ public class ObjectMappersTest {
 	@Test
 	public void loadXmlOrYaml() throws IOException {
 
-		ObjectMappers mappers = ObjectMappers.of()
-				.add("xml", ObjectMappers.XML)
-				.add("yaml", ObjectMappers.YAML)
-				.build();
+		ObjectMappers mappers =
+				ObjectMappers.of().add("xml", ObjectMappers.XML).add("yaml", ObjectMappers.YAML).build();
 
 		final MapperTest test = mappers.readFileValue(DIRECTORY, "test", DEFAULT_TEST, MapperTest.class);
 		Assert.assertNotNull(test);
