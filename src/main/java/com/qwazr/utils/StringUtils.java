@@ -190,7 +190,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		return result.toString();
 	}
 
-	static CharSequence fastConcatCharSequence(final Object... objects) {
+	public static CharSequence fastConcatCharSequence(final Object... objects) {
 		if (objects == null)
 			return null;
 		if (objects.length == 1)
@@ -203,7 +203,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		return sb;
 	}
 
-	static String fastConcat(final Object... objects) {
+	public static String fastConcat(final Object... objects) {
 		CharSequence cs = fastConcatCharSequence(objects);
 		return cs == null ? null : cs.toString();
 	}
