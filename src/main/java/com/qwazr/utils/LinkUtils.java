@@ -34,7 +34,7 @@ public class LinkUtils {
 		} catch (MalformedURLException e) {
 			return url;
 		}
-		final String path = StringUtils.joinWithSeparator("/", u.getHost(), u.getPath());
+		final String path = StringUtils.joinWithSeparator('/', u.getHost(), u.getPath());
 		final String[] frags = StringUtils.split(path, '/');
 		if (frags.length < 2)
 			return frags[0];
@@ -62,7 +62,7 @@ public class LinkUtils {
 			if (!bHandled)
 				break;
 		}
-		return StringUtils.joinWithSeparator("/", sbStart, "…", sbEnd);
+		return StringUtils.joinWithSeparator('/', sbStart, "…", sbEnd);
 	}
 
 	public static String lastPart(String path) {

@@ -21,8 +21,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
@@ -172,22 +174,21 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 			sb.append(object.toString());
 	}
 
-	public static String joinWithSeparator(final String separator, final Object... objects) {
+	public static String joinWithSeparator(final char separator, final Object... objects) {
 		if (objects == null)
 			throw new IllegalArgumentException("Object varargs must not be null");
-		final StringBuilder result = new StringBuilder();
-		int i = 1;
-		for (Object object : objects) {
+		final List<String> fragments = new ArrayList<>();
+		for (final Object object : objects) {
 			if (object == null)
 				continue;
-			final String value = object.toString();
-			if (!value.equals(separator))
-				result.append(value);
-			if (!value.endsWith(separator) && i != objects.length)
-				result.append(separator);
-			i++;
+			final String[] stringArray = StringUtils.split(object.toString(), separator);
+			if (stringArray == null)
+				continue;
+			for (String string : stringArray)
+				if (string != null && !string.isEmpty())
+					fragments.add(string);
 		}
-		return result.toString();
+		return StringUtils.join(fragments, separator);
 	}
 
 	public static CharSequence fastConcatCharSequence(final Object... objects) {
