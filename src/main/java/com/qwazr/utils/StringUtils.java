@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014-2016 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -172,7 +172,25 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 			sb.append(object.toString());
 	}
 
-	public static CharSequence fastConcatCharSequence(final Object... objects) {
+	public static String joinWithSeparator(final String separator, final Object... objects) {
+		if (objects == null)
+			throw new IllegalArgumentException("Object varargs must not be null");
+		final StringBuilder result = new StringBuilder();
+		int i = 1;
+		for (Object object : objects) {
+			if (object == null)
+				continue;
+			final String value = object.toString();
+			if (!value.equals(separator))
+				result.append(value);
+			if (!value.endsWith(separator) && i != objects.length)
+				result.append(separator);
+			i++;
+		}
+		return result.toString();
+	}
+
+	static CharSequence fastConcatCharSequence(final Object... objects) {
 		if (objects == null)
 			return null;
 		if (objects.length == 1)
@@ -185,7 +203,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		return sb;
 	}
 
-	public static String fastConcat(final Object... objects) {
+	static String fastConcat(final Object... objects) {
 		CharSequence cs = fastConcatCharSequence(objects);
 		return cs == null ? null : cs.toString();
 	}
@@ -225,7 +243,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	 * @param escaped_chars a list of char to escape
 	 * @return the escaped string
 	 */
-	public static String escape_chars(final String source, final char[] escaped_chars) {
+	public static String escapeChars(final String source, final char[] escaped_chars) {
 		if (escaped_chars == null || escaped_chars.length == 0)
 			return source;
 		if (source == null || source.length() == 0)

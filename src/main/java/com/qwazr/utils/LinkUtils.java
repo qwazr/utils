@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,22 +27,22 @@ import java.util.List;
 
 public class LinkUtils {
 
-	public final static String urlHostPathWrapReduce(String url, int maxSize) {
-		URL u;
+	public static String urlHostPathWrapReduce(final String url, final int maxSize) {
+		final URL u;
 		try {
 			u = new URL(url);
 		} catch (MalformedURLException e) {
 			return url;
 		}
-		String path = StringUtils.fastConcat(u.getHost(), '/', u.getPath());
-		String[] frags = StringUtils.split(path, '/');
+		final String path = StringUtils.joinWithSeparator("/", u.getHost(), u.getPath());
+		final String[] frags = StringUtils.split(path, '/');
 		if (frags.length < 2)
-			return path;
+			return frags[0];
 		int startPos = 1;
 		int endPos = frags.length - 2;
-		StringBuilder sbStart = new StringBuilder(frags[0]);
-		StringBuilder sbEnd = new StringBuilder(frags[frags.length - 1]);
-		int length = sbStart.length() + sbEnd.length();
+		final StringBuilder sbStart = new StringBuilder(frags[0]);
+		final StringBuilder sbEnd = new StringBuilder(frags[frags.length - 1]);
+		final int length = sbStart.length() + sbEnd.length();
 		for (; ; ) {
 			boolean bHandled = false;
 			if (startPos != -1 && startPos < endPos) {
@@ -62,22 +62,10 @@ public class LinkUtils {
 			if (!bHandled)
 				break;
 		}
-		return StringUtils.fastConcat(sbStart, "/…/", sbEnd);
+		return StringUtils.joinWithSeparator("/", sbStart, "…", sbEnd);
 	}
 
-	public final static String concatPath(String path1, String path2) {
-		if (path2 == null)
-			return path1;
-		if (path1 == null)
-			return path2;
-		StringBuilder sb = new StringBuilder(path1);
-		if (!path1.endsWith("/") && !path2.startsWith("/"))
-			sb.append('/');
-		sb.append(path2);
-		return sb.toString();
-	}
-
-	public final static String lastPart(String path) {
+	public static String lastPart(String path) {
 		if (path == null)
 			return null;
 		String[] parts = StringUtils.split(path, '/');
@@ -88,11 +76,11 @@ public class LinkUtils {
 		return parts[parts.length - 1];
 	}
 
-	public final static String UTF8_URL_Encode(String s) throws UnsupportedEncodingException {
+	public static String UTF8_URL_Encode(String s) throws UnsupportedEncodingException {
 		return URLEncoder.encode(s, "UTF-8").replace("+", "%20");
 	}
 
-	public final static String UTF8_URL_QuietDecode(String s) {
+	public static String UTF8_URL_QuietDecode(String s) {
 		try {
 			return URLDecoder.decode(s, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
@@ -100,31 +88,31 @@ public class LinkUtils {
 		}
 	}
 
-	public final static URI newEncodedURI(String u) throws MalformedURLException, URISyntaxException {
+	public static URI newEncodedURI(String u) throws MalformedURLException, URISyntaxException {
 		URL tmpUrl = new URL(u);
 		return new URI(tmpUrl.getProtocol(), tmpUrl.getUserInfo(), tmpUrl.getHost(), tmpUrl.getPort(), tmpUrl.getPath(),
 				tmpUrl.getQuery(), tmpUrl.getRef());
 	}
 
-	public final static URL newEncodedURL(String u) throws MalformedURLException, URISyntaxException {
+	public static URL newEncodedURL(String u) throws MalformedURLException, URISyntaxException {
 		return newEncodedURI(u).toURL();
 	}
 
-	public final static MultivaluedMap<String, String> getQueryParameters(final String queryString) {
+	public static MultivaluedMap<String, String> getQueryParameters(final String queryString) {
 		if (queryString == null || queryString.isEmpty())
 			return null;
-		final MultivaluedHashMap<String, String> map = new MultivaluedHashMap();
+		final MultivaluedHashMap<String, String> map = new MultivaluedHashMap<>();
 		final List<NameValuePair> parameters = URLEncodedUtils.parse(queryString, CharsetUtils.CharsetUTF8);
 		if (parameters != null)
 			parameters.forEach(pair -> map.add(pair.getName(), pair.getValue()));
 		return map;
 	}
 
-	public final static String[] getPathSegments(final String path) {
+	public static String[] getPathSegments(final String path) {
 		return path == null ? null : StringUtils.split(path, '/');
 	}
 
-	public final static URI resolveQuietly(URI uri, String href) {
+	public static URI resolveQuietly(URI uri, String href) {
 		if (uri == null || href == null)
 			return null;
 		try {

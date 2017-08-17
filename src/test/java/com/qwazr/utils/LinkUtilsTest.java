@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Emmanuel Keller / QWAZR
+ * Copyright 2016-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.utils.test;
+package com.qwazr.utils;
 
-import com.qwazr.utils.LinkUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -33,6 +32,15 @@ public class LinkUtilsTest {
 		Assert.assertEquals("my+file.png", LinkUtils.lastPart("my+file.png"));
 		Assert.assertEquals("my+file.png", LinkUtils.lastPart("my+folder/my+sub-folder/my+file.png"));
 		Assert.assertEquals("outlook%3AINBOX%2F%7ETEST%20TEST", LinkUtils.UTF8_URL_Encode("outlook:INBOX/~TEST TEST"));
+	}
+
+	@Test
+	public void testUrlHostPathWrapReduce() {
+		final String url =
+				"file://Users/ekeller/Moteur/infotoday_enterprisesearchsourcebook08/Open_on_Windows.exe?test=2";
+		Assert.assertEquals("Users/ekeller/…/infotoday_enterprisesearchsourcebook08/Open_on_Windows.exe",
+				LinkUtils.urlHostPathWrapReduce(url, 80));
+		Assert.assertEquals("www.qwazr.com", LinkUtils.urlHostPathWrapReduce("http://www.qwazr.com/", 80));
 	}
 }
 
