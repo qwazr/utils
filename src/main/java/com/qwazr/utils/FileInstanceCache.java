@@ -49,7 +49,7 @@ public class FileInstanceCache<T> {
 	 * If the file does not exist, the method returns null.
 	 *
 	 * @return the instance
-	 * @throws IOException
+	 * @throws IOException if any I/O error occurs
 	 */
 	public T get() throws IOException {
 		if (reader == null)
@@ -70,8 +70,9 @@ public class FileInstanceCache<T> {
 	 * Write the instance in the file.
 	 * If the new instance eguals the cached instance, the file is not writed again.
 	 *
-	 * @param instance
-	 * @throws IOException
+	 * @param instance the instance to write
+	 * @return the cached instance
+	 * @throws IOException if any I/O error occurs
 	 */
 	public FileInstanceCache<T> set(T instance) throws IOException {
 		if (writer == null)

@@ -84,6 +84,7 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 	 *
 	 * @param filePath the path to the file
 	 * @return true if the file exists and is writable.
+	 * @throws IOException if any I/O error occurs
 	 */
 	public static boolean checkExistsAndEnforceWritable(Path filePath) throws IOException {
 		if (!Files.exists(filePath))
@@ -147,10 +148,10 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 	/**
 	 * Check if the child Path is child or equals the parent Path
 	 *
-	 * @param parent
-	 * @param child
-	 * @return
-	 * @throws IOException
+	 * @param parent the parent path
+	 * @param child  the path of the child
+	 * @return true if the child path is a child of the parent path
+	 * @throws IOException if any I/O error occurs
 	 */
 	public static boolean isParent(final Path parent, Path child) throws IOException {
 		while (child != null) {
