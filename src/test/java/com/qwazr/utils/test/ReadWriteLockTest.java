@@ -26,8 +26,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
@@ -77,7 +79,7 @@ public class ReadWriteLockTest {
 		final long totalTime;
 
 		Benchmark(String name, ReadWriteLock rwl, Duration duration, long readSleep, long writeSleep)
-				throws InterruptedException {
+				throws InterruptedException, ExecutionException {
 			this.name = name;
 			this.rwl = rwl;
 			this.readSleep = readSleep;
@@ -109,17 +111,22 @@ public class ReadWriteLockTest {
 			});
 		}
 
-		private void execute() throws InterruptedException {
+		private void execute() throws InterruptedException, ExecutionException {
 			final ExecutorService executor = Executors.newCachedThreadPool();
 
+			final List<Future> futures = new ArrayList<>();
+
 			for (int i = 0; i < 10; i++) {
-				executor.submit(() -> {
+				futures.add(executor.submit(() -> {
 					while (System.currentTimeMillis() < timeLimit) {
 						doRead();
 						doWrite();
 					}
-				});
+				}));
 			}
+
+			for (Future future : futures)
+				future.get();
 
 			executor.shutdown();
 			executor.awaitTermination(1, TimeUnit.MINUTES);
@@ -139,7 +146,8 @@ public class ReadWriteLockTest {
 		}
 	}
 
-	private void benchmarkSuite(Duration duration, long readSleep, long writeSleep) throws InterruptedException {
+	private void benchmarkSuite(Duration duration, long readSleep, long writeSleep)
+			throws InterruptedException, ExecutionException {
 		for (int i = 0; i < 5; i++) {
 			List<Benchmark> results = new ArrayList<>();
 			results.add(new Benchmark("Unfair", ReadWriteLock.reentrant(false), duration, readSleep, writeSleep));
@@ -166,22 +174,22 @@ public class ReadWriteLockTest {
 	}
 
 	@Test
-	public void benchmarkNoSleep() throws InterruptedException {
+	public void benchmarkNoSleep() throws InterruptedException, ExecutionException {
 		benchmarkSuite(Duration.ofSeconds(1), 0, 0);
 	}
 
 	@Test
-	public void benchmarkWithSleepBestRead() throws InterruptedException {
+	public void benchmarkWithSleepBestRead() throws InterruptedException, ExecutionException {
 		benchmarkSuite(Duration.ofSeconds(1), 0, 20);
 	}
 
 	@Test
-	public void benchmarkWithSleepBestWrite() throws InterruptedException {
+	public void benchmarkWithSleepBestWrite() throws InterruptedException, ExecutionException {
 		benchmarkSuite(Duration.ofSeconds(1), 20, 0);
 	}
 
 	@Test
-	public void benchmarkWithRealSleep() throws InterruptedException {
+	public void benchmarkWithRealSleep() throws InterruptedException, ExecutionException {
 		benchmarkSuite(Duration.ofSeconds(1), 5, 20);
 	}
 }

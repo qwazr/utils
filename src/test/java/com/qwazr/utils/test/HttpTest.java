@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,10 +23,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -49,17 +45,17 @@ public class HttpTest {
 	}
 
 	@Test
-	public void sslTest() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
+	public void sslTest() throws Exception {
 		System.setProperty("jsse.enableSNIExtension", "false");
-		for (String url : badSslURLs)
+		for (String url : badSslURLs) {
 			try {
 				Assert.assertEquals(url, 200, HttpClients.UNSECURE_HTTP_CLIENT.execute(HttpRequest.Get(url).request)
 						.getStatusLine()
 						.getStatusCode());
 			} catch (Exception e) {
-				e.printStackTrace();
-				Assert.fail("Fail on url: " + url);
+				throw new Exception("Fail on url: " + url, e);
 			}
+		}
 	}
 
 	@AfterClass
