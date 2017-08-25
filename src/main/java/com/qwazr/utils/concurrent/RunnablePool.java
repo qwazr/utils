@@ -19,19 +19,21 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
-public class RunnablePool implements Closeable {
+public class RunnablePool<T> implements Closeable {
 
 	private final int fixedThreads;
 
 	private final ExecutorService executor;
 
-	private final List<Future> futures;
+	private final List<Future<T>> futures;
 
 	private RunnablePool(ExecutorService executor, int fixedThreads) {
 		this.executor = executor;
@@ -65,25 +67,32 @@ public class RunnablePool implements Closeable {
 		this(Runtime.getRuntime().availableProcessors());
 	}
 
-	public void submit(Runnable runnable) {
-		futures.add(executor.submit(runnable));
+	public void submit(Callable<T> callable) {
+		futures.add(executor.submit(callable));
+	}
+
+	public void collect(Consumer<T> results, Consumer<Exception> exceptions) {
+		for (Future<T> future : futures) {
+			try {
+				final T result = future.get();
+				if (results != null)
+					results.accept(result);
+			} catch (ExecutionException | CancellationException | InterruptedException e) {
+				exceptions.accept(e);
+			}
+		}
+		futures.clear();
 	}
 
 	@Override
 	public void close() throws IOException {
 		if (fixedThreads != 0)
 			executor.shutdown();
-		List<Exception> exceptions = null;
-		for (Future future : futures) {
-			try {
-				future.get();
-			} catch (ExecutionException | CancellationException | InterruptedException e) {
-				if (exceptions == null)
-					exceptions = new ArrayList<>();
-				exceptions.add(e);
-			}
-		}
-		if (exceptions != null)
+		if (futures.isEmpty())
+			return;
+		final List<Exception> exceptions = new ArrayList<>();
+		collect(null, exceptions::add);
+		if (!exceptions.isEmpty())
 			throw new RunnablePoolException(exceptions);
 	}
 
