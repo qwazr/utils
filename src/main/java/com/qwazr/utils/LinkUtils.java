@@ -23,6 +23,7 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import java.io.UnsupportedEncodingException;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class LinkUtils {
@@ -102,7 +103,7 @@ public class LinkUtils {
 		if (queryString == null || queryString.isEmpty())
 			return null;
 		final MultivaluedHashMap<String, String> map = new MultivaluedHashMap<>();
-		final List<NameValuePair> parameters = URLEncodedUtils.parse(queryString, CharsetUtils.CharsetUTF8);
+		final List<NameValuePair> parameters = URLEncodedUtils.parse(queryString, StandardCharsets.UTF_8);
 		if (parameters != null)
 			parameters.forEach(pair -> map.add(pair.getName(), pair.getValue()));
 		return map;

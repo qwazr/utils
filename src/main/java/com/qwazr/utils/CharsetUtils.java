@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.ibm.icu.text.CharsetMatch;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 
 public class CharsetUtils {
 
@@ -40,30 +40,28 @@ public class CharsetUtils {
 		return match == null ? null : match.getName();
 	}
 
-	public final static Charset CharsetUTF8 = Charset.forName("UTF-8");
-
 	public final static CharsetEncoder newUTF8Encoder() {
-		synchronized (CharsetUTF8) {
-			return CharsetUTF8.newEncoder();
+		synchronized (StandardCharsets.UTF_8) {
+			return StandardCharsets.UTF_8.newEncoder();
 		}
 	}
 
 	public final static byte[] encodeUtf8(String string) {
 		if (string == null)
 			return null;
-		return string.getBytes(CharsetUTF8);
+		return string.getBytes(StandardCharsets.UTF_8);
 	}
 
 	public final static String decodeUtf8(byte[] bytes) {
 		if (bytes == null)
 			return null;
-		return new String(bytes, CharsetUTF8);
+		return new String(bytes, StandardCharsets.UTF_8);
 	}
 
 	public final static String decodeUtf8(ByteBuffer bytes) throws IOException {
 		if (bytes == null)
 			return null;
-		return new String(CharsetUTF8.newDecoder().decode(bytes).array());
+		return new String(StandardCharsets.UTF_8.newDecoder().decode(bytes).array());
 	}
 
 }

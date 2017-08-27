@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package com.qwazr.utils.http;
 
-import com.qwazr.utils.CharsetUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class HttpResponseEntityException extends HttpResponseException {
 
@@ -40,7 +40,7 @@ public class HttpResponseEntityException extends HttpResponseException {
 	private static String getMessage(final HttpEntity entity, final String message) {
 		try {
 			if (entity != null)
-				return EntityUtils.toString(entity, CharsetUtils.CharsetUTF8);
+				return EntityUtils.toString(entity, StandardCharsets.UTF_8);
 			return message;
 
 		} catch (IOException e) {
