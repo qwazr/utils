@@ -18,6 +18,10 @@ package com.qwazr.utils;
 import org.apache.commons.text.CharacterPredicate;
 import org.apache.commons.text.RandomStringGenerator;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+
 public class RandomUtils extends org.apache.commons.lang3.RandomUtils {
 
 	public enum Predicates implements CharacterPredicate {
@@ -30,8 +34,8 @@ public class RandomUtils extends org.apache.commons.lang3.RandomUtils {
 		}
 	}
 
-	final public static RandomStringGenerator LETTER_OR_DIGIT = new RandomStringGenerator.Builder().filteredBy(
-			Predicates.LETTER_OR_DIGIT).withinRange(31, 127).build();
+	final public static RandomStringGenerator LETTER_OR_DIGIT =
+			new RandomStringGenerator.Builder().filteredBy(Predicates.LETTER_OR_DIGIT).withinRange(31, 127).build();
 
 	public static String alphanumeric(int length) {
 		return LETTER_OR_DIGIT.generate(length);
@@ -47,5 +51,13 @@ public class RandomUtils extends org.apache.commons.lang3.RandomUtils {
 
 	public static char nextAlphanumericChar() {
 		return alphanumeric(1).charAt(0);
+	}
+
+	public static Date nextFutureDate(int fromDay, int toDay) {
+		return Date.from(Instant.now().plus(Duration.ofDays(RandomUtils.nextInt(fromDay, toDay))));
+	}
+
+	public static Date nextPastDate(int fromDay, int toDay) {
+		return Date.from(Instant.now().minus(Duration.ofDays(RandomUtils.nextInt(fromDay, toDay))));
 	}
 }

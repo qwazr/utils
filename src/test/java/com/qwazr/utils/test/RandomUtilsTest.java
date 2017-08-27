@@ -37,4 +37,10 @@ public class RandomUtilsTest {
 		RandomUtils.nextByte();
 		RandomUtils.nextAlphanumericChar();
 	}
+
+	@Test
+	public void testDate() {
+		Assert.assertTrue(RandomUtils.nextFutureDate(1, 10).getTime() > System.currentTimeMillis());
+		Assert.assertTrue(RandomUtils.nextPastDate(1, 10).getTime() < System.currentTimeMillis());
+	}
 }
