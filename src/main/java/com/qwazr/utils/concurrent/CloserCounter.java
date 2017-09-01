@@ -33,8 +33,9 @@ public class CloserCounter<T extends Closeable> {
 		return item;
 	}
 
-	public synchronized void acquire() {
+	public synchronized CloserCounter<T> acquire() {
 		++counter;
+		return this;
 	}
 
 	public synchronized void release() throws IOException {

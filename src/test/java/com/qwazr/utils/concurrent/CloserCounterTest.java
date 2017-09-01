@@ -54,6 +54,8 @@ public class CloserCounterTest {
 		final CloserCounter<Item> closer = new CloserCounter<>(item);
 		closer.acquire();
 
+		Assert.assertEquals(item, closer.get());
+
 		final List<Future<?>> futures = new ArrayList<>();
 		for (int i = 0; i < 4; i++) {
 			futures.add(executorService.submit(() -> {
