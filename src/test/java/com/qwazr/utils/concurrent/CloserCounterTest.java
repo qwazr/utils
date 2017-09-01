@@ -1,0 +1,115 @@
+/*
+ * Copyright 2017 Emmanuel Keller / QWAZR
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.qwazr.utils.concurrent;
+
+import com.qwazr.utils.RandomUtils;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class CloserCounterTest {
+
+	private static ExecutorService executorService;
+
+	@BeforeClass
+	public static void setup() {
+		executorService = Executors.newFixedThreadPool(5);
+	}
+
+	@AfterClass
+	public static void cleanup() {
+		executorService.shutdown();
+	}
+
+	private final static int MAX_ITERATIONS = 2000;
+
+	@Test
+	public void multiThreadTest() throws InterruptedException {
+
+		final Item item = new Item();
+		final CloserCounter<Item> closer = new CloserCounter<>(item);
+		closer.acquire();
+
+		final List<Future<?>> futures = new ArrayList<>();
+		for (int i = 0; i < 4; i++) {
+			futures.add(executorService.submit(() -> {
+				while (!item.done()) {
+					closer.acquire();
+					try {
+						item.action();
+					} finally {
+						closer.release(e -> {
+						});
+					}
+				}
+			}));
+		}
+
+		closer.release(e -> {
+		});
+
+		futures.forEach(f -> {
+			try {
+				f.get();
+			} catch (Exception e) {
+			}
+		});
+
+		Assert.assertFalse(item.open);
+		Assert.assertTrue(item.counter.get() >= MAX_ITERATIONS);
+	}
+
+	@Test(expected = IOException.class)
+	public void doubleReleaseTest() throws IOException {
+		final Item item = new Item();
+		final CloserCounter<Item> closer = new CloserCounter<>(item);
+		closer.release();
+		closer.release();
+	}
+
+	public static class Item implements Closeable {
+
+		private boolean open = true;
+		private AtomicInteger counter = new AtomicInteger();
+
+		public void action() {
+			ThreadUtils.sleep(RandomUtils.nextLong(0, 10), TimeUnit.MILLISECONDS);
+			counter.incrementAndGet();
+		}
+
+		public boolean done() {
+			return counter.get() > MAX_ITERATIONS;
+		}
+
+		@Override
+		public synchronized void close() throws IOException {
+			if (!open)
+				throw new IOException("Already close");
+			open = false;
+		}
+	}
+}
