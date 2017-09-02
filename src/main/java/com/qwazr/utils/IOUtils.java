@@ -54,8 +54,30 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 	public static void close(final Collection<? extends AutoCloseable> autoCloseables) {
 		if (autoCloseables == null)
 			return;
-		for (AutoCloseable autoCloseable : autoCloseables)
-			close(autoCloseable);
+		autoCloseables.forEach(IOUtils::close);
+	}
+
+	public static void closeQuietly(final Closeable closeable) {
+		if (closeable == null)
+			return;
+		try {
+			closeable.close();
+		} catch (IOException e) {
+			logger.log(Level.WARNING, e, () -> "Close failure on " + closeable);
+		}
+	}
+
+	public static void closeQuietly(final Closeable... closeables) {
+		if (closeables == null)
+			return;
+		for (Closeable closeable : closeables)
+			closeQuietly(closeable);
+	}
+
+	public static void closeQuietly(final Collection<? extends Closeable> closeables) {
+		if (closeables == null)
+			return;
+		closeables.forEach(IOUtils::closeQuietly);
 	}
 
 	public static void closeObjects(final Collection<?> objects) {
