@@ -17,37 +17,46 @@ package com.qwazr.utils.concurrent;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.function.Consumer;
 
-public class ReferenceCounter<E extends Exception> {
+public interface ReferenceCounter {
 
-	private int counter = 0;
+	void acquire();
 
-	public synchronized int acquire() {
-		return ++counter;
-	}
+	void release();
 
-	public synchronized int release() throws E {
-		return --counter;
-	}
+	abstract class Impl implements ReferenceCounter {
 
-	public abstract static class Closer extends ReferenceCounter<IOException> implements Closeable {
+		private int counter = 0;
 
-		@Override
-		public int release() throws IOException {
-			final int c = super.release();
-			if (c <= 0)
-				close();
-			return c;
+		public synchronized void acquire() {
+			++counter;
 		}
 
-		public void release(Consumer<IOException> exceptionConsumer) {
+		public synchronized void release() {
 			try {
-				release();
-			} catch (IOException e) {
-				if (exceptionConsumer != null)
-					exceptionConsumer.accept(e);
+				release(--counter);
+			} catch (Exception e) {
+				throw new ReleaseException(e);
 			}
+		}
+
+		abstract protected void release(int counter) throws Exception;
+
+	}
+
+	class ReleaseException extends RuntimeException {
+
+		protected ReleaseException(Exception e) {
+			super(e);
+		}
+	}
+
+	abstract class Closer extends Impl implements Closeable {
+
+		@Override
+		protected void release(int counter) throws IOException {
+			if (counter <= 0)
+				close();
 		}
 
 	}

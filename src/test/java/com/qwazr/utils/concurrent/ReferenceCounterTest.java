@@ -29,7 +29,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ReferenceCounterTest {
 
@@ -61,14 +60,13 @@ public class ReferenceCounterTest {
 					try {
 						item.action();
 					} finally {
-						item.release(e -> {
-						});
+						item.release();
 					}
 				}
 			}));
 		}
 
-		item.release(null);
+		item.release();
 
 		futures.forEach(f -> {
 			try {
@@ -81,23 +79,12 @@ public class ReferenceCounterTest {
 		Assert.assertTrue(item.counter.get() >= MAX_ITERATIONS);
 	}
 
-	@Test(expected = IOException.class)
-	public void doubleReleaseExceptionTest() throws IOException {
+	@Test(expected = ReferenceCounter.ReleaseException.class)
+	public void doubleReleaseExceptionTest() {
 		final Item item = new Item();
 		item.acquire();
 		item.release();
 		item.release();
-	}
-
-	@Test
-	public void doubleReleaseTest() throws IOException {
-		final Item item = new Item();
-		item.acquire();
-		final AtomicReference<IOException> exception = new AtomicReference<>();
-		item.release(exception::set);
-		Assert.assertNull(exception.get());
-		item.release(exception::set);
-		Assert.assertNotNull(exception.get());
 	}
 
 	public static class Item extends ReferenceCounter.Closer {
