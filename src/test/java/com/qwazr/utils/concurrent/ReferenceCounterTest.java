@@ -21,7 +21,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,14 +29,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
-public class CloserCounterTest {
+public class ReferenceCounterTest {
 
 	private static ExecutorService executorService;
 
 	@BeforeClass
 	public static void setup() {
-		executorService = Executors.newFixedThreadPool(5);
+		executorService = Executors.newFixedThreadPool(4);
 	}
 
 	@AfterClass
@@ -51,28 +51,24 @@ public class CloserCounterTest {
 	public void multiThreadTest() throws InterruptedException {
 
 		final Item item = new Item();
-		final CloserCounter<Item> closer = new CloserCounter<>(item);
-		closer.acquire();
-
-		Assert.assertEquals(item, closer.get());
+		item.acquire();
 
 		final List<Future<?>> futures = new ArrayList<>();
 		for (int i = 0; i < 4; i++) {
 			futures.add(executorService.submit(() -> {
 				while (!item.done()) {
-					closer.acquire();
+					item.acquire();
 					try {
 						item.action();
 					} finally {
-						closer.release(e -> {
+						item.release(e -> {
 						});
 					}
 				}
 			}));
 		}
 
-		closer.release(e -> {
-		});
+		item.release(null);
 
 		futures.forEach(f -> {
 			try {
@@ -86,14 +82,25 @@ public class CloserCounterTest {
 	}
 
 	@Test(expected = IOException.class)
-	public void doubleReleaseTest() throws IOException {
+	public void doubleReleaseExceptionTest() throws IOException {
 		final Item item = new Item();
-		final CloserCounter<Item> closer = new CloserCounter<>(item);
-		closer.release();
-		closer.release();
+		item.acquire();
+		item.release();
+		item.release();
 	}
 
-	public static class Item implements Closeable {
+	@Test
+	public void doubleReleaseTest() throws IOException {
+		final Item item = new Item();
+		item.acquire();
+		final AtomicReference<IOException> exception = new AtomicReference<>();
+		item.release(exception::set);
+		Assert.assertNull(exception.get());
+		item.release(exception::set);
+		Assert.assertNotNull(exception.get());
+	}
+
+	public static class Item extends ReferenceCounter.Closer {
 
 		private boolean open = true;
 		private AtomicInteger counter = new AtomicInteger();

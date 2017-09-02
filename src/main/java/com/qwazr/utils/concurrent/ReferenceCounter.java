@@ -19,36 +19,37 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-public class CloserCounter<T extends Closeable> {
+public class ReferenceCounter<E extends Exception> {
 
-	public final T item;
-	private int counter;
+	private int counter = 0;
 
-	public CloserCounter(T item) {
-		this.item = item;
-		this.counter = 0;
+	public synchronized int acquire() {
+		return ++counter;
 	}
 
-	public T get() {
-		return item;
+	public synchronized int release() throws E {
+		return --counter;
 	}
 
-	public synchronized CloserCounter<T> acquire() {
-		++counter;
-		return this;
-	}
+	public abstract static class Closer extends ReferenceCounter<IOException> implements Closeable {
 
-	public synchronized void release() throws IOException {
-		if (--counter <= 0)
-			item.close();
-	}
-
-	public void release(Consumer<IOException> exceptionConsumer) {
-		try {
-			release();
-		} catch (IOException e) {
-			exceptionConsumer.accept(e);
+		@Override
+		public int release() throws IOException {
+			final int c = super.release();
+			if (c <= 0)
+				close();
+			return c;
 		}
+
+		public void release(Consumer<IOException> exceptionConsumer) {
+			try {
+				release();
+			} catch (IOException e) {
+				if (exceptionConsumer != null)
+					exceptionConsumer.accept(e);
+			}
+		}
+
 	}
 
 }
