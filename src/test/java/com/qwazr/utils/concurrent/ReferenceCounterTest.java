@@ -15,12 +15,14 @@
  */
 package com.qwazr.utils.concurrent;
 
+import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.RandomUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +49,7 @@ public class ReferenceCounterTest {
 	private final static int MAX_ITERATIONS = 2000;
 
 	@Test
-	public void multiThreadTest() throws InterruptedException {
+	public void multiThreadTest() throws InterruptedException, IOException {
 
 		final Item item = new Item();
 		item.acquire();
@@ -60,13 +62,13 @@ public class ReferenceCounterTest {
 					try {
 						item.action();
 					} finally {
-						item.release();
+						IOUtils.closeQuietly(item);
 					}
 				}
 			}));
 		}
 
-		item.release();
+		item.close();
 
 		futures.forEach(f -> {
 			try {
@@ -79,22 +81,29 @@ public class ReferenceCounterTest {
 		Assert.assertTrue(item.counter.get() >= MAX_ITERATIONS);
 	}
 
-	@Test(expected = ReferenceCounter.ReleaseException.class)
-	public void doubleReleaseExceptionTest() {
+	@Test(expected = IOException.class)
+	public void doubleReleaseExceptionTest() throws IOException {
 		final Item item = new Item();
 		item.acquire();
-		item.release();
-		item.release();
+		item.close();
+		item.close();
 	}
 
-	public static class Item extends ReferenceCounter.Closer {
+	public static class Item implements Closeable {
+
+		private final AtomicInteger counter = new AtomicInteger();
+		private final ReferenceCounter.Impl refCounter = new ReferenceCounter.Impl();
 
 		private boolean open = true;
-		private AtomicInteger counter = new AtomicInteger();
 
 		public void action() {
 			ThreadUtils.sleep(RandomUtils.nextLong(0, 10), TimeUnit.MILLISECONDS);
 			counter.incrementAndGet();
+		}
+
+		public Item acquire() {
+			refCounter.acquire();
+			return this;
 		}
 
 		public boolean done() {
@@ -103,6 +112,8 @@ public class ReferenceCounterTest {
 
 		@Override
 		public synchronized void close() throws IOException {
+			if (refCounter.release() > 0)
+				return;
 			if (!open)
 				throw new IOException("Already close");
 			open = false;

@@ -15,48 +15,23 @@
  */
 package com.qwazr.utils.concurrent;
 
-import java.io.Closeable;
-import java.io.IOException;
-
 public interface ReferenceCounter {
 
-	void acquire();
+	ReferenceCounter acquire();
 
-	void release();
+	int release();
 
-	abstract class Impl implements ReferenceCounter {
+	class Impl implements ReferenceCounter {
 
 		private int counter = 0;
 
-		public synchronized void acquire() {
+		public synchronized Impl acquire() {
 			++counter;
+			return this;
 		}
 
-		public synchronized void release() {
-			try {
-				release(--counter);
-			} catch (Exception e) {
-				throw new ReleaseException(e);
-			}
-		}
-
-		abstract protected void release(int counter) throws Exception;
-
-	}
-
-	class ReleaseException extends RuntimeException {
-
-		protected ReleaseException(Exception e) {
-			super(e);
-		}
-	}
-
-	abstract class Closer extends Impl implements Closeable {
-
-		@Override
-		protected void release(int counter) throws IOException {
-			if (counter <= 0)
-				close();
+		public synchronized int release() {
+			return --counter;
 		}
 
 	}
