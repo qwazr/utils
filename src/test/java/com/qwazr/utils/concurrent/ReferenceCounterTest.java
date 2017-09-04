@@ -26,6 +26,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -49,7 +50,7 @@ public class ReferenceCounterTest {
 	private final static int MAX_ITERATIONS = 2000;
 
 	@Test
-	public void multiThreadTest() throws InterruptedException, IOException {
+	public void multiThreadTest() throws InterruptedException, IOException, ExecutionException {
 
 		final Item item = new Item();
 		item.acquire();
@@ -70,12 +71,8 @@ public class ReferenceCounterTest {
 
 		item.close();
 
-		futures.forEach(f -> {
-			try {
-				f.get();
-			} catch (Exception e) {
-			}
-		});
+		for (Future future : futures)
+			future.get();
 
 		Assert.assertFalse(item.open);
 		Assert.assertTrue(item.counter.get() >= MAX_ITERATIONS);
