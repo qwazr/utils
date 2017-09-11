@@ -19,6 +19,8 @@ package com.qwazr.utils.json;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.qwazr.utils.ObjectMappers;
 import com.qwazr.utils.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,14 +32,32 @@ import java.util.Objects;
 
 public class JsonMapperTest {
 
-	@Test
-	public void writeReadTest() throws IOException {
-		JsonMapper mapper = new JsonMapper();
+	void writeReadTest(ObjectMapper mapper) throws IOException {
 		File jsonFile = Files.createTempFile("test", ".json").toFile();
 		Item item1 = new Item(RandomUtils.nextInt(), RandomUtils.alphanumeric(10), null);
 		mapper.writeValue(jsonFile, item1);
 		Item item2 = mapper.readValue(jsonFile, Item.class);
 		Assert.assertEquals(item1, item2);
+	}
+
+	@Test
+	public void jsonMapper() throws IOException {
+		writeReadTest(ObjectMappers.JSON);
+	}
+
+	@Test
+	public void xmlMapper() throws IOException {
+		writeReadTest(ObjectMappers.XML);
+	}
+
+	@Test
+	public void yamlMapper() throws IOException {
+		writeReadTest(ObjectMappers.YAML);
+	}
+
+	@Test
+	public void cborMapper() throws IOException {
+		writeReadTest(ObjectMappers.CBOR);
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -66,8 +86,8 @@ public class JsonMapperTest {
 			if (o == null || !(o instanceof Item))
 				return false;
 			final Item i = (Item) o;
-			return Objects.equals(id, i.id) && Objects.equals(fullName, i.fullName) && Objects.equals(nullValue,
-					i.nullValue);
+			return Objects.equals(id, i.id) && Objects.equals(fullName, i.fullName) &&
+					Objects.equals(nullValue, i.nullValue);
 		}
 	}
 
