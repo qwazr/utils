@@ -24,7 +24,7 @@ import java.util.Objects;
 /**
  * This class keep a persistent version of your instance in the file system
  *
- * @param <T>
+ * @param <T> the cached type
  */
 public class FileInstanceCache<T> {
 

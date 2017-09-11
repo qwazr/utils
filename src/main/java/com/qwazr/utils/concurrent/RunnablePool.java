@@ -45,7 +45,7 @@ public class RunnablePool<T> implements Closeable {
 	 * Build a SubmitPool with the given ExecutorService.
 	 * It is the responsibility of the caller to shutdown the ExecutorService
 	 *
-	 * @param executor
+	 * @param executor the executor service to use
 	 */
 	public RunnablePool(ExecutorService executor) {
 		this(executor, 0);
