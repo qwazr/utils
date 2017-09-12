@@ -60,6 +60,11 @@ public class JsonMapperTest {
 		writeReadTest(ObjectMappers.CBOR);
 	}
 
+	@Test
+	public void ionMapper() throws IOException {
+		writeReadTest(ObjectMappers.ION);
+	}
+
 	@JsonInclude(JsonInclude.Include.NON_EMPTY)
 	public static class Item {
 

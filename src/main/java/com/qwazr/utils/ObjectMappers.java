@@ -17,6 +17,7 @@ package com.qwazr.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import com.fasterxml.jackson.dataformat.ion.IonObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.qwazr.utils.json.JsonMapper;
@@ -39,11 +40,14 @@ public class ObjectMappers {
 
 	public final static ObjectMapper CBOR;
 
+	public final static ObjectMapper ION;
+
 	static {
 		JSON = new JsonMapper();
 		YAML = new ObjectMapper(new YAMLFactory());
 		XML = new XmlMapper();
 		CBOR = new ObjectMapper(new CBORFactory());
+		ION = new IonObjectMapper();
 	}
 
 	private final Pair<String, ObjectMapper>[] objectMappers;
