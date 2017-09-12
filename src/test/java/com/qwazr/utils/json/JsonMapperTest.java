@@ -56,13 +56,8 @@ public class JsonMapperTest {
 	}
 
 	@Test
-	public void cborMapper() throws IOException {
-		writeReadTest(ObjectMappers.CBOR);
-	}
-
-	@Test
-	public void ionMapper() throws IOException {
-		writeReadTest(ObjectMappers.ION);
+	public void smileMapper() throws IOException {
+		writeReadTest(ObjectMappers.SMILE);
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_EMPTY)

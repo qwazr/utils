@@ -138,21 +138,8 @@
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.jaxrs</groupId>
-            <artifactId>jackson-jaxrs-cbor-provider</artifactId>
+            <artifactId>jackson-jaxrs-smile-provider</artifactId>
             <version>${jackson.version}</version>
-            <optional>true</optional>
-            <exclusions>
-                <exclusion>
-                    <artifactId>jackson-annotations</artifactId>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-ion</artifactId>
-            <version>${jackson.version}</version>
-            <optional>true</optional>
             <exclusions>
                 <exclusion>
                     <artifactId>jackson-annotations</artifactId>
