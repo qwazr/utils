@@ -50,8 +50,11 @@ public class LinkUtilsTest {
 		Assert.assertEquals("value 1", LinkUtils.getQueryParameters("key+1=value%201").get("key 1").get(0));
 		Assert.assertEquals("value1", LinkUtils.getQueryParameters("key1=value1&key1=value2").get("key1").get(0));
 		Assert.assertEquals("value2", LinkUtils.getQueryParameters("key1=value1&key1=value2").get("key1").get(1));
+		Assert.assertEquals("value2", LinkUtils.getQueryParameters("key1=value1&key2=value2").get("key2").get(0));
 		Assert.assertEquals("", LinkUtils.getQueryParameters("key1&key2").get("key1").get(0));
 		Assert.assertEquals("", LinkUtils.getQueryParameters("key1&key2").get("key2").get(0));
+		Assert.assertEquals(null, LinkUtils.getQueryParameters(null));
+		Assert.assertTrue(LinkUtils.getQueryParameters("").isEmpty());
 	}
 }
 
