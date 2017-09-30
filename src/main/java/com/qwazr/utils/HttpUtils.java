@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014-2016 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.utils.http;
-
-import com.qwazr.utils.StringUtils;
+package com.qwazr.utils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
