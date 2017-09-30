@@ -15,9 +15,12 @@
  */
 package com.qwazr.utils;
 
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 
 public class LinkUtils {
@@ -73,6 +76,29 @@ public class LinkUtils {
 
 	public static String UTF8_URL_Encode(String s) throws UnsupportedEncodingException {
 		return URLEncoder.encode(s, "UTF-8").replace("+", "%20");
+	}
+
+	public static MultivaluedMap<String, String> getQueryParameters(String queryString, String charset)
+			throws UnsupportedEncodingException {
+		if (queryString == null)
+			return null;
+		final MultivaluedMap<String, String> multiMap = new MultivaluedHashMap<>();
+		final String[] keyValues = StringUtils.split(queryString, '&');
+		for (String keyValue : keyValues) {
+			final String[] s = StringUtils.split(keyValue, '=');
+			final String key = URLDecoder.decode(s[0], charset);
+			if (s.length == 1)
+				multiMap.add(key, StringUtils.EMPTY);
+			else
+				for (int i = 1; i < s.length; i++)
+					multiMap.add(key, URLDecoder.decode(s[i], charset));
+		}
+		return multiMap;
+	}
+
+	public static MultivaluedMap<String, String> getQueryParameters(String queryString)
+			throws UnsupportedEncodingException {
+		return getQueryParameters(queryString, "UTF-8");
 	}
 
 }

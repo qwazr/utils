@@ -42,6 +42,17 @@ public class LinkUtilsTest {
 				LinkUtils.urlHostPathWrapReduce(url, 80));
 		Assert.assertEquals("www.qwazr.com", LinkUtils.urlHostPathWrapReduce("http://www.qwazr.com/", 80));
 	}
+
+	@Test
+	public void testQueryParameters() throws UnsupportedEncodingException {
+		Assert.assertEquals("value1", LinkUtils.getQueryParameters("key1=value1").get("key1").get(0));
+		Assert.assertEquals("value 1", LinkUtils.getQueryParameters("key1=value+1").get("key1").get(0));
+		Assert.assertEquals("value 1", LinkUtils.getQueryParameters("key+1=value%201").get("key 1").get(0));
+		Assert.assertEquals("value1", LinkUtils.getQueryParameters("key1=value1&key1=value2").get("key1").get(0));
+		Assert.assertEquals("value2", LinkUtils.getQueryParameters("key1=value1&key1=value2").get("key1").get(1));
+		Assert.assertEquals("", LinkUtils.getQueryParameters("key1&key2").get("key1").get(0));
+		Assert.assertEquals("", LinkUtils.getQueryParameters("key1&key2").get("key2").get(0));
+	}
 }
 
 
