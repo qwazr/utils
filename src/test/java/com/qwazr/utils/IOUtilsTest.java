@@ -19,7 +19,13 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -56,5 +62,19 @@ public class IOUtilsTest {
 		public void close() throws IOException {
 			open = false;
 		}
+	}
+
+	@Test
+	public void readLines() throws IOException {
+		final List<Object> lines = Arrays.asList("line1", "line2", "line3");
+		final File file = Files.createTempFile("ioutils", "txt").toFile();
+		try (final FileWriter writer = new FileWriter(file)) {
+			IOUtils.writeLines(lines, null, writer);
+		}
+		final List<String> readLines = new ArrayList<>();
+		try (final InputStream input = new FileInputStream(file)) {
+			IOUtils.readLines(input, null, readLines::add);
+		}
+		Assert.assertArrayEquals(lines.toArray(), readLines.toArray());
 	}
 }
