@@ -15,16 +15,10 @@
  */
 package com.qwazr.utils;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.client.utils.URLEncodedUtils;
-
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
 import java.io.UnsupportedEncodingException;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
 
 public class LinkUtils {
 
@@ -69,7 +63,7 @@ public class LinkUtils {
 	public static String lastPart(String path) {
 		if (path == null)
 			return null;
-		String[] parts = StringUtils.split(path, '/');
+		final String[] parts = StringUtils.split(path, '/');
 		if (parts == null)
 			return path;
 		if (parts.length == 0)
@@ -79,48 +73,6 @@ public class LinkUtils {
 
 	public static String UTF8_URL_Encode(String s) throws UnsupportedEncodingException {
 		return URLEncoder.encode(s, "UTF-8").replace("+", "%20");
-	}
-
-	public static String UTF8_URL_QuietDecode(String s) {
-		try {
-			return URLDecoder.decode(s, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			return s;
-		}
-	}
-
-	public static URI newEncodedURI(String u) throws MalformedURLException, URISyntaxException {
-		URL tmpUrl = new URL(u);
-		return new URI(tmpUrl.getProtocol(), tmpUrl.getUserInfo(), tmpUrl.getHost(), tmpUrl.getPort(), tmpUrl.getPath(),
-				tmpUrl.getQuery(), tmpUrl.getRef());
-	}
-
-	public static URL newEncodedURL(String u) throws MalformedURLException, URISyntaxException {
-		return newEncodedURI(u).toURL();
-	}
-
-	public static MultivaluedMap<String, String> getQueryParameters(final String queryString) {
-		if (queryString == null || queryString.isEmpty())
-			return null;
-		final MultivaluedHashMap<String, String> map = new MultivaluedHashMap<>();
-		final List<NameValuePair> parameters = URLEncodedUtils.parse(queryString, StandardCharsets.UTF_8);
-		if (parameters != null)
-			parameters.forEach(pair -> map.add(pair.getName(), pair.getValue()));
-		return map;
-	}
-
-	public static String[] getPathSegments(final String path) {
-		return path == null ? null : StringUtils.split(path, '/');
-	}
-
-	public static URI resolveQuietly(URI uri, String href) {
-		if (uri == null || href == null)
-			return null;
-		try {
-			return URIUtils.resolve(uri, href);
-		} catch (IllegalArgumentException e) {
-			return null;
-		}
 	}
 
 }
