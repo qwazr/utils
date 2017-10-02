@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,21 @@
  */
 package com.qwazr.utils;
 
-import java.util.Enumeration;
-import java.util.Iterator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class EnumerationUtils {
+public abstract class Equalizer<T extends Equalizer> {
 
-	public static class IteratorEnumeration<E> implements Enumeration<E> {
-		private final Iterator<E> iterator;
+	protected Class<T> ownClass;
 
-		public IteratorEnumeration(Iterator<E> iterator) {
-			this.iterator = iterator;
-		}
+	protected Equalizer(Class<T> ownClass) {
+		this.ownClass = ownClass;
+	}
 
-		@Override
-		public E nextElement() {
-			return iterator.next();
-		}
+	@JsonIgnore
+	protected abstract boolean isEqual(T query);
 
-		@Override
-		public boolean hasMoreElements() {
-			return iterator.hasNext();
-		}
-
+	@Override
+	public final boolean equals(final Object o) {
+		return o != null && ownClass.isInstance(o) && (o == this || isEqual(ownClass.cast(o)));
 	}
 }
