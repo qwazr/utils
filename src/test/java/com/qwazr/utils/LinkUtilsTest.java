@@ -31,7 +31,7 @@ public class LinkUtilsTest {
 		Assert.assertEquals("my+file.png", LinkUtils.lastPart("/my+file.png"));
 		Assert.assertEquals("my+file.png", LinkUtils.lastPart("my+file.png"));
 		Assert.assertEquals("my+file.png", LinkUtils.lastPart("my+folder/my+sub-folder/my+file.png"));
-		Assert.assertEquals("outlook%3AINBOX%2F%7ETEST%20TEST", LinkUtils.UTF8_URL_Encode("outlook:INBOX/~TEST TEST"));
+		Assert.assertEquals("outlook%3AINBOX%2F%7ETEST%20TEST", LinkUtils.urlEncode("outlook:INBOX/~TEST TEST"));
 	}
 
 	@Test

@@ -68,16 +68,11 @@ public class FastUTF8Encoder {
 	}
 
 	/**
-	 * @param sa
-	 *            source char array
-	 * @param sl
-	 *            source array length/limit
-	 * @param da
-	 *            destination address
-	 * @param dp
-	 *            destination position
-	 * @param dl
-	 *            destination limit
+	 * @param sa source char array
+	 * @param sl source array length/limit
+	 * @param da destination address
+	 * @param dp destination position
+	 * @param dl destination limit
 	 * @return UNDERFLOW is successful, OVERFLOW/ERROR otherwise
 	 */
 	final private CoderResult encode(char[] sa, int sp, int sl, byte[] da, int dp, int dl) {
@@ -117,8 +112,8 @@ public class FastUTF8Encoder {
 	}
 
 	final public CoderResult encode(final char[] charArray, final int charLength, final ByteBuffer byteBuffer) {
-		CoderResult res = encode(charArray, 0, charLength, byteBuffer.array(), byteBuffer.position(),
-						byteBuffer.limit());
+		CoderResult res =
+				encode(charArray, 0, charLength, byteBuffer.array(), byteBuffer.position(), byteBuffer.limit());
 		byteBuffer.position(lastDp);
 		return res;
 	}

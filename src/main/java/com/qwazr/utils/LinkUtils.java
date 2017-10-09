@@ -74,8 +74,13 @@ public class LinkUtils {
 		return parts[parts.length - 1];
 	}
 
-	public static String UTF8_URL_Encode(String s) throws UnsupportedEncodingException {
-		return URLEncoder.encode(s, "UTF-8").replace("+", "%20");
+	public static String urlEncode(String s) {
+
+		try {
+			return StringUtils.replace(URLEncoder.encode(s, "UTF-8"), "+", "%20");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public static MultivaluedMap<String, String> getQueryParameters(String queryString, String charset)
