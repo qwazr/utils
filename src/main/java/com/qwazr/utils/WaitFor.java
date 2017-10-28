@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.qwazr.utils;
+
+import com.qwazr.utils.concurrent.CallableEx;
 
 import java.util.concurrent.TimeUnit;
 
@@ -31,7 +33,7 @@ public class WaitFor {
 		this.pauseTimeDuration = builder.pauseTimeDuration;
 	}
 
-	public interface UntilCondition extends FunctionUtils.CallableEx<Boolean, InterruptedException> {
+	public interface UntilCondition extends CallableEx<Boolean, InterruptedException> {
 	}
 
 	public <T extends UntilCondition> T until(final T condition) throws InterruptedException {
