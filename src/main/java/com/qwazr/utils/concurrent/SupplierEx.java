@@ -16,7 +16,7 @@
 package com.qwazr.utils.concurrent;
 
 @FunctionalInterface
-interface SupplierEx<T, E extends Exception> {
+public interface SupplierEx<T, E extends Exception> {
 
 	T get() throws E;
 }
