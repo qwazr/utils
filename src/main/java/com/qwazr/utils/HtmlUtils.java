@@ -136,7 +136,7 @@ public class HtmlUtils {
 		loopProtection.add(node);
 
 		if (recursion == 0)
-			throw new IllegalStateException("Max recursion reached (getTextContent)");
+			return;
 
 		final short nodeType = node.getNodeType();
 
