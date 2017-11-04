@@ -15,29 +15,42 @@
  */
 package com.qwazr.utils.concurrent;
 
+import com.qwazr.utils.LoggerUtils;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BlockingPoolLambda<T> implements Closeable {
 
+	private final static Logger LOGGER = LoggerUtils.getLogger(BlockingPoolLambda.class);
+
+	private final Logger logger;
 	private final ExecutorService executorService;
 	private final List<Future<T>> futures;
 	private final Semaphore semaphore;
 	private final ConsumerEx<Collection<T>, Exception> resultsConsumer;
 
-	public BlockingPoolLambda(int size, ConsumerEx<Collection<T>, Exception> results) {
+	public BlockingPoolLambda(Logger logger, int size, ConsumerEx<Collection<T>, Exception> results) {
+		this.logger = logger == null ? LOGGER : logger;
 		executorService = Executors.newFixedThreadPool(size);
 		semaphore = new Semaphore(size);
 		futures = new ArrayList<>();
 		resultsConsumer = results;
+	}
+
+	public BlockingPoolLambda(int size, ConsumerEx<Collection<T>, Exception> results) {
+		this(null, size, results);
 	}
 
 	void collect(boolean checkAll) throws Exception {
@@ -46,7 +59,11 @@ public class BlockingPoolLambda<T> implements Closeable {
 		while (i.hasNext()) {
 			final Future<T> f = i.next();
 			if (checkAll || f.isDone()) {
-				results.add(f.get());
+				try {
+					results.add(f.get());
+				} catch (ExecutionException e) {
+					logger.log(Level.WARNING, e.getMessage(), e.getCause());
+				}
 				i.remove();
 			}
 		}
