@@ -55,16 +55,18 @@ public class BlockingPoolLambda<T> implements Closeable {
 
 	void collect(boolean checkAll) throws Exception {
 		final Collection<T> results = new ArrayList<>();
-		final Iterator<Future<T>> i = futures.iterator();
-		while (i.hasNext()) {
-			final Future<T> f = i.next();
-			if (checkAll || f.isDone()) {
-				try {
-					results.add(f.get());
-				} catch (ExecutionException e) {
-					logger.log(Level.WARNING, e.getMessage(), e.getCause());
+		synchronized (futures) {
+			final Iterator<Future<T>> i = futures.iterator();
+			while (i.hasNext()) {
+				final Future<T> f = i.next();
+				if (checkAll || f.isDone()) {
+					try {
+						results.add(f.get());
+					} catch (ExecutionException e) {
+						logger.log(Level.WARNING, e.getMessage(), e.getCause());
+					}
+					i.remove();
 				}
-				i.remove();
 			}
 		}
 		if (resultsConsumer != null)
@@ -73,13 +75,15 @@ public class BlockingPoolLambda<T> implements Closeable {
 
 	public void submit(SupplierEx<T, Exception> callable) throws Exception {
 		semaphore.acquire();
-		futures.add(executorService.submit(() -> {
-			try {
-				return callable.get();
-			} finally {
-				semaphore.release();
-			}
-		}));
+		synchronized (futures) {
+			futures.add(executorService.submit(() -> {
+				try {
+					return callable.get();
+				} finally {
+					semaphore.release();
+				}
+			}));
+		}
 		collect(false);
 	}
 
