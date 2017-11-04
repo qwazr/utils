@@ -1,5 +1,5 @@
-/**
- * Copyright 2015-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class XPathParser {
 		this.xPathExpressions = new ConcurrentHashMap<>();
 	}
 
-	final public static XPath getXPath() {
+	public static XPath getXPath() {
 		synchronized (xPathfactory) {
 			return xPathfactory.newXPath();
 		}
@@ -70,9 +70,8 @@ public class XPathParser {
 		return (Node) getExpression(query).evaluate(rootNode, XPathConstants.NODE);
 	}
 
-	final public DomUtils.Looper evaluateNodes(final Node rootNode, final String query)
-			throws XPathExpressionException {
-		return DomUtils.iterator((NodeList) getExpression(query).evaluate(rootNode, XPathConstants.NODESET));
+	final public NodeList evaluateNodes(final Node rootNode, final String query) throws XPathExpressionException {
+		return (NodeList) getExpression(query).evaluate(rootNode, XPathConstants.NODESET);
 	}
 
 	private static final List<Pair<QName, BiConsumer<Object, Consumer>>> consumers = new ArrayList<>();
@@ -80,7 +79,7 @@ public class XPathParser {
 	static {
 		consumers.add(Pair.of(XPathConstants.NODESET, (object, consumer) -> {
 			if (object != null && consumer != null)
-				DomUtils.iterator((NodeList) object).forEach(consumer::accept);
+				DomUtils.forEach((NodeList) object, consumer::accept);
 		}));
 		consumers.add(Pair.of(XPathConstants.NODE, (object, consumer) -> {
 			if (object != null && consumer != null)

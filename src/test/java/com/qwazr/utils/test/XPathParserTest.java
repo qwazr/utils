@@ -37,8 +37,8 @@ import java.util.List;
 public class XPathParserTest {
 
 	static final String xml =
-			"<html>" + "<head>" + "<meta name=\"metacontent\"/>" + "<title>Title Test</title>" + "</head>" + "<body>"
-					+ "<p>12</p>" + "<p>true</p>" + "</body>" + "</html>";
+			"<html>" + "<head>" + "<meta name=\"metacontent\"/>" + "<title>Title Test</title>" + "</head>" + "<body>" +
+					"<p>12</p>" + "<p>true</p>" + "</body>" + "</html>";
 
 	private static Document xmlDocument;
 
@@ -109,7 +109,7 @@ public class XPathParserTest {
 			throws IOException, SAXException, ParserConfigurationException, XPathExpressionException {
 		XPathParser xpp = new XPathParser();
 		Evaluator evaluator = new Evaluator();
-		xpp.evaluateNodes(xmlDocument, "//p").forEach(evaluator::accept);
+		DomUtils.forEach(xpp.evaluateNodes(xmlDocument, "//p"), evaluator::accept);
 		Assert.assertEquals(2, evaluator.nodeList.size());
 	}
 

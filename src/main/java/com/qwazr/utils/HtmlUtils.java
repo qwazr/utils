@@ -128,8 +128,12 @@ public class HtmlUtils {
 
 	private final static HashSet<String> excludedTagSet = new HashSet<>(Arrays.asList("script", "style", "object"));
 
-	private static void domTextExtractor(final Node node, int recursion, final StringBuffer buffer,
-			final Consumer<String> output) {
+	private static void domTextExtractor(final Node node, int recursion, HashSet<Node> loopProtection,
+			final StringBuffer buffer, final Consumer<String> output) {
+
+		if (loopProtection.contains(node))
+			return;
+		loopProtection.add(node);
 
 		if (recursion == 0)
 			throw new IllegalStateException("Max recursion reached (getTextContent)");
@@ -160,8 +164,9 @@ public class HtmlUtils {
 			}
 		}
 
-		DomUtils.iterator(node.getChildNodes())
-				.forEach(child -> domTextExtractor(child, recursion - 1, buffer, output));
+		final int nextRecursion = recursion - 1;
+		DomUtils.forEach(node.getChildNodes(),
+				child -> domTextExtractor(child, nextRecursion, loopProtection, buffer, output));
 
 		if (nodeName == null || buffer.length() == 0)
 			return;
@@ -176,7 +181,8 @@ public class HtmlUtils {
 
 	public static void domTextExtractor(final Node node, final int maxRecursion, Consumer<String> consumer) {
 		final StringBuffer buffer = new StringBuffer();
-		domTextExtractor(node, maxRecursion, buffer, consumer);
+		final HashSet<Node> loopProtection = new HashSet<>();
+		domTextExtractor(node, maxRecursion, loopProtection, buffer, consumer);
 		if (buffer.length() > 0)
 			consumer.accept(buffer.toString());
 	}
