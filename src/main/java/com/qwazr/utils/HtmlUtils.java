@@ -177,7 +177,7 @@ public class HtmlUtils {
 		}
 	}
 
-	public final static int DEFAULT_MAX_RECURSION = 4096;
+	public final static int DEFAULT_MAX_RECURSION = 768;
 
 	public static void domTextExtractor(final Node node, final int maxRecursion, Consumer<String> consumer) {
 		final StringBuffer buffer = new StringBuffer();
