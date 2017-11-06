@@ -18,9 +18,12 @@ package com.qwazr.utils;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class StringUtils extends org.apache.commons.lang3.StringUtils {
 
@@ -320,5 +325,37 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 				return Character.isAlphabetic(value);
 			}
 		});
+	}
+
+	/**
+	 * Compress a string using GZIP compression
+	 *
+	 * @param text    the text to compress
+	 * @param charset the charset to use
+	 * @return the compressed byte array
+	 * @throws IOException if any I/O error occurs
+	 */
+	public static byte[] compressGzip(final String text, final Charset charset) throws IOException {
+		try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+			try (final GZIPOutputStream compressed = new GZIPOutputStream(output)) {
+				IOUtils.write(text, compressed, charset);
+			}
+			return output.toByteArray();
+		}
+	}
+
+	/**
+	 * Decompress a byte array to a string using GZIP compression
+	 *
+	 * @param bytes the compressed bytes
+	 * @return the uncompressed text
+	 * @throws IOException if any I/O error occurs
+	 */
+	public static String decompressGzip(final byte[] bytes, final Charset charset) throws IOException {
+		try (final ByteArrayInputStream input = new ByteArrayInputStream(bytes)) {
+			try (final GZIPInputStream decompressed = new GZIPInputStream(input)) {
+				return IOUtils.toString(decompressed, charset);
+			}
+		}
 	}
 }

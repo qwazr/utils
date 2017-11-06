@@ -18,6 +18,10 @@ package com.qwazr.utils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
 public class StringUtilsTest {
 
 	@Test
@@ -25,5 +29,30 @@ public class StringUtilsTest {
 		final String result = "dir1/dir2/file.txt";
 		Assert.assertEquals(result, StringUtils.joinWithSeparator('/', "/dir1/", "/dir2/", "/file.txt"));
 		Assert.assertEquals(result, StringUtils.joinWithSeparator('/', "dir1", "dir2", "file.txt"));
+	}
+
+	byte[] testCompression(String text, Charset charset) throws IOException {
+		final byte[] compressed = StringUtils.compressGzip(text, charset);
+		Assert.assertEquals(text, StringUtils.decompressGzip(compressed, charset));
+		return compressed;
+	}
+
+	@Test
+	public void gzipCompression() throws IOException {
+		final String test = RandomUtils.alphanumeric(1000);
+		final byte[] compressed = testCompression(test, null);
+		Assert.assertTrue(compressed.length < test.length());
+	}
+
+	@Test
+	public void gzipCompressionUtf8() throws IOException {
+		final String test = RandomUtils.alphanumeric(1000);
+		final byte[] compressed = testCompression(test, StandardCharsets.UTF_8);
+		Assert.assertTrue(compressed.length < test.length());
+	}
+
+	@Test
+	public void gzipCompressionEmpty() throws IOException {
+		testCompression(StringUtils.EMPTY, null);
 	}
 }
