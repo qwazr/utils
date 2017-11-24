@@ -17,18 +17,21 @@ package com.qwazr.utils;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,7 +40,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 
 	private final static Logger logger = LoggerUtils.getLogger(IOUtils.class);
 
-	public static void close(final AutoCloseable autoCloseable) {
+	public static void closeQuietly(final AutoCloseable autoCloseable) {
 		if (autoCloseable == null)
 			return;
 		try {
@@ -47,66 +50,48 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 	}
 
-	public static void close(final AutoCloseable... autoCloseables) {
+	public static void closeQuietly(final AutoCloseable... autoCloseables) {
 		if (autoCloseables == null)
 			return;
 		for (AutoCloseable autoCloseable : autoCloseables)
-			close(autoCloseable);
-	}
-
-	public static void close(final Collection<? extends AutoCloseable> autoCloseables) {
-		if (autoCloseables == null)
-			return;
-		autoCloseables.forEach(IOUtils::close);
-	}
-
-	public static void closeQuietly(final Closeable closeable) {
-		if (closeable == null)
-			return;
-		try {
-			closeable.close();
-		} catch (IOException e) {
-			logger.log(Level.WARNING, e, () -> "Close failure on " + closeable);
-		}
+			closeQuietly(autoCloseable);
 	}
 
 	public static void closeQuietly(final Closeable... closeables) {
 		if (closeables == null)
 			return;
 		for (Closeable closeable : closeables)
-			closeQuietly(closeable);
+			closeQuietly((AutoCloseable) closeable);
 	}
 
-	public static void closeQuietly(final Collection<? extends Closeable> closeables) {
-		if (closeables == null)
+	public static void closeQuietly(final Collection<? extends AutoCloseable> autoCloseables) {
+		if (autoCloseables == null)
 			return;
-		closeables.forEach(IOUtils::closeQuietly);
+		autoCloseables.forEach(IOUtils::closeQuietly);
 	}
 
 	public static void closeObjects(final Collection<?> objects) {
 		if (objects == null)
 			return;
 		objects.forEach(object -> {
-			if (object instanceof Closeable)
-				close((Closeable) object);
+			if (object instanceof AutoCloseable)
+				closeQuietly((AutoCloseable) object);
 		});
 	}
 
-	public static int copy(InputStream inputStream, File destFile) throws IOException {
-		try (final FileOutputStream fos = new FileOutputStream(destFile)) {
-			try (final BufferedOutputStream bos = new BufferedOutputStream(fos)) {
-				return copy(inputStream, bos);
-			}
+	public static int copy(final InputStream inputStream, final Path destFile) throws IOException {
+		try (final OutputStream out = Files.newOutputStream(destFile);
+				final BufferedOutputStream bOut = new BufferedOutputStream(out);) {
+			return copy(inputStream, bOut);
 		}
 	}
 
-	public static StringBuilder copy(InputStream inputStream, StringBuilder sb, String charsetName,
+	public static StringBuilder copy(final InputStream inputStream, StringBuilder sb, final Charset charset,
 			boolean bCloseInputStream) throws IOException {
 		if (inputStream == null)
 			return sb;
 		if (sb == null)
 			sb = new StringBuilder();
-		Charset charset = Charset.forName(charsetName);
 		byte[] buffer = new byte[16384];
 		int length;
 		while ((length = inputStream.read(buffer)) != -1)
@@ -160,7 +145,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 
 		@Override
 		public void close(AutoCloseable autoCloseable) {
-			IOUtils.close(autoCloseable);
+			IOUtils.closeQuietly(autoCloseable);
 			synchronized (autoCloseables) {
 				autoCloseables.remove(autoCloseable);
 			}
@@ -169,7 +154,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		@Override
 		public void close() {
 			synchronized (autoCloseables) {
-				IOUtils.close(autoCloseables);
+				IOUtils.closeQuietly(autoCloseables);
 				autoCloseables.clear();
 			}
 		}
@@ -179,16 +164,53 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 	/**
 	 * Extract the content of a file to a string
 	 *
+	 * @param path    the path to a regular file
+	 * @param charset the charset to use
+	 * @return the content of the file as a string
+	 * @throws IOException if any I/O error occured
+	 */
+	public static String readPathAsString(final Path path, final Charset charset) throws IOException {
+		try (final BufferedReader reader = Files.newBufferedReader(path, charset)) {
+			return toString(reader);
+		}
+	}
+
+	/**
+	 * Extract the content of a file to a string
+	 *
+	 * @param file    the file
+	 * @param charset the charset to use (default charset if null)
+	 * @return the content of the file as a string
+	 * @throws IOException if any I/O error occured
+	 */
+	public static String readFileAsString(final File file, final Charset charset) throws IOException {
+		return readPathAsString(Objects.requireNonNull(file, "The file is null").toPath(), charset);
+	}
+
+	/**
+	 * Extract the content of a file to a string using default charset
+	 *
 	 * @param file the file
 	 * @return the content of the file as a string
 	 * @throws IOException if any I/O error occured
 	 */
-	public static String readFileAsString(File file) throws IOException {
-		final FileReader reader = new FileReader(file);
-		try {
-			return toString(reader);
-		} finally {
-			closeQuietly(reader);
+	public static String readFileAsString(final File file) throws IOException {
+		return readFileAsString(file, Charset.defaultCharset());
+	}
+
+	/**
+	 * Write the string to a path
+	 *
+	 * @param content the text to write
+	 * @param charset the charset to use
+	 * @param path    the destination file
+	 * @throws IOException if any I/O error occured
+	 */
+	public static void writeStringToPath(final String content, final Charset charset, final Path path)
+			throws IOException {
+		try (final BufferedWriter writer = Files.newBufferedWriter(path,
+				Objects.requireNonNull(charset, "The charset is missing"))) {
+			writer.write(content);
 		}
 	}
 
@@ -196,16 +218,24 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 	 * Write the string to a file
 	 *
 	 * @param content the text to write
+	 * @param charset the charset to use
 	 * @param file    the destination file
 	 * @throws IOException if any I/O error occured
 	 */
-	public static void writeStringAsFile(String content, File file) throws IOException {
-		final FileWriter writer = new FileWriter(file);
-		try {
-			writer.write(content);
-		} finally {
-			closeQuietly(writer);
-		}
+	public static void writeStringToFile(final String content, final Charset charset, final File file)
+			throws IOException {
+		writeStringToPath(content, charset, Objects.requireNonNull(file, "The file is missing").toPath());
+	}
+
+	/**
+	 * Write the string to a file using the default charset
+	 *
+	 * @param content the text to write
+	 * @param file    the destination file
+	 * @throws IOException if any I/O error occured
+	 */
+	public static void writeStringToFile(final String content, final File file) throws IOException {
+		writeStringToFile(content, Charset.defaultCharset(), file);
 	}
 
 }

@@ -1,5 +1,5 @@
-/**
- * Copyright 2015-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,32 +23,32 @@ import com.google.common.hash.Hashing;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.UUID;
 
 public class HashUtils {
 
-	public static int getMurmur3Mod(final String hashString, Charset charset, final int mod) {
+	public static int getMurmur3Mod(final String hashString, final Charset charset, final int mod) {
 		final HashFunction m3 = Hashing.murmur3_128();
-		if (charset == null)
-			charset = Charset.defaultCharset();
-		return (Math.abs(m3.hashString(hashString, charset).asInt()) % mod);
+		return (Math.abs(m3.hashString(hashString, charset == null ? Charset.defaultCharset() : charset).asInt()) %
+				mod);
 	}
 
-	public static String md5Hex(File file) throws IOException {
-		FileInputStream fis = new FileInputStream(file);
-		try {
-			BufferedInputStream bis = new BufferedInputStream(fis);
-			try {
-				return DigestUtils.md5Hex(bis);
-			} finally {
-				IOUtils.closeQuietly(bis);
-			}
-		} finally {
-			IOUtils.closeQuietly(fis);
+	/**
+	 * Compute the MD5 hash from a file and return the hexa representation
+	 *
+	 * @param filePath path to a regular file
+	 * @return an hexa representation of the md5
+	 * @throws IOException
+	 */
+	public static String md5Hex(final Path filePath) throws IOException {
+		try (final InputStream in = Files.newInputStream(filePath);
+				final BufferedInputStream bIn = new BufferedInputStream(in)) {
+			return DigestUtils.md5Hex(bIn);
 		}
 	}
 

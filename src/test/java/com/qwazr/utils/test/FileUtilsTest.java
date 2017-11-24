@@ -46,8 +46,8 @@ public class FileUtilsTest {
 		File file1 = subdir1.resolve("file1").toFile();
 		File file2 = subdir2.resolve("file1").toFile();
 		Files.createDirectories(subdir2);
-		IOUtils.writeStringAsFile("Test", file1);
-		IOUtils.writeStringAsFile("Test", file2);
+		IOUtils.writeStringToFile("Test", file1);
+		IOUtils.writeStringToFile("Test", file2);
 		Assert.assertTrue(subdir2.toFile().setReadOnly());
 		Assert.assertTrue(file2.setReadOnly());
 		return parentDir;

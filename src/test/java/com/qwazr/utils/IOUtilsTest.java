@@ -32,11 +32,6 @@ import java.util.List;
 public class IOUtilsTest {
 
 	@Test
-	public void closeQuietlyNull() {
-		IOUtils.closeQuietly(null, null);
-	}
-
-	@Test
 	public void closeQuietlyArray() {
 		final CloseableObject c1 = new CloseableObject();
 		final CloseableObject c2 = new CloseableObject();

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +16,15 @@
 package com.qwazr.utils.test;
 
 import com.qwazr.utils.HashUtils;
+import com.qwazr.utils.IOUtils;
+import com.qwazr.utils.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.UUID;
 
@@ -29,12 +35,26 @@ public class HashUtilTest {
 
 	@Test
 	public void timeBasedUuid() {
-		HashSet<UUID> set = new HashSet<>();
+		final HashSet<UUID> set = new HashSet<>();
 		for (int i = 0; i < 100; i++) {
 			final UUID uuid = HashUtils.newTimeBasedUUID();
 			if (!set.add(uuid))
 				Assert.fail("The UUID is not unique");
 		}
+	}
+
+	@Test
+	public void md5Test() throws IOException {
+		final String content = RandomUtils.alphanumeric(1000);
+		final String md5a = HashUtils.md5Hex(content);
+		Assert.assertNotNull(md5a);
+
+		final Path file = Files.createTempFile("hashUtils", ".txt");
+		IOUtils.writeStringToPath(content, Charset.defaultCharset(), file);
+		final String md5b = HashUtils.md5Hex(file);
+
+		Assert.assertEquals(md5a, md5b);
+
 	}
 
 	@Test

@@ -48,8 +48,10 @@ public class FileInstanceCacheTest {
 	public void fullTest() throws IOException {
 		final String instance = RandomUtils.alphanumeric(10);
 
-		final FileInstanceCache<String> cache = FileInstanceCache.<String>of(cacheFilePath).reader(
-				IOUtils::readFileAsString).writer(IOUtils::writeStringAsFile).build();
+		final FileInstanceCache<String> cache =
+				FileInstanceCache.<String>of(cacheFilePath).reader(IOUtils::readFileAsString)
+						.writer(IOUtils::writeStringToFile)
+						.build();
 
 		// Read no cache
 		Assert.assertFalse(Files.exists(cacheFilePath));
@@ -72,18 +74,20 @@ public class FileInstanceCacheTest {
 		Assert.assertEquals("Wrong filetime", fileTime, Files.getLastModifiedTime(cacheFilePath));
 
 		// Read the existing value with a new cache
-		final FileInstanceCache<String> cache2 = FileInstanceCache.<String>of(cacheFilePath).reader(
-				IOUtils::readFileAsString).writer(IOUtils::writeStringAsFile).build();
+		final FileInstanceCache<String> cache2 =
+				FileInstanceCache.<String>of(cacheFilePath).reader(IOUtils::readFileAsString)
+						.writer(IOUtils::writeStringToFile)
+						.build();
 		Assert.assertEquals(instance, cache2.get());
 		Assert.assertEquals("Wrong filetime", fileTime, Files.getLastModifiedTime(cacheFilePath));
 	}
 
 	private FileInstanceCache<String> readOnly() throws IOException {
 		final String instance = RandomUtils.alphanumeric(10);
-		IOUtils.writeStringAsFile(instance, cacheFilePath.toFile());
+		IOUtils.writeStringToFile(instance, cacheFilePath.toFile());
 
-		final FileInstanceCache<String> cache = FileInstanceCache.<String>of(cacheFilePath).reader(
-				IOUtils::readFileAsString).build();
+		final FileInstanceCache<String> cache =
+				FileInstanceCache.<String>of(cacheFilePath).reader(IOUtils::readFileAsString).build();
 		Assert.assertEquals(instance, cache.get());
 		return cache;
 	}
@@ -101,8 +105,8 @@ public class FileInstanceCacheTest {
 	private FileInstanceCache<String> writeOnly() throws IOException {
 		final String instance = RandomUtils.alphanumeric(10);
 
-		final FileInstanceCache<String> cache = FileInstanceCache.<String>of(cacheFilePath).writer(
-				IOUtils::writeStringAsFile).build();
+		final FileInstanceCache<String> cache =
+				FileInstanceCache.<String>of(cacheFilePath).writer(IOUtils::writeStringToFile).build();
 
 		Assert.assertEquals(cache, cache.set(instance));
 		Assert.assertEquals(instance, IOUtils.readFileAsString(cacheFilePath.toFile()));

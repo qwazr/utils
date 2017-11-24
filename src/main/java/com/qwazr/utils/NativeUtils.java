@@ -15,9 +15,10 @@
  */
 package com.qwazr.utils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.logging.Logger;
 
 public class NativeUtils {
@@ -56,9 +57,9 @@ public class NativeUtils {
 						"Can't find " + libraryName + " in the filesystem nor in the classpath: " + e1.getMessage());
 
 			try {
-				File libraryFile = File.createTempFile(libraryName, null);
+				final Path libraryFile = Files.createTempFile(libraryName, null);
 				IOUtils.copy(inputStream, libraryFile);
-				System.load(libraryFile.getAbsolutePath());
+				System.load(libraryFile.toAbsolutePath().toString());
 				logger.info(() -> "Native OSS loaded from temp file:" + libraryName);
 
 			} catch (IOException e) {
