@@ -50,6 +50,10 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 	}
 
+	public static void closeQuietly(final Closeable closeable) {
+		closeQuietly((AutoCloseable) closeable);
+	}
+
 	public static void closeQuietly(final AutoCloseable... autoCloseables) {
 		if (autoCloseables == null)
 			return;
