@@ -29,7 +29,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -305,26 +304,36 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		return replaceEach(text, search, replace);
 	}
 
+	/**
+	 * @param chars the analyzed char sequence
+	 * @return true if the char sequence contains any digit
+	 */
 	public static boolean anyDigit(final CharSequence chars) {
-		if (chars == null)
-			return false;
-		return chars.chars().anyMatch(new IntPredicate() {
-			@Override
-			public boolean test(int value) {
-				return Character.isDigit(value);
-			}
-		});
+		return chars != null && chars.chars().anyMatch(Character::isDigit);
 	}
 
+	/**
+	 * @param chars the analyzed char sequence
+	 * @return true if the char sequence contains any alphabetic character
+	 */
 	public static boolean anyAlpha(final CharSequence chars) {
-		if (chars == null)
-			return false;
-		return chars.chars().anyMatch(new IntPredicate() {
-			@Override
-			public boolean test(int value) {
-				return Character.isAlphabetic(value);
-			}
-		});
+		return chars != null && chars.chars().anyMatch(Character::isAlphabetic);
+	}
+
+	/**
+	 * @param chars the analyzed char sequence
+	 * @return true if the char sequence contains any lowercase character
+	 */
+	public static boolean anyLowercase(final CharSequence chars) {
+		return chars != null && chars.chars().anyMatch(Character::isLowerCase);
+	}
+
+	/**
+	 * @param chars the analyzed char sequence
+	 * @return true if the char sequence contains any uppoercase character
+	 */
+	public static boolean anyUpperCase(final CharSequence chars) {
+		return chars != null && chars.chars().anyMatch(Character::isUpperCase);
 	}
 
 	/**

@@ -55,4 +55,35 @@ public class StringUtilsTest {
 	public void gzipCompressionEmpty() throws IOException {
 		testCompression(StringUtils.EMPTY, null);
 	}
+
+	@Test
+	public void anyAlphaTest() {
+		Assert.assertTrue(StringUtils.anyAlpha("abcd"));
+		Assert.assertTrue(StringUtils.anyAlpha("ABCD1234"));
+		Assert.assertFalse(StringUtils.anyAlpha("1234"));
+	}
+
+	@Test
+	public void anyDigitTest() {
+		Assert.assertFalse(StringUtils.anyDigit("abcd"));
+		Assert.assertTrue(StringUtils.anyDigit("ABCD1234"));
+		Assert.assertTrue(StringUtils.anyDigit("1234"));
+	}
+
+	@Test
+	public void anyLowerCaseTest() {
+		Assert.assertTrue(StringUtils.anyLowercase("abcd"));
+		Assert.assertFalse(StringUtils.anyLowercase("ABCD1234"));
+		Assert.assertFalse(StringUtils.anyLowercase("1234"));
+		Assert.assertTrue(StringUtils.anyLowercase("abcdABCD"));
+	}
+
+	@Test
+	public void anyUpperCaseTest() {
+		Assert.assertFalse(StringUtils.anyUpperCase("abcd"));
+		Assert.assertTrue(StringUtils.anyUpperCase("ABCD1234"));
+		Assert.assertFalse(StringUtils.anyUpperCase("1234"));
+		Assert.assertTrue(StringUtils.anyUpperCase("abcdABCD"));
+		Assert.assertTrue(StringUtils.anyUpperCase("ABCD"));
+	}
 }
