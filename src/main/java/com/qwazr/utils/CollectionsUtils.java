@@ -55,6 +55,19 @@ public class CollectionsUtils {
 		return true;
 	}
 
+	public static <T> boolean unorderedEquals(final Collection<T> coll1, final Collection<T> coll2) {
+		if (coll1 == coll2)
+			return true;
+		if (coll1 == null || coll2 == null)
+			return false;
+		if (coll1.size() != coll2.size())
+			return false;
+		for (T o : coll1)
+			if (!coll2.contains(o))
+				return false;
+		return true;
+	}
+
 	public static <K, V> boolean equals(final Map<K, V> map1, final Map<K, V> map2) {
 		if (map1 == map2)
 			return true;

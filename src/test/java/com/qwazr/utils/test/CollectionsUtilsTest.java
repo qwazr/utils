@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -76,6 +77,17 @@ public class CollectionsUtilsTest {
 		Assert.assertFalse(CollectionsUtils.equals(coll, arraySameSize));
 		// Not same content size
 		Assert.assertFalse(CollectionsUtils.equals(coll, arrayDifferentSize));
+	}
+
+	@Test
+	public void setTests() {
+		final Collection<Integer> coll1 = Arrays.asList(1, 2, 3);
+		final Collection<Integer> coll2 = new HashSet<>(coll1);
+		final Collection<Integer> different = Arrays.asList(1, 2, 4);
+
+		Assert.assertTrue(CollectionsUtils.unorderedEquals(coll1, coll2));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(coll1, different));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(coll2, different));
 	}
 
 	@Test
