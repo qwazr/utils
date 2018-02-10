@@ -60,10 +60,11 @@ public class CollectionsUtils {
 			return true;
 		if (coll1 == null || coll2 == null)
 			return false;
-		if (coll1.size() != coll2.size())
-			return false;
 		for (T o : coll1)
 			if (!coll2.contains(o))
+				return false;
+		for (T o : coll2)
+			if (!coll1.contains(o))
 				return false;
 		return true;
 	}

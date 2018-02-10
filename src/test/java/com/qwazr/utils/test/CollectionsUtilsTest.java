@@ -83,11 +83,28 @@ public class CollectionsUtilsTest {
 	public void setTests() {
 		final Collection<Integer> coll1 = Arrays.asList(1, 2, 3);
 		final Collection<Integer> coll2 = new HashSet<>(coll1);
-		final Collection<Integer> different = Arrays.asList(1, 2, 4);
+		final Collection<Integer> coll3 = Arrays.asList(1, 2, 3, 3);
+		final Collection<Integer> different1 = Arrays.asList(1, 2, 4);
+		final Collection<Integer> different2 = Arrays.asList(1, 2, 2);
 
 		Assert.assertTrue(CollectionsUtils.unorderedEquals(coll1, coll2));
-		Assert.assertFalse(CollectionsUtils.unorderedEquals(coll1, different));
-		Assert.assertFalse(CollectionsUtils.unorderedEquals(coll2, different));
+		Assert.assertTrue(CollectionsUtils.unorderedEquals(coll1, coll3));
+		Assert.assertTrue(CollectionsUtils.unorderedEquals(coll2, coll1));
+		Assert.assertTrue(CollectionsUtils.unorderedEquals(coll2, coll3));
+		Assert.assertTrue(CollectionsUtils.unorderedEquals(coll3, coll1));
+		Assert.assertTrue(CollectionsUtils.unorderedEquals(coll3, coll2));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(coll1, different1));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(coll1, different2));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(coll2, different1));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(coll2, different2));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(coll3, different1));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(coll3, different2));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(different1, coll1));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(different1, coll2));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(different1, coll3));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(different2, coll1));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(different2, coll2));
+		Assert.assertFalse(CollectionsUtils.unorderedEquals(different2, coll3));
 	}
 
 	@Test
