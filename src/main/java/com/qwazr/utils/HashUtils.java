@@ -21,7 +21,6 @@ import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.common.primitives.Longs;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.BufferedInputStream;
@@ -30,6 +29,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.UUID;
 
 public class HashUtils {
@@ -73,11 +73,11 @@ public class HashUtils {
 	}
 
 	public static String longToBase64(final long value) {
-		return Base64.encodeBase64String(Longs.toByteArray(value));
+		return Base64.getEncoder().encodeToString(Longs.toByteArray(value));
 	}
 
 	public static long base64toLong(final String base64) {
-		return Longs.fromByteArray(Base64.decodeBase64(base64));
+		return Longs.fromByteArray(Base64.getDecoder().decode(base64));
 	}
 
 	/**
