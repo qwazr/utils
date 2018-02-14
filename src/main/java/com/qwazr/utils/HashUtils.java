@@ -20,6 +20,8 @@ import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.google.common.primitives.Longs;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.BufferedInputStream;
@@ -68,5 +70,34 @@ public class HashUtils {
 	// https://github.com/rantav/hector/blob/master/core/src/main/java/me/prettyprint/cassandra/utils/TimeUUIDUtils.java
 	public static long getTimeFromUUID(UUID uuid) {
 		return (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000;
+	}
+
+	public static String longToBase64(final long value) {
+		return Base64.encodeBase64String(Longs.toByteArray(value));
+	}
+
+	public static long base64toLong(final String base64) {
+		return Longs.fromByteArray(Base64.decodeBase64(base64));
+	}
+
+	/**
+	 * Encode an UUID into a base64 string
+	 *
+	 * @param uuid the UUID to encode
+	 * @return the encoded string
+	 */
+	public static String toBase64(UUID uuid) {
+		return longToBase64(uuid.getMostSignificantBits()) + ' ' + longToBase64(uuid.getLeastSignificantBits());
+	}
+
+	/**
+	 * Decode an UUID from a Base64 string
+	 *
+	 * @param shortString the encoded string
+	 * @return the decoded UUID
+	 */
+	public static UUID fromBase64(String shortString) {
+		final String[] parts = StringUtils.split(shortString, ' ');
+		return new UUID(base64toLong(parts[0]), base64toLong(parts[1]));
 	}
 }

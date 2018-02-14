@@ -63,4 +63,20 @@ public class HashUtilTest {
 		long time = HashUtils.getTimeFromUUID(uuid);
 		Assert.assertEquals(time, (uuid.timestamp() - 0x01b21dd213814000L) / 10000);
 	}
+
+	private void checkBase64Uuuid(UUID uuid) {
+		final String encoded = HashUtils.toBase64(uuid);
+		final UUID decoded = HashUtils.fromBase64(encoded);
+		Assert.assertEquals(uuid, decoded);
+	}
+
+	@Test
+	public void base64UuidTimeBasesEncodingTest() {
+		checkBase64Uuuid(HashUtils.newTimeBasedUUID());
+	}
+
+	@Test
+	public void base64UuidRandomEncodingTest() {
+		checkBase64Uuuid(UUID.randomUUID());
+	}
 }
