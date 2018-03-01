@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2018 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,11 +41,11 @@ public class ArrayUtils extends org.apache.commons.lang3.ArrayUtils {
 		return array;
 	}
 
-	public static byte[] toPrimitiveByte(Collection<Byte> collection) {
+	public static byte[] toPrimitiveByte(Collection<? extends Number> collection) {
 		final byte[] array = new byte[collection.size()];
 		int i = 0;
-		for (byte val : collection)
-			array[i++] = val;
+		for (Number val : collection)
+			array[i++] = val.byteValue();
 		return array;
 	}
 
@@ -57,43 +57,43 @@ public class ArrayUtils extends org.apache.commons.lang3.ArrayUtils {
 		return array;
 	}
 
-	public static int[] toPrimitiveInt(Collection<Integer> collection) {
+	public static int[] toPrimitiveInt(Collection<? extends Number> collection) {
 		final int[] array = new int[collection.size()];
 		int i = 0;
-		for (int val : collection)
-			array[i++] = val;
+		for (Number val : collection)
+			array[i++] = val == null ? 0 : val.intValue();
 		return array;
 	}
 
-	public static short[] toPrimitiveShort(Collection<Short> collection) {
+	public static short[] toPrimitiveShort(Collection<? extends Number> collection) {
 		final short[] array = new short[collection.size()];
 		int i = 0;
-		for (Short val : collection)
-			array[i++] = val;
+		for (Number val : collection)
+			array[i++] = val == null ? 0 : val.shortValue();
 		return array;
 	}
 
-	public static long[] toPrimitiveLong(Collection<Long> collection) {
-		long[] array = new long[collection.size()];
+	public static long[] toPrimitiveLong(Collection<? extends Number> collection) {
+		final long[] array = new long[collection.size()];
 		int i = 0;
-		for (long val : collection)
-			array[i++] = val;
+		for (Number val : collection)
+			array[i++] = val == null ? 0 : val.longValue();
 		return array;
 	}
 
-	public static double[] toPrimitiveDouble(Collection<Double> collection) {
+	public static double[] toPrimitiveDouble(Collection<? extends Number> collection) {
 		final double[] array = new double[collection.size()];
 		int i = 0;
-		for (double val : collection)
-			array[i++] = val;
+		for (Number val : collection)
+			array[i++] = val == null ? 0 : val.doubleValue();
 		return array;
 	}
 
-	public static float[] toPrimitiveFloat(Collection<Float> collection) {
+	public static float[] toPrimitiveFloat(Collection<? extends Number> collection) {
 		final float[] array = new float[collection.size()];
 		int i = 0;
-		for (float val : collection)
-			array[i++] = val;
+		for (Number val : collection)
+			array[i++] = val == null ? 0 : val.floatValue();
 		return array;
 	}
 

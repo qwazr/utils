@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 Emmanuel Keller / QWAZR
+ * Copyright 2016-2018 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,15 @@ public class ArrayUtilsTest {
 	}
 
 	@Test
+	public void toPrimitiveLong() {
+		Collection<Long> list = Arrays.asList(RandomUtils.nextLong(), RandomUtils.nextLong());
+		long[] array = ArrayUtils.toPrimitiveLong(list);
+		int i = 0;
+		for (long value : list)
+			Assert.assertEquals(value, array[i++], 0);
+	}
+
+	@Test
 	public void toPrimitiveDouble() {
 		Collection<Double> list = Arrays.asList(RandomUtils.nextDouble(), RandomUtils.nextDouble());
 		double[] array = ArrayUtils.toPrimitiveDouble(list);
@@ -96,8 +105,8 @@ public class ArrayUtilsTest {
 
 	@Test
 	public void toPrimitiveChar() {
-		Collection<Character> list = Arrays.asList(RandomUtils.nextAlphanumericChar(),
-				RandomUtils.nextAlphanumericChar());
+		Collection<Character> list =
+				Arrays.asList(RandomUtils.nextAlphanumericChar(), RandomUtils.nextAlphanumericChar());
 		char[] array = ArrayUtils.toPrimitiveChar(list);
 		int i = 0;
 		for (char value : list)
