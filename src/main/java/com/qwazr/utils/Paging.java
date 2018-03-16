@@ -39,7 +39,7 @@ public class Paging {
 		if (startPage < 0)
 			startPage = 0;
 
-		int endPage = currentPage + pageSize;
+		int endPage = startPage + numberOfPages;
 		if (endPage > totalPages)
 			endPage = totalPages;
 

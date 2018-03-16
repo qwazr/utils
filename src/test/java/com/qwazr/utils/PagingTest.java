@@ -27,7 +27,7 @@ public class PagingTest {
 			Assert.assertNull(paging.getPages());
 			Assert.assertNull(paging.getTotalPage());
 		} else {
-			Assert.assertEquals(expectedPages.length, paging.getTotalPage(), 0);
+			Assert.assertEquals(totalHit == 0 ? 0 : (totalHit + 9) / 10, paging.getTotalPage(), 0);
 			Assert.assertEquals(paging.getPages().size(), expectedPages.length, 0);
 			int pos = 0;
 			for (int expectedPageNumber : expectedPages) {
@@ -91,5 +91,13 @@ public class PagingTest {
 		checkResult(30L, 21, 2, 3, null, 1, 2, 3);
 		checkResult(30L, 29, 2, 3, null, 1, 2, 3);
 		checkResult(30L, 30, 2, 3, null, 1, 2, 3);
+	}
+
+	@Test
+	public void testTenPages() {
+		checkResult(1000L, 10, 1, 2, 3, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+		checkResult(1000L, 50, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+		checkResult(1000L, 60, 6, 7, 8, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+		checkResult(1000L, 100, 10, 11, 12, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
 	}
 }
