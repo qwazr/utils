@@ -23,119 +23,127 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ExceptionUtilsTest {
 
-	@Test
-	public void booleanBypassTest() throws IOException {
-		final Path homeDir = FileUtils.getUserDirectory().toPath();
-		Assert.assertNotNull(Files.list(homeDir)
-				.filter(p -> Files.isDirectory(p))
-				.filter(p -> ExceptionUtils.bypass(() -> Files.isHidden(p)))
-				.collect(Collectors.toSet()));
-	}
+    @Test
+    public void booleanBypassTest() throws IOException {
+        final Path homeDir = FileUtils.getUserDirectory().toPath();
+        try (final Stream<Path> stream = Files.list(homeDir)) {
+            Assert.assertNotNull(stream
+                    .filter(p -> Files.isDirectory(p))
+                    .filter(p -> ExceptionUtils.bypass(() -> Files.isHidden(p)))
+                    .collect(Collectors.toSet()));
+        }
+    }
 
-	boolean booleanEx() throws IOException {
-		throw new IOException("test");
-	}
+    boolean booleanEx() throws IOException {
+        throw new IOException("test");
+    }
 
-	@Test(expected = RuntimeException.class)
-	public void booleanBypassExTest() {
-		ExceptionUtils.bypass(this::booleanEx);
-	}
+    @Test(expected = RuntimeException.class)
+    public void booleanBypassExTest() {
+        ExceptionUtils.bypass(this::booleanEx);
+    }
 
-	@Test
-	public void longBypassTest() throws IOException {
-		final Path homeDir = FileUtils.getUserDirectory().toPath();
-		final AtomicLong totalSize = new AtomicLong();
-		Files.list(homeDir)
-				.filter(p -> Files.isRegularFile(p))
-				.forEach(p -> totalSize.addAndGet(ExceptionUtils.bypass(() -> Files.size(p))));
-	}
+    @Test
+    public void longBypassTest() throws IOException {
+        final Path homeDir = FileUtils.getUserDirectory().toPath();
+        final AtomicLong totalSize = new AtomicLong();
+        try (final Stream<Path> stream = Files.list(homeDir)) {
+            stream.filter(p -> Files.isRegularFile(p))
+                    .forEach(p -> totalSize.addAndGet(ExceptionUtils.bypass(() -> Files.size(p))));
+        }
+    }
 
-	long longEx() throws IOException {
-		throw new IOException("test");
-	}
+    long longEx() throws IOException {
+        throw new IOException("test");
+    }
 
-	@Test(expected = RuntimeException.class)
-	public void longBypassExTest() {
-		ExceptionUtils.bypass(this::longEx);
-	}
+    @Test(expected = RuntimeException.class)
+    public void longBypassExTest() {
+        ExceptionUtils.bypass(this::longEx);
+    }
 
-	@Test
-	public void intBypassTest() throws IOException {
-		final Path homeDir = FileUtils.getUserDirectory().toPath();
-		final AtomicInteger totalSize = new AtomicInteger();
-		Files.list(homeDir)
-				.filter(p -> Files.isRegularFile(p))
-				.forEach(p -> totalSize.addAndGet(ExceptionUtils.bypass(() -> (int) Files.size(p))));
-	}
+    @Test
+    public void intBypassTest() throws IOException {
+        final Path homeDir = FileUtils.getUserDirectory().toPath();
+        final AtomicInteger totalSize = new AtomicInteger();
+        try (final Stream<Path> stream = Files.list(homeDir)) {
+            stream.filter(p -> Files.isRegularFile(p))
+                    .forEach(p -> totalSize.addAndGet(ExceptionUtils.bypass(() -> (int) Files.size(p))));
+        }
+    }
 
-	int intEx() throws IOException {
-		throw new IOException("test");
-	}
+    int intEx() throws IOException {
+        throw new IOException("test");
+    }
 
-	@Test(expected = RuntimeException.class)
-	public void intBypassExTest() {
-		ExceptionUtils.bypass(this::intEx);
-	}
+    @Test(expected = RuntimeException.class)
+    public void intBypassExTest() {
+        ExceptionUtils.bypass(this::intEx);
+    }
 
-	@Test
-	public void doubleBypassTest() throws IOException {
-		final Path homeDir = FileUtils.getUserDirectory().toPath();
-		final AtomicDouble totalSize = new AtomicDouble();
-		Files.list(homeDir)
-				.filter(p -> Files.isRegularFile(p))
-				.forEach(p -> totalSize.addAndGet(ExceptionUtils.bypass(() -> (double) Files.size(p))));
-	}
+    @Test
+    public void doubleBypassTest() throws IOException {
+        final Path homeDir = FileUtils.getUserDirectory().toPath();
+        final AtomicDouble totalSize = new AtomicDouble();
+        try (final Stream<Path> stream = Files.list(homeDir)) {
+            stream.filter(p -> Files.isRegularFile(p))
+                    .forEach(p -> totalSize.addAndGet(ExceptionUtils.bypass(() -> (double) Files.size(p))));
+        }
+    }
 
-	double doubleEx() throws IOException {
-		throw new IOException("test");
-	}
+    double doubleEx() throws IOException {
+        throw new IOException("test");
+    }
 
-	@Test(expected = RuntimeException.class)
-	public void doubleBypassExTest() {
-		ExceptionUtils.bypass(this::doubleEx);
-	}
+    @Test(expected = RuntimeException.class)
+    public void doubleBypassExTest() {
+        ExceptionUtils.bypass(this::doubleEx);
+    }
 
-	@Test
-	public void floatBypassTest() throws IOException {
-		final Path homeDir = FileUtils.getUserDirectory().toPath();
-		final AtomicDouble totalSize = new AtomicDouble();
-		Files.list(homeDir)
-				.filter(p -> Files.isRegularFile(p))
-				.forEach(p -> totalSize.addAndGet(ExceptionUtils.bypass(() -> (float) Files.size(p))));
-	}
+    @Test
+    public void floatBypassTest() throws IOException {
+        final Path homeDir = FileUtils.getUserDirectory().toPath();
+        final AtomicDouble totalSize = new AtomicDouble();
+        try (final Stream<Path> stream = Files.list(homeDir)) {
+            stream.filter(p -> Files.isRegularFile(p))
+                    .forEach(p -> totalSize.addAndGet(ExceptionUtils.bypass(() -> (float) Files.size(p))));
+        }
+    }
 
-	float floatEx() throws IOException {
-		throw new IOException("test");
-	}
+    float floatEx() throws IOException {
+        throw new IOException("test");
+    }
 
-	@Test(expected = RuntimeException.class)
-	public void floatBypassExTest() {
-		ExceptionUtils.bypass(this::floatEx);
-	}
+    @Test(expected = RuntimeException.class)
+    public void floatBypassExTest() {
+        ExceptionUtils.bypass(this::floatEx);
+    }
 
-	@Test
-	public void objectBypassTest() throws IOException {
-		final Path homeDir = FileUtils.getUserDirectory().toPath();
-		final Map<Path, FileTime> fileTimes = new HashMap<>();
-		Files.list(homeDir)
-				.filter(p -> Files.isRegularFile(p))
-				.forEach(p -> fileTimes.put(p, ExceptionUtils.bypass(() -> Files.getLastModifiedTime(p))));
-	}
+    @Test
+    public void objectBypassTest() throws IOException {
+        final Path homeDir = FileUtils.getUserDirectory().toPath();
+        final Map<Path, FileTime> fileTimes = new HashMap<>();
+        try (final Stream<Path> stream = Files.list(homeDir)) {
+            stream.filter(p -> Files.isRegularFile(p))
+                    .forEach(p -> fileTimes.put(p, ExceptionUtils.bypass(() -> Files.getLastModifiedTime(p))));
+        }
+    }
 
-	Object objectEx() throws IOException {
-		throw new IOException("test");
-	}
+    Object objectEx() throws IOException {
+        throw new IOException("test");
+    }
 
-	@Test(expected = RuntimeException.class)
-	public void objectBypassExTest() {
-		ExceptionUtils.bypass(this::objectEx);
-	}
+    @Test(expected = RuntimeException.class)
+    public void objectBypassExTest() {
+        ExceptionUtils.bypass(this::objectEx);
+    }
 }
