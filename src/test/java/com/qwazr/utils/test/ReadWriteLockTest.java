@@ -45,10 +45,13 @@ public class ReadWriteLockTest {
 		final AtomicLong readTime = new AtomicLong();
 		final ExecutorService executor = Executors.newSingleThreadExecutor();
 		rwl.writeEx(() -> {
-			executor.submit(() -> rwl.readEx(() -> {
+
+			final Runnable runnable = () -> rwl.readEx(() -> {
 				ThreadUtils.sleep(1, TimeUnit.MILLISECONDS);
 				readTime.set(System.currentTimeMillis());
-			}));
+			});
+
+			executor.submit(runnable);
 			Thread.sleep(100);
 			writeTime.set(System.currentTimeMillis());
 		});
