@@ -28,62 +28,62 @@ import java.util.concurrent.TimeUnit;
  */
 public class ExecutorSingleton implements Closeable {
 
-	private final ExecutorService externalExecutorService;
-	private final long closingTimeout;
-	private final TimeUnit closingUnit;
+    private final ExecutorService externalExecutorService;
+    private final long closingTimeout;
+    private final TimeUnit closingUnit;
 
-	private volatile ExecutorService executorService;
+    private volatile ExecutorService executorService;
 
-	private ExecutorSingleton(final ExecutorService executorService, long closingTimeout, TimeUnit closingUnit) {
-		this.externalExecutorService = this.executorService = executorService;
-		this.closingTimeout = closingTimeout;
-		this.closingUnit = closingUnit;
-	}
+    private ExecutorSingleton(final ExecutorService executorService, long closingTimeout, TimeUnit closingUnit) {
+        this.externalExecutorService = this.executorService = executorService;
+        this.closingTimeout = closingTimeout;
+        this.closingUnit = closingUnit;
+    }
 
-	public ExecutorSingleton(final ExecutorService executorService) {
-		this(executorService, 0, null);
-	}
+    public ExecutorSingleton(final ExecutorService executorService) {
+        this(executorService, 0, null);
+    }
 
-	/**
-	 * @param closingTimeout the maximum time to wait
-	 * @param closingUnit    the time unit of the timeout argument
-	 */
-	public ExecutorSingleton(long closingTimeout, TimeUnit closingUnit) {
-		this(null, closingTimeout, Objects.requireNonNull(closingUnit, "The closingUnit is missing"));
+    /**
+     * @param closingTimeout the maximum time to wait
+     * @param closingUnit    the time unit of the timeout argument
+     */
+    public ExecutorSingleton(long closingTimeout, TimeUnit closingUnit) {
+        this(null, closingTimeout, Objects.requireNonNull(closingUnit, "The closingUnit is missing"));
 
-	}
+    }
 
-	/**
-	 * Ovveride this class to provide an alternative ExecutorService implementation.
-	 * By default a CachedThreadPool is provided.
-	 *
-	 * @return a new ExecutorService instance
-	 * @See ExecutorService.newCachedThreadPool()
-	 */
-	protected ExecutorService newExecutorService() {
-		return Executors.newCachedThreadPool();
-	}
+    /**
+     * Ovveride this class to provide an alternative ExecutorService implementation.
+     * By default a CachedThreadPool is provided.
+     *
+     * @return a new ExecutorService instance
+     * @See ExecutorService.newCachedThreadPool()
+     */
+    protected ExecutorService newExecutorService() {
+        return Executors.newCachedThreadPool();
+    }
 
-	/**
-	 * @return the ExecutorService singleton
-	 */
-	public ExecutorService getExecutorService() {
-		if (executorService == null) {
-			synchronized (ExecutorService.class) {
-				if (executorService == null)
-					executorService = newExecutorService();
-			}
-		}
-		return executorService;
-	}
+    /**
+     * @return the ExecutorService singleton
+     */
+    public ExecutorService getExecutorService() {
+        if (executorService == null) {
+            synchronized (ExecutorService.class) {
+                if (executorService == null)
+                    executorService = newExecutorService();
+            }
+        }
+        return executorService;
+    }
 
-	@Override
-	public void close() {
-		if (externalExecutorService == null && !executorService.isShutdown()) {
-			executorService.shutdown();
-			ExceptionUtils.bypass(() -> executorService.awaitTermination(5, TimeUnit.MINUTES));
-			executorService = null;
-		}
-	}
+    @Override
+    public void close() {
+        if (externalExecutorService == null && !executorService.isShutdown()) {
+            executorService.shutdown();
+            ExceptionUtils.bypass(() -> executorService.awaitTermination(closingTimeout, closingUnit));
+            executorService = null;
+        }
+    }
 
 }

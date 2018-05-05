@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2016 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils.jdbc;
 
+import com.qwazr.utils.ExceptionUtils;
 import com.qwazr.utils.jdbc.connection.ConnectionManager;
 
 import java.io.Closeable;
@@ -52,138 +53,140 @@ import java.util.HashSet;
  */
 public class Transaction implements Closeable {
 
-	private Connection cnx;
-	private HashSet<Query> queries;
+    final private Connection cnx;
+    private HashSet<Query> queries;
 
-	public Transaction(Connection cnx, boolean autoCommit,
-					   Integer transactionIsolation) throws SQLException {
-		this.cnx = cnx;
-		if (transactionIsolation != null)
-			cnx.setTransactionIsolation(transactionIsolation);
-		cnx.setAutoCommit(autoCommit);
-	}
+    public Transaction(Connection cnx, boolean autoCommit,
+                       Integer transactionIsolation) throws SQLException {
+        this.cnx = cnx;
+        if (transactionIsolation != null)
+            cnx.setTransactionIsolation(transactionIsolation);
+        cnx.setAutoCommit(autoCommit);
+    }
 
-	void closeQuery(Query query) {
-		synchronized (this) {
-			query.closeAll();
-			queries.remove(query);
-		}
-	}
+    void closeQuery(Query query) {
+        synchronized (this) {
+            query.closeAll();
+            queries.remove(query);
+        }
+    }
 
-	private void closeQueries() {
-		synchronized (this) {
-			if (queries == null)
-				return;
-			for (Query query : queries)
-				query.closeAll();
-			queries.clear();
-		}
-	}
+    private void closeQueries() {
+        synchronized (this) {
+            if (queries == null)
+                return;
+            for (Query query : queries)
+                query.closeAll();
+            queries.clear();
+        }
+    }
 
-	/**
-	 * Close all queries and the transaction. No commit or rollback are
-	 * performed.
-	 */
-	public void close() {
-		synchronized (this) {
-			if (cnx == null)
-				return;
-			synchronized (cnx) {
-				closeQueries();
-				ConnectionManager.close(null, null, cnx);
-				cnx = null;
-			}
-		}
-	}
+    /**
+     * Close all queries and the transaction. No commit or rollback are
+     * performed.
+     */
+    @Override
+    public void close() {
+        synchronized (this) {
+            if (cnx == null)
+                return;
+            if (ExceptionUtils.bypass(cnx::isClosed))
+                return;
+            synchronized (cnx) {
+                closeQueries();
+                ConnectionManager.close(null, null, cnx);
+            }
+        }
+    }
 
-	/**
-	 * Usual JDBC/SQL transaction rollback
-	 *
-	 * @throws SQLException if any JDBC error occurs
-	 */
-	public void rollback() throws SQLException {
-		synchronized (cnx) {
-			cnx.rollback();
-		}
-	}
+    /**
+     * Usual JDBC/SQL transaction rollback
+     *
+     * @throws SQLException if any JDBC error occurs
+     */
+    public void rollback() throws SQLException {
+        synchronized (cnx) {
+            cnx.rollback();
+        }
+    }
 
-	/**
-	 * Usual JDBC/SQL transaction commit
-	 *
-	 * @throws SQLException if any JDBC error occurs
-	 */
-	public void commit() throws SQLException {
-		synchronized (cnx) {
-			cnx.commit();
-		}
-	}
+    /**
+     * Usual JDBC/SQL transaction commit
+     *
+     * @throws SQLException if any JDBC error occurs
+     */
+    public void commit() throws SQLException {
+        synchronized (cnx) {
+            cnx.commit();
+        }
+    }
 
-	private void addQuery(Query query) {
-		synchronized (this) {
-			if (queries == null)
-				queries = new HashSet<Query>();
-			queries.add(query);
-		}
-	}
+    private void addQuery(Query query) {
+        synchronized (this) {
+            if (queries == null)
+                queries = new HashSet<>();
+            queries.add(query);
+        }
+    }
 
-	/**
-	 * Create a new Query
-	 *
-	 * @param sql The native SQL query
-	 * @return a new Query instance
-	 * @throws SQLException if any JDBC error occurs
-	 */
-	public Query prepare(String sql) throws SQLException {
-		Query query = new Query(cnx.prepareStatement(sql));
-		addQuery(query);
-		return query;
-	}
+    /**
+     * Create a new Query
+     *
+     * @param sql The native SQL query
+     * @return a new Query instance
+     * @throws SQLException if any JDBC error occurs
+     */
+    public Query prepare(String sql) throws SQLException {
+        Query query = new Query(cnx.prepareStatement(sql));
+        addQuery(query);
+        return query;
+    }
 
-	/**
-	 * Create a new Query with autogeneratedkey flag
-	 *
-	 * @param sql The native SQL query
-	 * @return a new Query instance
-	 * @throws SQLException if any JDBC error occurs
-	 */
-	public Query prepareWithKeys(String sql) throws SQLException {
-		Query query = new Query(cnx.prepareStatement(sql,
-				Statement.RETURN_GENERATED_KEYS));
-		addQuery(query);
-		return query;
-	}
+    /**
+     * Create a new Query with autogeneratedkey flag
+     *
+     * @param sql The native SQL query
+     * @return a new Query instance
+     * @throws SQLException if any JDBC error occurs
+     */
+    public Query prepareWithKeys(String sql) throws SQLException {
+        Query query = new Query(cnx.prepareStatement(sql,
+                Statement.RETURN_GENERATED_KEYS));
+        addQuery(query);
+        return query;
+    }
 
-	/**
-	 * Create a new Query with standard JDBC properties.
-	 * <p>
-	 * ResultSetType and ResultSetConcureny are JDBC standard parameters like
-	 * ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.TYPE_FORWARD_ONLY,
-	 * ResultSet.CONCUR_READ_ONLY, ResultSet.CONCUR_UPDATABLE, ...
-	 * </p>
-	 *
-	 * @param sql                 The native SQL query
-	 * @param resultSetType       A standard JDBC ResultSet type
-	 * @param resultSetConcurency A standard JDBC Result concurency property
-	 * @return a new Query instance
-	 * @throws SQLException if any JDBC error occurs
-	 */
-	public Query prepare(String sql, int resultSetType, int resultSetConcurency)
-			throws SQLException {
-		Query query = new Query(cnx.prepareStatement(sql, resultSetType,
-				resultSetConcurency));
-		addQuery(query);
-		return query;
-	}
+    /**
+     * Create a new Query with standard JDBC properties.
+     * <p>
+     * ResultSetType and ResultSetConcureny are JDBC standard parameters like
+     * ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.TYPE_FORWARD_ONLY,
+     * ResultSet.CONCUR_READ_ONLY, ResultSet.CONCUR_UPDATABLE, ...
+     * </p>
+     *
+     * @param sql                 The native SQL query
+     * @param resultSetType       A standard JDBC ResultSet type
+     * @param resultSetConcurency A standard JDBC Result concurency property
+     * @return a new Query instance
+     * @throws SQLException if any JDBC error occurs
+     */
+    public Query prepare(String sql, int resultSetType, int resultSetConcurency)
+            throws SQLException {
+        Query query = new Query(cnx.prepareStatement(sql, resultSetType,
+                resultSetConcurency));
+        addQuery(query);
+        return query;
+    }
 
-	/**
-	 * A convenient way to directly execute an INSERT/UPDATE/DELETE SQL
-	 * statement.
-	 *
-	 * @param sql The native SQL query
-	 * @return the row count
-	 * @throws SQLException if any JDBC error occurs
-	 */
-	public int update(String sql) throws SQLException {
-		return prepare(sql).update();
-	}
+    /**
+     * A convenient way to directly execute an INSERT/UPDATE/DELETE SQL
+     * statement.
+     *
+     * @param sql The native SQL query
+     * @return the row count
+     * @throws SQLException if any JDBC error occurs
+     */
+    public int update(String sql) throws SQLException {
+        return prepare(sql).update();
+    }
 }

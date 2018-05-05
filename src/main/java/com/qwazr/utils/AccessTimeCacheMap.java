@@ -23,99 +23,99 @@ import java.util.function.Supplier;
 
 public class AccessTimeCacheMap<K, V> {
 
-	private volatile int size;
+    private volatile int size;
 
-	private final EldestMap entryMap;
-	private final ReadWriteLock rwl = ReadWriteLock.stamped();
+    private final EldestMap entryMap;
+    private final ReadWriteLock rwl = ReadWriteLock.stamped();
 
-	private final long msTimeOut;
+    private final long msTimeOut;
 
-	public AccessTimeCacheMap(int secondsTimeOut) {
-		entryMap = new EldestMap();
-		msTimeOut = secondsTimeOut * 1000;
-		size = 0;
-	}
+    public AccessTimeCacheMap(int secondsTimeOut) {
+        entryMap = new EldestMap();
+        msTimeOut = secondsTimeOut * 1000;
+        size = 0;
+    }
 
-	private V getSynchronizedValue(K key, long nextExpirationTime) {
-		AccessTimeCacheEntry<V> entry = entryMap.get(key);
-		if (entry == null)
-			return null;
-		synchronized (entry) {
-			return entry.getValue(nextExpirationTime);
-		}
-	}
+    private V getSynchronizedValue(K key, long nextExpirationTime) {
+        final AccessTimeCacheEntry<V> entry = entryMap.get(key);
+        if (entry == null)
+            return null;
+        synchronized (entry) {
+            return entry.getValue(nextExpirationTime);
+        }
+    }
 
-	public V getOrCreate(K key, Supplier<V> supplier) {
-		final long nextExpirationTime = System.currentTimeMillis() + msTimeOut;
-		final V val = rwl.read(() -> getSynchronizedValue(key, nextExpirationTime));
-		if (val != null)
-			return val;
-		final AccessTimeCacheEntry<V> entry = new AccessTimeCacheEntry(nextExpirationTime);
-		synchronized (entry) {
-			return rwl.write(() -> {
-				V value = getSynchronizedValue(key, nextExpirationTime);
-				if (value != null)
-					return value;
-				entryMap.put(key, entry);
-				size = entryMap.size();
-				entry.setValue(supplier);
-				return entry.value;
-			});
-		}
-	}
+    public V getOrCreate(K key, Supplier<V> supplier) {
+        final long nextExpirationTime = System.currentTimeMillis() + msTimeOut;
+        final V val = rwl.read(() -> getSynchronizedValue(key, nextExpirationTime));
+        if (val != null)
+            return val;
+        final AccessTimeCacheEntry<V> entry = new AccessTimeCacheEntry(nextExpirationTime);
+        synchronized (entry) {
+            return rwl.write(() -> {
+                V value = getSynchronizedValue(key, nextExpirationTime);
+                if (value != null)
+                    return value;
+                entryMap.put(key, entry);
+                size = entryMap.size();
+                entry.setValue(supplier);
+                return entry.value;
+            });
+        }
+    }
 
-	public V remove(K key) {
-		final V val = rwl.read(() -> getSynchronizedValue(key, 0));
-		if (val == null)
-			return null;
+    public V remove(K key) {
+        final V val = rwl.read(() -> getSynchronizedValue(key, 0));
+        if (val == null)
+            return null;
 
-		return rwl.write(() -> {
-			final V value = getSynchronizedValue(key, 0);
-			if (value == null)
-				return null;
-			entryMap.remove(key);
-			size = entryMap.size();
-			return value;
-		});
-	}
+        return rwl.write(() -> {
+            final V value = getSynchronizedValue(key, 0);
+            if (value == null)
+                return null;
+            entryMap.remove(key);
+            size = entryMap.size();
+            return value;
+        });
+    }
 
-	public int size() {
-		return size;
-	}
+    public int size() {
+        return size;
+    }
 
-	private class EldestMap extends LinkedHashMap<K, AccessTimeCacheEntry<V>> {
+    private class EldestMap extends LinkedHashMap<K, AccessTimeCacheEntry<V>> {
 
-		@Override
-		protected boolean removeEldestEntry(Map.Entry<K, AccessTimeCacheEntry<V>> eldest) {
-			return eldest.getValue().isExpired(System.currentTimeMillis());
-		}
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<K, AccessTimeCacheEntry<V>> eldest) {
+            return eldest.getValue().isExpired(System.currentTimeMillis());
+        }
 
-	}
+    }
 
-	private class AccessTimeCacheEntry<T> {
+    private class AccessTimeCacheEntry<T> {
 
-		private volatile long expirationTime;
+        private volatile long expirationTime;
 
-		private T value;
+        private T value;
 
-		AccessTimeCacheEntry(long newExpirationTime) {
-			this.expirationTime = newExpirationTime;
-			this.value = null;
-		}
+        AccessTimeCacheEntry(long newExpirationTime) {
+            this.expirationTime = newExpirationTime;
+            this.value = null;
+        }
 
-		void setValue(Supplier<T> supplier) {
-			value = supplier.get();
-		}
+        void setValue(Supplier<T> supplier) {
+            value = supplier.get();
+        }
 
-		T getValue(long newExpirationTime) {
-			expirationTime = newExpirationTime;
-			return value;
-		}
+        T getValue(long newExpirationTime) {
+            expirationTime = newExpirationTime;
+            return value;
+        }
 
-		boolean isExpired(long compareTime) {
-			return expirationTime < compareTime;
-		}
+        boolean isExpired(long compareTime) {
+            return expirationTime < compareTime;
+        }
 
-	}
+    }
 
 }

@@ -27,176 +27,176 @@ import java.util.Stack;
  */
 public class WildcardMatcher {
 
-	private final String[] wcs;
+    private final String[] wcs;
 
-	private final String pattern;
+    private final String pattern;
 
-	public WildcardMatcher(final String pattern) {
-		this.pattern = pattern;
-		wcs = pattern == null ? null : splitOnTokens(pattern);
-	}
+    public WildcardMatcher(final String pattern) {
+        this.pattern = pattern;
+        wcs = pattern == null ? null : splitOnTokens(pattern);
+    }
 
-	public String getPattern() {
-		return pattern;
-	}
+    public String getPattern() {
+        return pattern;
+    }
 
-	/**
-	 * Match the passed name with the current pattern
-	 *
-	 * @param name            the string to test
-	 * @param caseSensitivity enable or disable the case sentisitiviy
-	 * @return true if the name match the pattern
-	 */
-	public boolean match(final String name, IOCase caseSensitivity) {
-		if (name == null && wcs == null) {
-			return true;
-		}
-		if (name == null || wcs == null) {
-			return false;
-		}
-		if (caseSensitivity == null) {
-			caseSensitivity = IOCase.SENSITIVE;
-		}
-		final int length = name.length();
-		boolean anyChars = false;
-		int textIdx = 0;
-		int wcsIdx = 0;
-		final Stack<int[]> backtrack = new Stack<>();
+    /**
+     * Match the passed name with the current pattern
+     *
+     * @param name            the string to test
+     * @param caseSensitivity enable or disable the case sentisitiviy
+     * @return true if the name match the pattern
+     */
+    public boolean match(final String name, IOCase caseSensitivity) {
+        if (name == null && wcs == null) {
+            return true;
+        }
+        if (name == null || wcs == null) {
+            return false;
+        }
+        if (caseSensitivity == null) {
+            caseSensitivity = IOCase.SENSITIVE;
+        }
+        final int length = name.length();
+        boolean anyChars = false;
+        int textIdx = 0;
+        int wcsIdx = 0;
+        final Stack<int[]> backtrack = new Stack<>();
 
-		// loop around a backtrack stack, to handle complex * matching
-		do {
-			if (backtrack.size() > 0) {
-				final int[] array = backtrack.pop();
-				wcsIdx = array[0];
-				textIdx = array[1];
-				anyChars = true;
-			}
+        // loop around a backtrack stack, to handle complex * matching
+        do {
+            if (backtrack.size() > 0) {
+                final int[] array = backtrack.pop();
+                wcsIdx = array[0];
+                textIdx = array[1];
+                anyChars = true;
+            }
 
-			// loop whilst tokens and text left to process
-			while (wcsIdx < wcs.length) {
+            // loop whilst tokens and text left to process
+            while (wcsIdx < wcs.length) {
 
-				if (wcs[wcsIdx].equals("?")) {
-					// ? so move to next text char
-					textIdx++;
-					if (textIdx > length) {
-						break;
-					}
-					anyChars = false;
+                if (wcs[wcsIdx].equals("?")) {
+                    // ? so move to next text char
+                    textIdx++;
+                    if (textIdx > length) {
+                        break;
+                    }
+                    anyChars = false;
 
-				} else if (wcs[wcsIdx].equals("*")) {
-					// set any chars status
-					anyChars = true;
-					if (wcsIdx == wcs.length - 1) {
-						textIdx = length;
-					}
+                } else if (wcs[wcsIdx].equals("*")) {
+                    // set any chars status
+                    anyChars = true;
+                    if (wcsIdx == wcs.length - 1) {
+                        textIdx = length;
+                    }
 
-				} else {
-					// matching text token
-					if (anyChars) {
-						// any chars then try to locate text token
-						textIdx = caseSensitivity.checkIndexOf(name, textIdx, wcs[wcsIdx]);
-						if (textIdx == -1) {
-							// token not found
-							break;
-						}
-						int repeat = caseSensitivity.checkIndexOf(name, textIdx + 1, wcs[wcsIdx]);
-						if (repeat >= 0) {
-							backtrack.push(new int[] { wcsIdx, repeat });
-						}
-					} else {
-						// matching from current position
-						if (!caseSensitivity.checkRegionMatches(name, textIdx, wcs[wcsIdx])) {
-							// couldnt match token
-							break;
-						}
-					}
+                } else {
+                    // matching text token
+                    if (anyChars) {
+                        // any chars then try to locate text token
+                        textIdx = caseSensitivity.checkIndexOf(name, textIdx, wcs[wcsIdx]);
+                        if (textIdx == -1) {
+                            // token not found
+                            break;
+                        }
+                        int repeat = caseSensitivity.checkIndexOf(name, textIdx + 1, wcs[wcsIdx]);
+                        if (repeat >= 0) {
+                            backtrack.push(new int[]{wcsIdx, repeat});
+                        }
+                    } else {
+                        // matching from current position
+                        if (!caseSensitivity.checkRegionMatches(name, textIdx, wcs[wcsIdx])) {
+                            // couldnt match token
+                            break;
+                        }
+                    }
 
-					// matched text token, move text index to end of matched token
-					textIdx += wcs[wcsIdx].length();
-					anyChars = false;
-				}
+                    // matched text token, move text index to end of matched token
+                    textIdx += wcs[wcsIdx].length();
+                    anyChars = false;
+                }
 
-				wcsIdx++;
-			}
+                wcsIdx++;
+            }
 
-			// full match
-			if (wcsIdx == wcs.length && textIdx == length) {
-				return true;
-			}
+            // full match
+            if (wcsIdx == wcs.length && textIdx == length) {
+                return true;
+            }
 
-		} while (backtrack.size() > 0);
+        } while (backtrack.size() > 0);
 
-		return false;
-	}
+        return false;
+    }
 
-	/**
-	 * Case insensitive match
-	 *
-	 * @param name the string to test
-	 * @return true if the name matches the pattern
-	 */
-	public boolean match(final String name) {
-		return match(name, IOCase.INSENSITIVE);
-	}
+    /**
+     * Case insensitive match
+     *
+     * @param name the string to test
+     * @return true if the name matches the pattern
+     */
+    public boolean match(final String name) {
+        return match(name, IOCase.INSENSITIVE);
+    }
 
-	/**
-	 * Splits a string into a number of tokens.
-	 * The text is split by '?' and '*'.
-	 * Where multiple '*' occur consecutively they are collapsed into a single '*'.
-	 *
-	 * @param text the text to split
-	 * @return the array of tokens, never null
-	 */
-	static String[] splitOnTokens(final String text) {
-		// used by wildcardMatch
-		// package level so a unit test may run on this
+    /**
+     * Splits a string into a number of tokens.
+     * The text is split by '?' and '*'.
+     * Where multiple '*' occur consecutively they are collapsed into a single '*'.
+     *
+     * @param text the text to split
+     * @return the array of tokens, never null
+     */
+    static String[] splitOnTokens(final String text) {
+        // used by wildcardMatch
+        // package level so a unit test may run on this
 
-		if (text.indexOf('?') == -1 && text.indexOf('*') == -1) {
-			return new String[] { text };
-		}
+        if (text.indexOf('?') == -1 && text.indexOf('*') == -1) {
+            return new String[]{text};
+        }
 
-		char[] array = text.toCharArray();
-		ArrayList<String> list = new ArrayList<String>();
-		StringBuilder buffer = new StringBuilder();
-		for (int i = 0; i < array.length; i++) {
-			if (array[i] == '?' || array[i] == '*') {
-				if (buffer.length() != 0) {
-					list.add(buffer.toString());
-					buffer.setLength(0);
-				}
-				if (array[i] == '?') {
-					list.add("?");
-				} else if (list.isEmpty() || i > 0 && list.get(list.size() - 1).equals("*") == false) {
-					list.add("*");
-				}
-			} else {
-				buffer.append(array[i]);
-			}
-		}
-		if (buffer.length() != 0) {
-			list.add(buffer.toString());
-		}
+        char[] array = text.toCharArray();
+        final ArrayList<String> list = new ArrayList<>();
+        StringBuilder buffer = new StringBuilder();
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == '?' || array[i] == '*') {
+                if (buffer.length() != 0) {
+                    list.add(buffer.toString());
+                    buffer.setLength(0);
+                }
+                if (array[i] == '?') {
+                    list.add("?");
+                } else if (list.isEmpty() || i > 0 && list.get(list.size() - 1).equals("*") == false) {
+                    list.add("*");
+                }
+            } else {
+                buffer.append(array[i]);
+            }
+        }
+        if (buffer.length() != 0) {
+            list.add(buffer.toString());
+        }
 
-		return list.toArray(new String[list.size()]);
-	}
+        return list.toArray(ArrayUtils.EMPTY_STRING_ARRAY);
+    }
 
-	public final static List<WildcardMatcher> getList(final Collection<String> patternList) {
-		if (patternList == null || patternList.isEmpty())
-			return null;
-		final List<WildcardMatcher> matcherList = new ArrayList<>(patternList.size());
-		for (String pattern : patternList)
-			matcherList.add(new WildcardMatcher(pattern));
-		return matcherList;
-	}
+    public final static List<WildcardMatcher> getList(final Collection<String> patternList) {
+        if (patternList == null || patternList.isEmpty())
+            return null;
+        final List<WildcardMatcher> matcherList = new ArrayList<>(patternList.size());
+        for (String pattern : patternList)
+            matcherList.add(new WildcardMatcher(pattern));
+        return matcherList;
+    }
 
-	public final static boolean anyMatch(final String value, final List<WildcardMatcher> matcherList) {
-		for (WildcardMatcher matcher : matcherList) {
-			synchronized (matcher) {
-				if (matcher.match(value))
-					return true;
-			}
-		}
-		return false;
-	}
+    public final static boolean anyMatch(final String value, final List<WildcardMatcher> matcherList) {
+        for (WildcardMatcher matcher : matcherList) {
+            synchronized (matcher) {
+                if (matcher.match(value))
+                    return true;
+            }
+        }
+        return false;
+    }
 
 }

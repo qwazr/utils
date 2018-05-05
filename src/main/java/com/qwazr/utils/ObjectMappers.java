@@ -31,55 +31,55 @@ import java.util.List;
 
 public class ObjectMappers {
 
-	public final static JsonMapper JSON;
+    public final static JsonMapper JSON;
 
-	public final static ObjectMapper YAML;
+    public final static ObjectMapper YAML;
 
-	public final static XmlMapper XML;
+    public final static XmlMapper XML;
 
-	public final static ObjectMapper SMILE;
+    public final static ObjectMapper SMILE;
 
-	static {
-		JSON = new JsonMapper();
-		YAML = new ObjectMapper(new YAMLFactory());
-		XML = new XmlMapper();
-		SMILE = new ObjectMapper(new SmileFactory());
-	}
+    static {
+        JSON = new JsonMapper();
+        YAML = new ObjectMapper(new YAMLFactory());
+        XML = new XmlMapper();
+        SMILE = new ObjectMapper(new SmileFactory());
+    }
 
-	private final Pair<String, ObjectMapper>[] objectMappers;
+    private final Collection<Pair<String, ObjectMapper>> objectMappers;
 
-	public ObjectMappers(Collection<Pair<String, ObjectMapper>> mappers) {
-		this.objectMappers = mappers.toArray(new Pair[mappers.size()]);
-	}
+    public ObjectMappers(final Collection<Pair<String, ObjectMapper>> mappers) {
+        this.objectMappers = new ArrayList<>(mappers);
+    }
 
-	public <T> T readFileValue(Path directory, String fileBaseName, T defaultValue, Class<? extends T> classValue)
-			throws IOException {
-		for (Pair<String, ObjectMapper> pair : objectMappers) {
-			final Path file = directory.resolve(fileBaseName + '.' + pair.getKey());
-			if (Files.exists(file))
-				return pair.getValue().readValue(file.toFile(), classValue);
-		}
-		return defaultValue;
-	}
+    public <T> T readFileValue(Path directory, String fileBaseName, T defaultValue, Class<? extends T> classValue)
+            throws IOException {
+        for (final Pair<String, ObjectMapper> pair : objectMappers) {
+            final Path file = directory.resolve(fileBaseName + '.' + pair.getKey());
+            if (Files.exists(file))
+                return pair.getValue().readValue(file.toFile(), classValue);
+        }
+        return defaultValue;
+    }
 
-	public static Builder of() {
-		return new Builder();
-	}
+    public static Builder of() {
+        return new Builder();
+    }
 
-	public static class Builder {
+    public static class Builder {
 
-		private List<Pair<String, ObjectMapper>> mappers;
+        private List<Pair<String, ObjectMapper>> mappers;
 
-		public Builder add(String extension, ObjectMapper mapper) {
-			if (mappers == null)
-				mappers = new ArrayList<>();
-			mappers.add(Pair.of(extension, mapper));
-			return this;
-		}
+        public Builder add(String extension, ObjectMapper mapper) {
+            if (mappers == null)
+                mappers = new ArrayList<>();
+            mappers.add(Pair.of(extension, mapper));
+            return this;
+        }
 
-		public ObjectMappers build() {
-			return new ObjectMappers(mappers);
-		}
+        public ObjectMappers build() {
+            return new ObjectMappers(mappers);
+        }
 
-	}
+    }
 }

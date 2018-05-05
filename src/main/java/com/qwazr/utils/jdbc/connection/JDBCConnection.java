@@ -121,7 +121,7 @@ public class JDBCConnection extends ConnectionManager {
 			localUrl += urlSuffix;
 		if (logger.isLoggable(Level.FINEST))
 			logger.finest("DriverManager.getConnection " + localUrl);
-		Connection cnx = null;
+		final Connection cnx ;
 		if (username != null || password != null)
 			cnx = DriverManager.getConnection(localUrl, username, password);
 		else

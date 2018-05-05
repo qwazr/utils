@@ -31,10 +31,10 @@ public class HtmlUtils {
 	private final static Pattern removeBrPattern1 =
 			Pattern.compile("\\.\\p{Space}+<br\\p{Space}*/?>", Pattern.CASE_INSENSITIVE);
 	private final static Pattern removeEndTagBlockPattern1 = Pattern.compile(
-			"\\.\\p{Space}+</(p|td|div|h1|h2|h3|h4|h5|h6|hr|li|option|pre|select|table|tbody|td|textarea|tfoot|thead|th|title|tr|ul)>",
+			"\\.\\p{Space}+</(p|div|h1|h2|h3|h4|h5|h6|hr|li|option|pre|select|table|tbody|td|textarea|tfoot|thead|th|title|tr|ul)>",
 			Pattern.CASE_INSENSITIVE);
 	private final static Pattern removeEndTagBlockPattern2 = Pattern.compile(
-			"</(p|td|div|h1|h2|h3|h4|h5|h6|hr|li|option|pre|select|table|tbody|td|textarea|tfoot|thead|th|title|tr|ul)>",
+			"</(p|div|h1|h2|h3|h4|h5|h6|hr|li|option|pre|select|table|tbody|td|textarea|tfoot|thead|th|title|tr|ul)>",
 			Pattern.CASE_INSENSITIVE);
 	private final static Pattern removeBrPattern2 = Pattern.compile("<br\\p{Space}*/?>", Pattern.CASE_INSENSITIVE);
 	private final static Pattern removeScriptObjectStylePattern =

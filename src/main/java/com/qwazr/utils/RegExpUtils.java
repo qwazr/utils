@@ -23,32 +23,32 @@ import java.util.regex.Pattern;
 
 public class RegExpUtils {
 
-	public final static List<Matcher> getMatcherList(final Collection<String> patternList) {
-		if (patternList == null || patternList.isEmpty())
-			return null;
-		final List<Matcher> matcherList = new ArrayList<>(patternList.size());
-		for (String pattern : patternList)
-			matcherList.add(Pattern.compile(pattern).matcher(StringUtils.EMPTY));
-		return matcherList;
-	}
+    public static List<Matcher> getMatcherList(final Collection<String> patternList) {
+        if (patternList == null || patternList.isEmpty())
+            return null;
+        final List<Matcher> matcherList = new ArrayList<>(patternList.size());
+        for (String pattern : patternList)
+            matcherList.add(Pattern.compile(pattern).matcher(StringUtils.EMPTY));
+        return matcherList;
+    }
 
-	public final static boolean anyMatch(final String value, final Collection<Matcher> matcherList) {
-		for (Matcher matcher : matcherList) {
-			synchronized (matcher) {
-				matcher.reset(value);
-				if (matcher.find())
-					return true;
-			}
-		}
-		return false;
-	}
+    public static boolean anyMatch(final String value, final Collection<Matcher> matcherList) {
+        for (final Matcher matcher : matcherList) {
+            synchronized (matcher) {
+                matcher.reset(value);
+                if (matcher.find())
+                    return true;
+            }
+        }
+        return false;
+    }
 
-	public static String removeAllMatches(String value, Collection<Matcher> matcherList) {
-		for (Matcher matcher : matcherList) {
-			synchronized (matcher) {
-				value = matcher.reset(value).replaceAll(StringUtils.EMPTY);
-			}
-		}
-		return value;
-	}
+    public static String removeAllMatches(String value, final Collection<Matcher> matcherList) {
+        for (final Matcher matcher : matcherList) {
+            synchronized (matcher) {
+                value = matcher.reset(value).replaceAll(StringUtils.EMPTY);
+            }
+        }
+        return value;
+    }
 }
