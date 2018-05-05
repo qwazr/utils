@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2014-2018 Emmanuel Keller / QWAZR
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,22 +20,22 @@ import java.io.FileFilter;
 
 public class JsonFileFilter implements FileFilter {
 
-	public final static String EXT_JS = ".js";
-	public final static String EXT_JSON = ".json";
+    public final static String EXT_JS = ".js";
+    public final static String EXT_JSON = ".json";
 
-	public final static String[] EXTENSIONS = { EXT_JS, EXT_JSON };
+    private final static String[] EXTENSIONS = {EXT_JS, EXT_JSON};
 
-	public final static JsonFileFilter INSTANCE = new JsonFileFilter();
+    public final static JsonFileFilter INSTANCE = new JsonFileFilter();
 
-	@Override
-	public boolean accept(File file) {
-		if (!file.isFile())
-			return false;
-		String name = file.getName().toLowerCase();
-		for (String extension : EXTENSIONS)
-			if (name.endsWith(extension))
-				return true;
-		return false;
-	}
+    @Override
+    public boolean accept(final File file) {
+        if (!file.isFile())
+            return false;
+        final String name = file.getName().toLowerCase();
+        for (final String extension : EXTENSIONS)
+            if (name.endsWith(extension))
+                return true;
+        return false;
+    }
 
 }

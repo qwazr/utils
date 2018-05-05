@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2014-2018 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,30 +23,30 @@ import java.lang.management.OperatingSystemMXBean;
 
 public class RuntimeUtils {
 
-	public static long getMemoryUsage() {
-		Runtime runtime = Runtime.getRuntime();
-		return runtime.totalMemory() - runtime.freeMemory();
-	}
+    public static long getMemoryUsage() {
+        Runtime runtime = Runtime.getRuntime();
+        return runtime.totalMemory() - runtime.freeMemory();
+    }
 
-	public static String getMemoryUsagePretty() {
-		return FileUtils.byteCountToDisplaySize(getMemoryUsage());
-	}
+    public static String getMemoryUsagePretty() {
+        return FileUtils.byteCountToDisplaySize(getMemoryUsage());
+    }
 
-	public static Long getOpenFileCount() {
-		OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
-		if (os instanceof UnixOperatingSystemMXBean)
-			return ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount();
-		return null;
-	}
+    public static Long getOpenFileCount() {
+        OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
+        if (os instanceof UnixOperatingSystemMXBean)
+            return ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount();
+        return null;
+    }
 
-	public static Thread mainThread = Thread.currentThread();
+    final public static Thread mainThread = Thread.currentThread();
 
-	public static Integer getActiveThreadCount() {
-		ThreadGroup threadGroup = mainThread.getThreadGroup();
-		if (threadGroup == null)
-			threadGroup = Thread.currentThread().getThreadGroup();
-		return threadGroup == null ? null : threadGroup.activeCount();
-	}
+    public static Integer getActiveThreadCount() {
+        ThreadGroup threadGroup = mainThread.getThreadGroup();
+        if (threadGroup == null)
+            threadGroup = Thread.currentThread().getThreadGroup();
+        return threadGroup == null ? null : threadGroup.activeCount();
+    }
 
 
 }

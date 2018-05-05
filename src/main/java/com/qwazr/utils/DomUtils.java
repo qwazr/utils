@@ -23,38 +23,40 @@ import java.util.function.Consumer;
 
 public class DomUtils {
 
-	static Node getAttribute(final Node node, final String attributeName) {
-		final NamedNodeMap attributes = node.getAttributes();
-		return attributes == null ? null : attributes.getNamedItem(attributeName);
-	}
+    static Node getAttribute(final Node node, final String attributeName) {
+        final NamedNodeMap attributes = node.getAttributes();
+        return attributes == null ? null : attributes.getNamedItem(attributeName);
+    }
 
-	public static String getAttributeString(final Node node, final String attributeName) {
-		final Node attrNode = getAttribute(node, attributeName);
-		return attrNode == null ? null : attrNode.getTextContent();
-	}
+    public static String getAttributeString(final Node node, final String attributeName) {
+        final Node attrNode = getAttribute(node, attributeName);
+        return attrNode == null ? null : attrNode.getTextContent();
+    }
 
-	public static void extractText(final Node node, final StringBuilder sb) {
-		switch (node.getNodeType()) {
-		case Node.TEXT_NODE:
-		case Node.CDATA_SECTION_NODE:
-			sb.append(node.getNodeValue());
-			break;
-		}
-		forEach(node.getChildNodes(), n -> extractText(n, sb));
-	}
+    public static void extractText(final Node node, final StringBuilder sb) {
+        switch (node.getNodeType()) {
+            case Node.TEXT_NODE:
+            case Node.CDATA_SECTION_NODE:
+                sb.append(node.getNodeValue());
+                break;
+            default:
+                break;
+        }
+        forEach(node.getChildNodes(), n -> extractText(n, sb));
+    }
 
-	public static String getText(final Node node) {
-		final StringBuilder sb = new StringBuilder();
-		extractText(node, sb);
-		return sb.toString();
-	}
+    public static String getText(final Node node) {
+        final StringBuilder sb = new StringBuilder();
+        extractText(node, sb);
+        return sb.toString();
+    }
 
-	public static void forEach(final NodeList nodeList, final Consumer<Node> nodeConsumer) {
-		if (nodeList == null || nodeConsumer == null)
-			return;
-		final int length = nodeList.getLength();
-		for (int i = 0; i < length; i++)
-			nodeConsumer.accept(nodeList.item(i));
-	}
+    public static void forEach(final NodeList nodeList, final Consumer<Node> nodeConsumer) {
+        if (nodeList == null || nodeConsumer == null)
+            return;
+        final int length = nodeList.getLength();
+        for (int i = 0; i < length; i++)
+            nodeConsumer.accept(nodeList.item(i));
+    }
 
 }

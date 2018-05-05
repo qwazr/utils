@@ -18,9 +18,11 @@ package com.qwazr.utils.process;
 import com.qwazr.utils.LoggerUtils;
 import org.apache.commons.lang3.SystemUtils;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 public class ProcessUtils {
@@ -55,9 +57,9 @@ public class ProcessUtils {
         return run(commandLine);
     }
 
-    public static Boolean isRunning(Number pid) throws IOException, InterruptedException {
-        if (pid == null)
-            return null;
+    @Nullable
+    public static boolean isRunning(final Number pid) throws IOException, InterruptedException {
+        Objects.requireNonNull(pid, "The PID is null");
         final String commandLine;
         if (SystemUtils.IS_OS_UNIX)
             commandLine = "kill -0 " + pid;

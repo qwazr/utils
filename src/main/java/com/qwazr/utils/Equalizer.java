@@ -19,17 +19,17 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public abstract class Equalizer<T extends Equalizer> {
 
-	protected Class<T> ownClass;
+    protected Class<T> ownClass;
 
-	protected Equalizer(Class<T> ownClass) {
-		this.ownClass = ownClass;
-	}
+    protected Equalizer(Class<T> ownClass) {
+        this.ownClass = ownClass;
+    }
 
-	@JsonIgnore
-	protected abstract boolean isEqual(T query);
+    @JsonIgnore
+    protected abstract boolean isEqual(T query);
 
-	@Override
-	public final boolean equals(final Object o) {
-		return o != null && ownClass.isInstance(o) && (o == this || isEqual(ownClass.cast(o)));
-	}
+    @Override
+    public final boolean equals(final Object o) {
+        return ownClass.isInstance(o) && (o == this || isEqual(ownClass.cast(o)));
+    }
 }
