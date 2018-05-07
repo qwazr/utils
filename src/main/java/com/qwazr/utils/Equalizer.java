@@ -27,7 +27,7 @@ public abstract class Equalizer<T extends Equalizer> {
 
     @JsonIgnore
     protected abstract boolean isEqual(T query);
-
+    
     @Override
     public final boolean equals(final Object o) {
         return ownClass.isInstance(o) && (o == this || isEqual(ownClass.cast(o)));

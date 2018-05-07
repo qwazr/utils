@@ -78,9 +78,10 @@ public class ExecutorSingleton implements Closeable {
     }
 
     @Override
-    public void close() {
-        if (externalExecutorService == null && !executorService.isShutdown()) {
-            executorService.shutdown();
+    public synchronized void close() {
+        if (externalExecutorService == null && executorService != null) {
+            if (!executorService.isShutdown())
+                executorService.shutdown();
             ExceptionUtils.bypass(() -> executorService.awaitTermination(closingTimeout, closingUnit));
             executorService = null;
         }
