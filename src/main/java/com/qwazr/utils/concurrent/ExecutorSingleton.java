@@ -37,11 +37,11 @@ public class ExecutorSingleton implements Closeable {
     private ExecutorSingleton(final ExecutorService executorService, long closingTimeout, TimeUnit closingUnit) {
         this.externalExecutorService = this.executorService = executorService;
         this.closingTimeout = closingTimeout;
-        this.closingUnit = closingUnit;
+        this.closingUnit = Objects.requireNonNull(closingUnit, "The closing timeunit is missing");
     }
 
     public ExecutorSingleton(final ExecutorService executorService) {
-        this(executorService, 0, null);
+        this(executorService, 1, TimeUnit.HOURS);
     }
 
     /**
