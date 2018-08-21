@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class FileUtilsTest {
@@ -69,7 +71,7 @@ public class FileUtilsTest {
         try (Stream<Path> stream = Files.walk(parentDir)) {
             Assert.assertEquals(5L, stream.count(), 0);
         }
-        Assert.assertNull(FileUtils.deleteDirectoryQuietly(parentDir));
+        FileUtils.deleteDirectory(parentDir);
         Assert.assertFalse(Files.exists(parentDir));
     }
 
@@ -95,13 +97,32 @@ public class FileUtilsTest {
     }
 
     @Test
-    public void test() throws IOException {
+    public void testDeleteDirectoryLoop() throws IOException {
         final Path testDir = Files.createTempDirectory("fileUtilsTest");
-        Files.deleteIfExists(testDir);
+        FileUtils.deleteDirectory(testDir);
         for (int i = 0; i < 100; i++) {
             createDirectoryAndContent(testDir);
             FileUtils.deleteDirectory(testDir);
         }
     }
+
+    @Test
+    public void testFileListCount() throws IOException {
+        final Path testDir = Files.createTempDirectory("fileListCount");
+        FileUtils.deleteDirectory(testDir);
+        createDirectoryAndContent(testDir);
+        Assert.assertEquals(10, FileUtils.countFiles(testDir));
+    }
+
+    @Test
+    public void testFileListWithConsumer() throws IOException {
+        final Path testDir = Files.createTempDirectory("fileList");
+        FileUtils.deleteDirectory(testDir);
+        createDirectoryAndContent(testDir);
+        final Set<Path> pathSet = new LinkedHashSet<>();
+        FileUtils.listFiles(testDir, pathSet::add);
+        Assert.assertEquals(10, pathSet.size());
+    }
+
 }
 

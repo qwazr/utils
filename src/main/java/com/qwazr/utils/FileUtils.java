@@ -23,9 +23,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -47,34 +48,44 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
      * Delete a directory and its content
      *
      * @param directoryPath the path of the directory
+     * @param preservePath  a list of path to preserve
      * @return the number of item deleted
      * @throws IOException if any I/O error occurs
      */
-    public static int deleteDirectory(final Path directoryPath) throws IOException {
+    public static int deleteDirectory(final Path directoryPath, final Path... preservePath) throws IOException {
 
-        AtomicInteger counter = new AtomicInteger();
+        final AtomicInteger counter = new AtomicInteger();
+        final HashSet<Path> preservePathSet;
+        if (preservePath == null && preservePath.length > 0) {
+            preservePathSet = new HashSet<>();
+            Collections.addAll(preservePathSet, preservePath);
+        } else
+            preservePathSet = null;
 
         Files.walkFileTree(Objects.requireNonNull(directoryPath), new SimpleFileVisitor<Path>() {
 
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                checkExistsAndEnforceWritable(dir);
+                if (preservePathSet == null || !preservePathSet.contains(dir))
+                    checkExistsAndEnforceWritable(dir);
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (checkExistsAndEnforceWritable(file))
-                    if (Files.deleteIfExists(file))
-                        counter.incrementAndGet();
+                if (preservePathSet == null || !preservePathSet.contains(file))
+                    if (checkExistsAndEnforceWritable(file))
+                        if (Files.deleteIfExists(file))
+                            counter.incrementAndGet();
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
             public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                if (checkExistsAndEnforceWritable(dir))
-                    if (Files.deleteIfExists(dir))
-                        counter.incrementAndGet();
+                if (preservePathSet == null || !preservePathSet.contains(dir))
+                    if (checkExistsAndEnforceWritable(dir))
+                        if (Files.deleteIfExists(dir))
+                            counter.incrementAndGet();
                 return FileVisitResult.CONTINUE;
             }
         });
@@ -98,54 +109,6 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
         if (!file.setWritable(true))
             throw new IOException("Cannot set the file writable: " + file);
         return true;
-    }
-
-    /**
-     * Quietly delete a directory and its content without throwing any IOException
-     *
-     * @param directoryPath the path of the directory
-     * @return the first IOException which occured (if any)
-     */
-    public static IOException deleteDirectoryQuietly(final Path directoryPath) {
-
-        AtomicReference<IOException> firstException = new AtomicReference<>();
-
-        try {
-            Files.walkFileTree(Objects.requireNonNull(directoryPath), new SimpleFileVisitor<Path>() {
-
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    checkExistsAndEnforceWritable(dir);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                final public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    try {
-                        if (checkExistsAndEnforceWritable(file))
-                            Files.deleteIfExists(file);
-                    } catch (IOException e) {
-                        firstException.compareAndSet(null, e);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                final public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                    try {
-                        if (checkExistsAndEnforceWritable(dir))
-                            Files.deleteIfExists(dir);
-                    } catch (IOException e) {
-                        firstException.compareAndSet(null, e);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            firstException.compareAndSet(null, e);
-        }
-
-        return firstException.get();
     }
 
     /**
