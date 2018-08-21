@@ -16,16 +16,37 @@
 package com.qwazr.utils;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Stream;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class FileUtilsTest {
 
+    Path tmpDir;
 
+    @Before
+    public void setup() throws IOException {
+        tmpDir = Files.createTempDirectory("test");
+        Files.createFile(tmpDir.resolve("1.tmp"));
+        Files.createFile(tmpDir.resolve("2.tmp"));
+        Files.createFile(tmpDir.resolve("3.tmp"));
+    }
+
+    @Test
+    public void testFileListCount() throws IOException {
+        Assert.assertEquals(3, FileUtils.countFiles(tmpDir));
+    }
+
+    @Test
+    public void testFileListWithConsumer() throws IOException {
+        final Set<Path> pathSet = new LinkedHashSet<>();
+        FileUtils.listFiles(tmpDir, pathSet::add);
+        Assert.assertEquals(3, pathSet.size());
+    }
 
 }

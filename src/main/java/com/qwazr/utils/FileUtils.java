@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -25,6 +26,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class FileUtils extends org.apache.commons.io.FileUtils {
 
@@ -159,6 +162,32 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
             child = child.getParent();
         }
         return false;
+    }
+
+    /**
+     * Wrapper on Files.list Stream#count call embedded in a autoclose try/resource.
+     *
+     * @param path
+     * @return the number of files
+     * @throws IOException
+     */
+    public static long countFiles(@Nonnull final Path path) throws IOException {
+        try (final Stream<Path> files = Files.list(path)) {
+            return files.count();
+        }
+    }
+
+    /**
+     * Wrapper on Files.list embedded in a autoclose try/resource.
+     *
+     * @param path
+     * @param pathConsumer
+     * @throws IOException
+     */
+    public static void listFiles(@Nonnull final Path path, @Nonnull final Consumer<Path> pathConsumer) throws IOException {
+        try (final Stream<Path> files = Files.list(path)) {
+            files.forEach(pathConsumer);
+        }
     }
 
 }
