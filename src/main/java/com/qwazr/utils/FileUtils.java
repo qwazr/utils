@@ -56,7 +56,7 @@ public class FileUtils extends org.apache.commons.io.FileUtils {
 
         final AtomicInteger counter = new AtomicInteger();
         final HashSet<Path> preservePathSet;
-        if (preservePath == null && preservePath.length > 0) {
+        if (preservePath != null && preservePath.length > 0) {
             preservePathSet = new HashSet<>();
             Collections.addAll(preservePathSet, preservePath);
         } else

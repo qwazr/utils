@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -86,7 +87,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     public static String base64decode(final String base64String) {
         if (isEmpty(base64String))
             return null;
-        return new String(Base64.decodeBase64(base64String));
+        return new String(Base64.decodeBase64(base64String), StandardCharsets.UTF_8);
     }
 
     public static int compareNullValues(final Object v1, final Object v2) {

@@ -25,7 +25,11 @@ public class InstanceFactory<T> {
 
     public InstanceFactory(final Constructor<T> constructor, final Object[] parameters) {
         this.constructor = constructor;
-        this.parameters = parameters;
+        if (parameters != null) {
+            this.parameters = new Object[parameters.length];
+            System.arraycopy(parameters, 0, this.parameters, 0, parameters.length);
+        } else
+            this.parameters = null;
     }
 
     public T newInstance() throws IllegalAccessException, InvocationTargetException, InstantiationException {
