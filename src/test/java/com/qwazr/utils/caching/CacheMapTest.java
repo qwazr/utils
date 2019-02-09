@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.utils;
+package com.qwazr.utils.caching;
 
 import org.junit.Test;
 

@@ -23,54 +23,61 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public interface ReadWriteLock {
 
-	<T> T read(final Callable<T> call);
+    <T> T read(final Callable<T> call);
 
-	<V, E extends Throwable> V readEx(final ExceptionCallable<V, E> call) throws E;
+    <V, E extends Throwable> V readEx(final ExceptionCallable<V, E> call) throws E;
 
-	void read(final Runnable run);
+    void read(final Runnable run);
 
-	<E extends Throwable> void readEx(final ExceptionRunnable<E> run) throws E;
+    <E extends Throwable> void readEx(final ExceptionRunnable<E> run) throws E;
 
-	<T> T write(final Callable<T> call);
+    <T> T write(final Callable<T> call);
 
-	<V, E extends Throwable> V writeEx(final ExceptionCallable<V, E> call) throws E;
+    <V, E extends Throwable> V writeEx(final ExceptionCallable<V, E> call) throws E;
 
-	<E extends Throwable> void writeEx(final ExceptionRunnable<E> run) throws E;
+    <E extends Throwable> void writeEx(final ExceptionRunnable<E> run) throws E;
 
-	void write(final Runnable run);
+    void write(final Runnable run);
 
-	<V> V readOrWrite(final Callable<V> read, final Callable<V> write);
+    default <V> V readOrWrite(final Callable<V> read, final Callable<V> write) {
+        final V result = read(read);
+        return result != null ? result : write(write);
+    }
 
-	<V, E extends Exception> V readOrWriteEx(final ExceptionCallable<V, E> read, final ExceptionCallable<V, E> write)
-			throws Exception;
+    default <V, E extends Exception> V readOrWriteEx(final ExceptionCallable<V, E> read, final ExceptionCallable<V, E> write)
+            throws Exception {
+        final V result = readEx(read);
+        return result != null ? result : writeEx(write);
 
-	interface ExceptionRunnable<E extends Throwable> {
-		void run() throws E;
-	}
+    }
 
-	interface ExceptionCallable<V, E extends Throwable> {
-		V call() throws E;
-	}
+    interface ExceptionRunnable<E extends Throwable> {
+        void run() throws E;
+    }
 
-	class InsideLockException extends RuntimeException {
+    interface ExceptionCallable<V, E extends Throwable> {
+        V call() throws E;
+    }
 
-		public final Exception exception;
+    class InsideLockException extends RuntimeException {
 
-		public InsideLockException(Exception cause) {
-			super(cause);
-			this.exception = cause;
-		}
-	}
+        public final Exception exception;
 
-	static ReadWriteLock of(java.util.concurrent.locks.ReadWriteLock rwl) {
-		return new ReadWriteLockImpl(rwl);
-	}
+        public InsideLockException(Exception cause) {
+            super(cause);
+            this.exception = cause;
+        }
+    }
 
-	static ReadWriteLock reentrant(boolean fair) {
-		return of(new ReentrantReadWriteLock(fair));
-	}
+    static ReadWriteLock of(java.util.concurrent.locks.ReadWriteLock rwl) {
+        return new ReadWriteLockImpl(rwl);
+    }
 
-	static ReadWriteLock stamped() {
-		return new StamptedReadWriteLockImpl();
-	}
+    static ReadWriteLock reentrant(boolean fair) {
+        return of(new ReentrantReadWriteLock(fair));
+    }
+
+    static ReadWriteLock stamped() {
+        return new StamptedReadWriteLockImpl();
+    }
 }
