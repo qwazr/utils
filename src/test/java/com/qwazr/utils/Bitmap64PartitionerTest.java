@@ -29,7 +29,7 @@ public class Bitmap64PartitionerTest {
     @Rule
     public ExpectedException exceptionRule = ExpectedException.none();
 
-    private Roaring64NavigableMap getRandom(int size) {
+    public static Roaring64NavigableMap getRandom(int size) {
         final Roaring64NavigableMap bitmap = new Roaring64NavigableMap();
         long pos = 0;
         for (int i = 0; i < size; i++) {
