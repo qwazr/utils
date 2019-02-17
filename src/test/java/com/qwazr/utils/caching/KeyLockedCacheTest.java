@@ -16,6 +16,7 @@
 package com.qwazr.utils.caching;
 
 import com.qwazr.utils.RandomUtils;
+import com.qwazr.utils.concurrent.ExecutorUtils;
 import com.qwazr.utils.concurrent.ThreadUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -49,11 +50,7 @@ public class KeyLockedCacheTest {
 
     @After
     public void cleanup() throws InterruptedException {
-        if (executorService != null) {
-            executorService.shutdown();
-            executorService.awaitTermination(5, TimeUnit.MINUTES);
-            executorService = null;
-        }
+        ExecutorUtils.close(executorService, 5, TimeUnit.MINUTES);
     }
 
     private void loop(final AtomicBoolean abort,

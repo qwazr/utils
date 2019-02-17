@@ -35,85 +35,85 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ReferenceCounterTest {
 
-	private static ExecutorService executorService;
+    private static ExecutorService executorService;
 
-	@BeforeClass
-	public static void setup() {
-		executorService = Executors.newFixedThreadPool(4);
-	}
+    @BeforeClass
+    public static void setup() {
+        executorService = Executors.newFixedThreadPool(4);
+    }
 
-	@AfterClass
-	public static void cleanup() {
-		executorService.shutdown();
-	}
+    @AfterClass
+    public static void cleanup() throws InterruptedException {
+        ExecutorUtils.close(executorService, 1, TimeUnit.MINUTES);
+    }
 
-	private final static int MAX_ITERATIONS = 2000;
+    private final static int MAX_ITERATIONS = 2000;
 
-	@Test
-	public void multiThreadTest() throws InterruptedException, IOException, ExecutionException {
+    @Test
+    public void multiThreadTest() throws InterruptedException, IOException, ExecutionException {
 
-		final Item item = new Item();
-		item.acquire();
+        final Item item = new Item();
+        item.acquire();
 
-		final List<Future<?>> futures = new ArrayList<>();
-		for (int i = 0; i < 4; i++) {
-			futures.add(executorService.submit(() -> {
-				while (!item.done()) {
-					item.acquire();
-					try {
-						item.action();
-					} finally {
-						IOUtils.closeQuietly(item);
-					}
-				}
-			}));
-		}
+        final List<Future<?>> futures = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            futures.add(executorService.submit(() -> {
+                while (!item.done()) {
+                    item.acquire();
+                    try {
+                        item.action();
+                    } finally {
+                        IOUtils.closeQuietly(item);
+                    }
+                }
+            }));
+        }
 
-		item.close();
+        item.close();
 
-		for (Future future : futures)
-			future.get();
+        for (Future future : futures)
+            future.get();
 
-		Assert.assertFalse(item.open);
-		Assert.assertTrue(item.counter.get() >= MAX_ITERATIONS);
-	}
+        Assert.assertFalse(item.open);
+        Assert.assertTrue(item.counter.get() >= MAX_ITERATIONS);
+    }
 
-	@Test(expected = IOException.class)
-	public void doubleReleaseExceptionTest() throws IOException {
-		final Item item = new Item();
-		item.acquire();
-		item.close();
-		item.close();
-	}
+    @Test(expected = IOException.class)
+    public void doubleReleaseExceptionTest() throws IOException {
+        final Item item = new Item();
+        item.acquire();
+        item.close();
+        item.close();
+    }
 
-	public static class Item implements Closeable {
+    public static class Item implements Closeable {
 
-		private final AtomicInteger counter = new AtomicInteger();
-		private final ReferenceCounter.Impl refCounter = new ReferenceCounter.Impl();
+        private final AtomicInteger counter = new AtomicInteger();
+        private final ReferenceCounter.Impl refCounter = new ReferenceCounter.Impl();
 
-		private boolean open = true;
+        private boolean open = true;
 
-		public void action() {
-			ThreadUtils.sleep(RandomUtils.nextLong(0, 10), TimeUnit.MILLISECONDS);
-			counter.incrementAndGet();
-		}
+        public void action() {
+            ThreadUtils.sleep(RandomUtils.nextLong(0, 10), TimeUnit.MILLISECONDS);
+            counter.incrementAndGet();
+        }
 
-		public Item acquire() {
-			refCounter.acquire();
-			return this;
-		}
+        public Item acquire() {
+            refCounter.acquire();
+            return this;
+        }
 
-		public boolean done() {
-			return counter.get() > MAX_ITERATIONS;
-		}
+        public boolean done() {
+            return counter.get() > MAX_ITERATIONS;
+        }
 
-		@Override
-		public synchronized void close() throws IOException {
-			if (refCounter.release() > 0)
-				return;
-			if (!open)
-				throw new IOException("Already close");
-			open = false;
-		}
-	}
+        @Override
+        public synchronized void close() throws IOException {
+            if (refCounter.release() > 0)
+                return;
+            if (!open)
+                throw new IOException("Already close");
+            open = false;
+        }
+    }
 }

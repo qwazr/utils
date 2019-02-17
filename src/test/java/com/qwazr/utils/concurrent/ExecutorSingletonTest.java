@@ -24,28 +24,37 @@ import java.util.concurrent.TimeUnit;
 
 public class ExecutorSingletonTest {
 
-	@Test(expected = NullPointerException.class)
-	public void invalidConstructorParameters() {
-		new ExecutorSingleton(0, null);
-	}
+    @Test(expected = NullPointerException.class)
+    public void invalidConstructorParameters() {
+        new ExecutorSingleton(0, null);
+    }
 
-	@Test
-	public void externalExecutorService() {
-		final ExecutorService executorService = Executors.newSingleThreadExecutor();
-		final ExecutorSingleton singleton = new ExecutorSingleton(executorService);
-		Assert.assertEquals(executorService, singleton.getExecutorService());
-		singleton.close();
-		Assert.assertFalse(executorService.isShutdown());
-		executorService.shutdown();
-	}
+    @Test
+    public void externalExecutorService() throws InterruptedException {
+        final ExecutorService executorService = Executors.newSingleThreadExecutor();
+        try {
+            final ExecutorSingleton singleton = new ExecutorSingleton(executorService);
+            Assert.assertEquals(executorService, singleton.getExecutorService());
+            singleton.close();
+            Assert.assertFalse(executorService.isShutdown());
+            Assert.assertFalse(executorService.isTerminated());
+        } finally {
+            ExecutorUtils.close(executorService, 1, TimeUnit.MINUTES);
+        }
+    }
 
-	@Test
-	public void internalExecutorService() {
-		final ExecutorSingleton singleton = new ExecutorSingleton(1, TimeUnit.MINUTES);
-		final ExecutorService executorService = singleton.getExecutorService();
-		Assert.assertNotNull(executorService);
-		singleton.close();
-		Assert.assertTrue(executorService.isShutdown());
-	}
+    @Test
+    public void internalExecutorService() throws InterruptedException {
+        final ExecutorSingleton singleton = new ExecutorSingleton(1, TimeUnit.MINUTES);
+        try {
+            final ExecutorService executorService = singleton.getExecutorService();
+            Assert.assertNotNull(executorService);
+            singleton.close();
+            Assert.assertTrue(executorService.isShutdown());
+            Assert.assertTrue(executorService.isTerminated());
+        } finally {
+            ExecutorUtils.close(singleton.getExecutorService(), 1, TimeUnit.MINUTES);
+        }
+    }
 
 }

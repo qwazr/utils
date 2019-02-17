@@ -82,7 +82,7 @@ public class ExecutorSingleton implements Closeable {
         if (externalExecutorService == null && executorService != null) {
             if (!executorService.isShutdown())
                 executorService.shutdown();
-            ExceptionUtils.bypass(() -> executorService.awaitTermination(closingTimeout, closingUnit));
+            ExceptionUtils.bypass(() -> ExecutorUtils.close(executorService, closingTimeout, closingUnit));
             executorService = null;
         }
     }

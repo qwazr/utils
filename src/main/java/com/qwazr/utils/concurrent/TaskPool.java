@@ -24,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 
 public interface TaskPool {
 
+    int DEFAULT_MAX_CONCURRENT_TASKS = Runtime.getRuntime().availableProcessors() + 1;
+
     default Future submit(final Runnable task) {
         return submit((Callable<?>) () -> {
             task.run();
@@ -40,6 +42,22 @@ public interface TaskPool {
 
     void awaitTermination() throws InterruptedException;
 
+    static TaskPool of() {
+        return new WithExecutor();
+    }
+
+    static TaskPool of(final int maxConcurrentTasks) {
+        return new WithExecutor(maxConcurrentTasks);
+    }
+
+    static TaskPool of(final ExecutorService executorService) {
+        return new Base(executorService);
+    }
+
+    static TaskPool of(final ExecutorService executorService, final int maxConcurrentTasks) {
+        return new Base(executorService, maxConcurrentTasks);
+    }
+
     class Base implements TaskPool {
 
         private final int maxConcurrentTasks;
@@ -53,7 +71,7 @@ public interface TaskPool {
         }
 
         protected Base(final ExecutorService executorService) {
-            this(executorService, Runtime.getRuntime().availableProcessors() * 2 + 1);
+            this(executorService, DEFAULT_MAX_CONCURRENT_TASKS);
         }
 
         protected ExecutorService getExecutorService() {
@@ -108,11 +126,7 @@ public interface TaskPool {
 
         @Override
         public void close() throws Exception {
-            final ExecutorService executorService = getExecutorService();
-            if (executorService.isTerminated())
-                return;
-            executorService.shutdown();
-            executorService.awaitTermination(1, TimeUnit.DAYS);
+            ExecutorUtils.close(getExecutorService(), 1, TimeUnit.DAYS);
         }
     }
 }
