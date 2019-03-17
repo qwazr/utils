@@ -15,6 +15,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -41,11 +43,11 @@ public class Bitmap64Provider implements
                                           final MediaType mediaType,
                                           final MultivaluedMap<String, String> httpHeaders,
                                           final InputStream entityStream) throws IOException, WebApplicationException {
-        try (final DataInputStream input = new DataInputStream(entityStream)) {
-            final Roaring64NavigableMap bitmap = new Roaring64NavigableMap();
+        final Roaring64NavigableMap bitmap = new Roaring64NavigableMap();
+        try (final DataInputStream input = new DataInputStream(new ByteArrayInputStream(entityStream.readAllBytes()))) {
             bitmap.deserialize(input);
-            return bitmap;
         }
+        return bitmap;
     }
 
     @Override
@@ -64,9 +66,11 @@ public class Bitmap64Provider implements
                         final MediaType mediaType,
                         final MultivaluedMap<String, Object> httpHeaders,
                         final OutputStream entityStream) throws IOException, WebApplicationException {
-        try (final DataOutputStream output = new DataOutputStream(entityStream)) {
-            bitmap.runOptimize();
-            bitmap.serialize(output);
+        try (final ByteArrayOutputStream bytesOutput = new ByteArrayOutputStream()) {
+            try (final DataOutputStream dataOutput = new DataOutputStream(bytesOutput)) {
+                bitmap.serialize(dataOutput);
+            }
+            entityStream.write(bytesOutput.toByteArray());
         }
     }
 }
