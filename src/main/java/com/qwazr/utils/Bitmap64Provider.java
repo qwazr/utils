@@ -15,8 +15,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -43,7 +41,7 @@ public class Bitmap64Provider implements
                                           final MediaType mediaType,
                                           final MultivaluedMap<String, String> httpHeaders,
                                           final InputStream entityStream) throws IOException, WebApplicationException {
-        try (final DataInputStream input = new DataInputStream(new BufferedInputStream(entityStream))) {
+        try (final DataInputStream input = new DataInputStream(entityStream)) {
             final Roaring64NavigableMap bitmap = new Roaring64NavigableMap();
             bitmap.deserialize(input);
             return bitmap;
@@ -51,19 +49,23 @@ public class Bitmap64Provider implements
     }
 
     @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+    public boolean isWriteable(final Class<?> type,
+                               final Type genericType,
+                               final Annotation[] annotations,
+                               final MediaType mediaType) {
         return type == Roaring64NavigableMap.class && mediaType.isCompatible(MediaType.APPLICATION_OCTET_STREAM_TYPE);
     }
 
     @Override
-    public void writeTo(Roaring64NavigableMap bitmap,
-                        Class<?> type,
-                        Type genericType,
-                        Annotation[] annotations,
-                        MediaType mediaType,
-                        MultivaluedMap<String, Object> httpHeaders,
-                        OutputStream entityStream) throws IOException, WebApplicationException {
-        try (final DataOutputStream output = new DataOutputStream(new BufferedOutputStream(entityStream))) {
+    public void writeTo(final Roaring64NavigableMap bitmap,
+                        final Class<?> type,
+                        final Type genericType,
+                        final Annotation[] annotations,
+                        final MediaType mediaType,
+                        final MultivaluedMap<String, Object> httpHeaders,
+                        final OutputStream entityStream) throws IOException, WebApplicationException {
+        try (final DataOutputStream output = new DataOutputStream(entityStream)) {
+            bitmap.runOptimize();
             bitmap.serialize(output);
         }
     }
