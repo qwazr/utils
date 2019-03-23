@@ -174,8 +174,10 @@ public interface TaskPool extends Closeable {
         }
 
         @Override
-        public synchronized void close() {
-            shutdown().awaitCompletion();
+        public void close() {
+            synchronized (shutdown()) {
+                shutdown().awaitCompletion();
+            }
         }
     }
 
@@ -194,7 +196,7 @@ public interface TaskPool extends Closeable {
         }
 
         @Override
-        public synchronized void close() {
+        public void close() {
             super.close();
             try {
                 ExecutorUtils.close(getExecutorService(), 1, TimeUnit.DAYS);
