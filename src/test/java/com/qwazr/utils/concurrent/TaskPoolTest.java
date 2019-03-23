@@ -63,11 +63,12 @@ public class TaskPoolTest {
             for (int value : values)
                 pool.submit(() -> {
                     returned.add(value);
-                    return value;
-                }).whenComplete((result, throwable) -> {
                     if (resultValues != null)
-                        resultValues.add(result);
+                        resultValues.add(value);
+                    return value;
                 });
+            while (pool.getConcurrentTasks() > 0)
+                ThreadUtils.sleep(1, TimeUnit.SECONDS);
             pool.close();
             Assert.assertEquals(0, pool.getConcurrentTasks());
         }
@@ -119,14 +120,14 @@ public class TaskPoolTest {
         test(2, 5, true);
     }
 
-    private void test(TaskPool pool, int count, int expectedTotal) {
+    private void test(final TaskPool pool, final int count, final int expectedTotal) {
         final AtomicInteger counter = new AtomicInteger();
         final AtomicInteger total = new AtomicInteger();
         for (int i = 0; i < count; i++) {
             pool.submit(() -> {
                 ThreadUtils.sleep(1, TimeUnit.SECONDS);
-                return counter.incrementAndGet();
-            }).thenAccept(total::addAndGet);
+                total.addAndGet(counter.incrementAndGet());
+            });
         }
         assertFalse(pool.isShutdown());
         assertEquals(pool.shutdown(), pool);

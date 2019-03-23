@@ -130,14 +130,12 @@ public interface TaskPool extends Closeable {
                     throw new RuntimeException(e);
                 }
                 try {
-                    final CompletableFuture<RESULT> future = CompletableFuture
-                            .supplyAsync(task, executorService)
-                            .whenComplete(((result, throwable) -> {
-                                tasksSemaphore.release();
-                                futures.removeIf(Future::isDone);
-                            }));
+                    final CompletableFuture<RESULT> future = CompletableFuture.supplyAsync(task, executorService);
                     futures.add(future);
-                    return future;
+                    return future.whenComplete((result, throwable) -> {
+                        tasksSemaphore.release();
+                        futures.removeIf(Future::isDone);
+                    });
                 } catch (RuntimeException e) {
                     tasksSemaphore.release();
                     throw e;
