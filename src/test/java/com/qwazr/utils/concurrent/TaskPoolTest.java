@@ -23,8 +23,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -163,16 +161,11 @@ public class TaskPoolTest {
 
     @Test
     public void exceptionsCollectTest() {
-        final List<Throwable> errors = new ArrayList<>();
+        thrown.expectMessage("exceptionCollectTest");
         try (final TaskPool pool = TaskPool.of()) {
             pool.submit(() -> {
                 throw new RuntimeException("exceptionCollectTest");
-            }).whenComplete((result, throwable) -> {
-                if (throwable != null)
-                    errors.add(throwable);
-            });
-            assertEquals(1, errors.size());
-            assertEquals("exceptionCollectTest", errors.get(0).getCause().getMessage());
+            }).join();
         }
     }
 
