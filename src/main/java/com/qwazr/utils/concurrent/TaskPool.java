@@ -15,63 +15,100 @@
  */
 package com.qwazr.utils.concurrent;
 
-import java.util.concurrent.Callable;
+import com.qwazr.utils.LoggerUtils;
+
+import java.io.Closeable;
+import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public interface TaskPool {
+public interface TaskPool extends Closeable {
+
+    Logger DEFAULT_LOGGER = LoggerUtils.getLogger(TaskPool.class);
 
     int DEFAULT_MAX_CONCURRENT_TASKS = Runtime.getRuntime().availableProcessors() + 1;
 
-    default Future submit(final Runnable task) {
-        return submit((Callable<?>) () -> {
+    default CompletableFuture<?> submit(final Runnable task) {
+        return submit((Supplier<?>) () -> {
             task.run();
             return null;
         });
     }
 
-    <RESULT> Future<RESULT> submit(final Callable<RESULT> task);
-
-    default void onTaskError(Exception exception) {
-    }
+    <RESULT> CompletableFuture<RESULT> submit(final Supplier<RESULT> task);
 
     int getConcurrentTasks();
 
-    void awaitTermination() throws InterruptedException;
+    TaskPool shutdown();
+
+    boolean isShutdown();
+
+    TaskPool awaitCompletion();
+
+    @Override
+    void close();
+
+    static TaskPool of(final Logger logger) {
+        return new WithExecutor(logger);
+    }
 
     static TaskPool of() {
-        return new WithExecutor();
+        return of(DEFAULT_LOGGER);
+    }
+
+    static TaskPool of(final Logger logger, final int maxConcurrentTasks) {
+        return new WithExecutor(logger, maxConcurrentTasks);
     }
 
     static TaskPool of(final int maxConcurrentTasks) {
-        return new WithExecutor(maxConcurrentTasks);
+        return of(DEFAULT_LOGGER, maxConcurrentTasks);
+    }
+
+    static TaskPool of(final Logger logger, final ExecutorService executorService) {
+        return new Base(logger, executorService);
     }
 
     static TaskPool of(final ExecutorService executorService) {
-        return new Base(executorService);
+        return of(DEFAULT_LOGGER, executorService);
+    }
+
+    static TaskPool of(final Logger logger, final ExecutorService executorService, final int maxConcurrentTasks) {
+        return new Base(logger, executorService, maxConcurrentTasks);
     }
 
     static TaskPool of(final ExecutorService executorService, final int maxConcurrentTasks) {
-        return new Base(executorService, maxConcurrentTasks);
+        return of(DEFAULT_LOGGER, executorService, maxConcurrentTasks);
     }
 
     class Base implements TaskPool {
 
-        private final int maxConcurrentTasks;
+        private final AtomicBoolean shutdown;
         private final Semaphore tasksSemaphore;
+        private final Logger logger;
         private final ExecutorService executorService;
+        private final Set<CompletableFuture> futures;
 
-        protected Base(final ExecutorService executorService, final int maxConcurrentTasks) {
-            this.maxConcurrentTasks = maxConcurrentTasks;
+        protected Base(final Logger logger, final ExecutorService executorService, final int maxConcurrentTasks) {
+            this.shutdown = new AtomicBoolean(false);
             this.tasksSemaphore = new Semaphore(maxConcurrentTasks, true);
+            this.logger = logger;
             this.executorService = executorService;
+            this.futures = ConcurrentHashMap.newKeySet(maxConcurrentTasks);
         }
 
-        protected Base(final ExecutorService executorService) {
-            this(executorService, DEFAULT_MAX_CONCURRENT_TASKS);
+        protected Base(final Logger logger, final ExecutorService executorService) {
+            this(logger, executorService, DEFAULT_MAX_CONCURRENT_TASKS);
         }
 
         protected ExecutorService getExecutorService() {
@@ -79,54 +116,93 @@ public interface TaskPool {
         }
 
         public int getConcurrentTasks() {
-            return maxConcurrentTasks - tasksSemaphore.availablePermits();
+            return futures.size();
         }
 
         @Override
-        public <RESULT> Future<RESULT> submit(final Callable<RESULT> task) {
-            try {
-                tasksSemaphore.acquire();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+        public <RESULT> CompletableFuture<RESULT> submit(final Supplier<RESULT> task) {
+            synchronized (shutdown) {
+                if (shutdown.get())
+                    throw new IllegalStateException("The task pool is shutdown");
+                try {
+                    tasksSemaphore.acquire();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                try {
+                    final CompletableFuture<RESULT> future = CompletableFuture
+                            .supplyAsync(task, executorService)
+                            .whenComplete(((result, throwable) -> {
+                                tasksSemaphore.release();
+                                futures.removeIf(Future::isDone);
+                            }));
+                    futures.add(future);
+                    return future;
+                } catch (RuntimeException e) {
+                    tasksSemaphore.release();
+                    throw e;
+                }
             }
-            try {
-                return executorService.submit(() -> {
+        }
+
+        @Override
+        public TaskPool shutdown() {
+            shutdown.set(true);
+            return this;
+        }
+
+        @Override
+        public boolean isShutdown() {
+            return shutdown.get();
+        }
+
+        @Override
+        public TaskPool awaitCompletion() {
+            synchronized (shutdown) {
+                if (!isShutdown())
+                    throw new IllegalStateException("The pool must be shutdown first");
+                futures.forEach(future -> {
                     try {
-                        return task.call();
-                    } catch (final Exception exception) {
-                        onTaskError(exception);
-                        return null;
-                    } finally {
-                        tasksSemaphore.release();
+                        future.join();
+                    } catch (final CancellationException e) {
+                        logger.log(Level.WARNING, e, () -> "Job cancelled");
+                    } catch (final CompletionException e) {
+                        logger.log(Level.WARNING, e, () -> "Job completion exception");
                     }
                 });
-            } catch (
-                    RuntimeException e) {
-                tasksSemaphore.release();
-                throw e;
+                futures.clear();
             }
+            return this;
         }
 
         @Override
-        public synchronized void awaitTermination() throws InterruptedException {
-            tasksSemaphore.acquire(maxConcurrentTasks);
-            tasksSemaphore.release(maxConcurrentTasks);
+        public synchronized void close() {
+            shutdown().awaitCompletion();
         }
     }
 
-    class WithExecutor extends Base implements AutoCloseable {
+    class WithExecutor extends Base {
 
-        protected WithExecutor(int maxConcurrentTasks) {
-            super(Executors.newFixedThreadPool(maxConcurrentTasks), maxConcurrentTasks);
+        private final Logger logger;
+
+        protected WithExecutor(final Logger logger, final int maxConcurrentTasks) {
+            super(logger, Executors.newFixedThreadPool(maxConcurrentTasks), maxConcurrentTasks);
+            this.logger = logger;
         }
 
-        protected WithExecutor() {
-            super(Executors.newCachedThreadPool());
+        protected WithExecutor(final Logger logger) {
+            super(logger, Executors.newCachedThreadPool());
+            this.logger = logger;
         }
 
         @Override
-        public void close() throws Exception {
-            ExecutorUtils.close(getExecutorService(), 1, TimeUnit.DAYS);
+        public synchronized void close() {
+            super.close();
+            try {
+                ExecutorUtils.close(getExecutorService(), 1, TimeUnit.DAYS);
+            } catch (InterruptedException e) {
+                logger.log(Level.WARNING, e, () -> "Task pool closing interrupted");
+            }
         }
     }
 }
