@@ -116,6 +116,7 @@ public interface TaskPool extends Closeable {
         }
 
         public int getConcurrentTasks() {
+            futures.removeIf(Future::isDone);
             return futures.size();
         }
 
@@ -131,11 +132,9 @@ public interface TaskPool extends Closeable {
                 }
                 try {
                     final CompletableFuture<RESULT> future = CompletableFuture.supplyAsync(task, executorService);
+                    futures.removeIf(Future::isDone);
                     futures.add(future);
-                    return future.whenComplete((result, throwable) -> {
-                        tasksSemaphore.release();
-                        futures.removeIf(Future::isDone);
-                    });
+                    return future.whenComplete((result, throwable) -> tasksSemaphore.release());
                 } catch (RuntimeException e) {
                     tasksSemaphore.release();
                     throw e;
