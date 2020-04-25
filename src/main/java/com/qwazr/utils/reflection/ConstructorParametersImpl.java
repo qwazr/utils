@@ -45,7 +45,7 @@ public class ConstructorParametersImpl extends InstancesSupplier.Impl implements
         final Constructor<T>[] constructors = (Constructor<T>[]) objectClass.getConstructors();
         if (map.size() == 0) {
             final Constructor<T> constructor = objectClass.getDeclaredConstructor();
-            return constructor == null ? null : new InstanceFactory<>(constructor, null);
+            return new InstanceFactory<>(constructor, null);
         }
         int max = -1;
         Constructor<T> bestMatchConstructor = null;
@@ -60,10 +60,8 @@ public class ConstructorParametersImpl extends InstancesSupplier.Impl implements
                 max = parameters.length;
             }
         }
-        if (bestParameterArray == null) {
-            final Constructor<T> constructor = objectClass.getDeclaredConstructor();
-            return constructor == null ? null : new InstanceFactory<>(constructor, null);
-        }
+        if (bestParameterArray == null)
+            return new InstanceFactory<>(objectClass.getDeclaredConstructor(), null);
         return new InstanceFactory<>(bestMatchConstructor, bestParameterArray);
     }
 
@@ -77,7 +75,7 @@ public class ConstructorParametersImpl extends InstancesSupplier.Impl implements
     private <T> Object[] findMatchingParameterSet(final Constructor<T> constructor) {
         final List<Object> parameterList = new ArrayList<>();
         final Class<?>[] parameterClasses = constructor.getParameterTypes();
-        if (parameterClasses == null || parameterClasses.length == 0)
+        if (parameterClasses.length == 0)
             return NO_PARAMS;
         for (final Class<?> parameterClass : parameterClasses) {
             final Object parameter = map.get(parameterClass);

@@ -92,7 +92,7 @@ public class AccessTimeCacheMap<K, V> {
 
     }
 
-    private class AccessTimeCacheEntry<T> {
+    private static class AccessTimeCacheEntry<T> {
 
         private volatile long expirationTime;
 

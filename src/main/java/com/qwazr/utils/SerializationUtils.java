@@ -15,7 +15,7 @@
  */
 package com.qwazr.utils;
 
-import com.qwazr.externalizor.Externalizor;
+import com.qwazr.externalizor   .Externalizor;
 
 import java.io.*;
 import java.util.zip.GZIPInputStream;

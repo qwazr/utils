@@ -16,6 +16,7 @@
 package com.qwazr.utils.jdbc;
 
 import com.qwazr.utils.jdbc.connection.ConnectionManager;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.beans.BeanInfo;
 import java.beans.Beans;
@@ -26,7 +27,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -115,7 +120,8 @@ public class Query {
             try {
                 if (colObject != null)
                     method.invoke(bean, colObject);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 throw new Exception("Error on column " + columnIndex + " method " + method.getName() +
                         " object class is " + colObject.getClass().getName(), e);
             }
@@ -195,17 +201,18 @@ public class Query {
         return rows;
     }
 
+    @NonNull
     private List<Row> createRowList(int limit) throws SQLException {
         moveToFirstResult();
-        List<Row> rows = createRowList(resultSet, limit);
-        return rows;
+        return createRowList(resultSet, limit);
     }
 
     public Iterator<Row> getRowIterator() {
         try {
             checkResultSet();
             return new RowIterator(buildColumnMap(resultSet), resultSet);
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
@@ -280,7 +287,7 @@ public class Query {
     public Row getFirstResult() throws SQLException {
         checkResultSet();
         List<Row> rows = createRowList(1);
-        if (rows == null || rows.isEmpty())
+        if (rows.isEmpty())
             return null;
         return rows.get(0);
     }

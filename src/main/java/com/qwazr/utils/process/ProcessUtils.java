@@ -18,7 +18,6 @@ package com.qwazr.utils.process;
 import com.qwazr.utils.LoggerUtils;
 import org.apache.commons.lang3.SystemUtils;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -57,7 +56,6 @@ public class ProcessUtils {
         return run(commandLine);
     }
 
-    @Nullable
     public static boolean isRunning(final Number pid) throws IOException, InterruptedException {
         Objects.requireNonNull(pid, "The PID is null");
         final String commandLine;
@@ -72,7 +70,8 @@ public class ProcessUtils {
         final Process process = Runtime.getRuntime().exec(commandLine);
         try {
             return process.waitFor();
-        } finally {
+        }
+        finally {
             process.destroy();
             if (process.isAlive())
                 process.destroyForcibly();
