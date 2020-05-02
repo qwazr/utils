@@ -26,7 +26,7 @@ public class AutoCloseWrapper<T> implements AutoCloseable {
     private final T instance;
     private final ConsumerEx<T, Exception> closeAction;
 
-    static <T> AutoCloseWrapper<T> of(final T instance, final Logger logger, final ConsumerEx<T, Exception> closeAction) {
+    public static <T> AutoCloseWrapper<T> of(final T instance, final Logger logger, final ConsumerEx<T, Exception> closeAction) {
         return new AutoCloseWrapper<>(instance, logger, closeAction);
     }
 
