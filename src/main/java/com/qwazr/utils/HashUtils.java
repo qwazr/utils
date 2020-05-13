@@ -18,86 +18,91 @@ package com.qwazr.utils;
 import com.fasterxml.uuid.EthernetAddress;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import com.google.common.primitives.Longs;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.codec.digest.MurmurHash3;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.UUID;
 
 public class HashUtils {
+    
+    public static int getMurmur3Hash32(final String stringToHash, final int mod) {
+        return (Math.abs(MurmurHash3.hash32x86(stringToHash.getBytes())) % mod);
+    }
 
-	public static int getMurmur3Mod(final String hashString, final Charset charset, final int mod) {
-		final HashFunction m3 = Hashing.murmur3_128();
-		return (Math.abs(m3.hashString(hashString, charset == null ? Charset.defaultCharset() : charset).asInt()) %
-				mod);
-	}
+    public static String getMurmur3Hash128Hex(final String stringToHash) {
+        final long[] hash = MurmurHash3.hash128x64(stringToHash.getBytes());
+        return Long.toHexString(hash[0]) + Long.toHexString(hash[1]);
+    }
 
-	/**
-	 * Compute the MD5 hash from a file and return the hexa representation
-	 *
-	 * @param filePath path to a regular file
-	 * @return an hexa representation of the md5
-	 * @throws IOException
-	 */
-	public static String md5Hex(final Path filePath) throws IOException {
-		try (final InputStream in = Files.newInputStream(filePath);
-				final BufferedInputStream bIn = new BufferedInputStream(in)) {
-			return DigestUtils.md5Hex(bIn);
-		}
-	}
+    public static String getMurmur3Hash32Hex(final String stringToHash) {
+        return Integer.toHexString(MurmurHash3.hash32x86(stringToHash.getBytes()));
+    }
 
-	public static String md5Hex(String text) {
-		return DigestUtils.md5Hex(text);
-	}
+    /**
+     * Compute the MD5 hash from a file and return the hexa representation
+     *
+     * @param filePath path to a regular file
+     * @return an hexa representation of the md5
+     * @throws IOException if any I/O exception occurs
+     */
+    public static String md5Hex(final Path filePath) throws IOException {
+        try (final InputStream in = Files.newInputStream(filePath);
+             final BufferedInputStream bIn = new BufferedInputStream(in)) {
+            return DigestUtils.md5Hex(bIn);
+        }
+    }
 
-	private static TimeBasedGenerator uuidGenerator = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
+    public static String md5Hex(String text) {
+        return DigestUtils.md5Hex(text);
+    }
 
-	public static UUID newTimeBasedUUID() {
-		return uuidGenerator.generate();
-	}
+    private static TimeBasedGenerator uuidGenerator = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
 
-	private static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
+    public static UUID newTimeBasedUUID() {
+        return uuidGenerator.generate();
+    }
 
-	// This method comes from Hector's TimeUUIDUtils class:
-	// https://github.com/rantav/hector/blob/master/core/src/main/java/me/prettyprint/cassandra/utils/TimeUUIDUtils.java
-	public static long getTimeFromUUID(UUID uuid) {
-		return (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000;
-	}
+    private static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
 
-	public static String longToBase64(final long value) {
-		return Base64.getEncoder().encodeToString(Longs.toByteArray(value));
-	}
+    // This method comes from Hector's TimeUUIDUtils class:
+    // https://github.com/rantav/hector/blob/master/core/src/main/java/me/prettyprint/cassandra/utils/TimeUUIDUtils.java
+    public static long getTimeFromUUID(UUID uuid) {
+        return (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000;
+    }
 
-	public static long base64toLong(final String base64) {
-		return Longs.fromByteArray(Base64.getDecoder().decode(base64));
-	}
+    public static String longToBase64(final long value) {
+        return Base64.getEncoder().encodeToString(Longs.toByteArray(value));
+    }
 
-	/**
-	 * Encode an UUID into a base64 string
-	 *
-	 * @param uuid the UUID to encode
-	 * @return the encoded string
-	 */
-	public static String toBase64(UUID uuid) {
-		return longToBase64(uuid.getMostSignificantBits()) + ' ' + longToBase64(uuid.getLeastSignificantBits());
-	}
+    public static long base64toLong(final String base64) {
+        return Longs.fromByteArray(Base64.getDecoder().decode(base64));
+    }
 
-	/**
-	 * Decode an UUID from a Base64 string
-	 *
-	 * @param shortString the encoded string
-	 * @return the decoded UUID
-	 */
-	public static UUID fromBase64(String shortString) {
-		final String[] parts = StringUtils.split(shortString, ' ');
-		return new UUID(base64toLong(parts[0]), base64toLong(parts[1]));
-	}
+    /**
+     * Encode an UUID into a base64 string
+     *
+     * @param uuid the UUID to encode
+     * @return the encoded string
+     */
+    public static String toBase64(UUID uuid) {
+        return longToBase64(uuid.getMostSignificantBits()) + ' ' + longToBase64(uuid.getLeastSignificantBits());
+    }
+
+    /**
+     * Decode an UUID from a Base64 string
+     *
+     * @param shortString the encoded string
+     * @return the decoded UUID
+     */
+    public static UUID fromBase64(String shortString) {
+        final String[] parts = StringUtils.split(shortString, ' ');
+        return new UUID(base64toLong(parts[0]), base64toLong(parts[1]));
+    }
 }
