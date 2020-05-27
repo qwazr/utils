@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 Emmanuel Keller / QWAZR
+ * Copyright 2016-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,55 +28,93 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.UUID;
 
-/**
- * Created by ekeller on 12/12/2016.
- */
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayWithSize;
+import static org.hamcrest.Matchers.equalTo;
+
 public class HashUtilTest {
 
-	@Test
-	public void timeBasedUuid() {
-		final HashSet<UUID> set = new HashSet<>();
-		for (int i = 0; i < 100; i++) {
-			final UUID uuid = HashUtils.newTimeBasedUUID();
-			if (!set.add(uuid))
-				Assert.fail("The UUID is not unique");
-		}
-	}
+    @Test
+    public void timeBasedUuid() {
+        final HashSet<UUID> set = new HashSet<>();
+        for (int i = 0; i < 100; i++) {
+            final UUID uuid = HashUtils.newTimeBasedUUID();
+            if (!set.add(uuid))
+                Assert.fail("The UUID is not unique");
+        }
+    }
 
-	@Test
-	public void md5Test() throws IOException {
-		final String content = RandomUtils.alphanumeric(1000);
-		final String md5a = HashUtils.md5Hex(content);
-		Assert.assertNotNull(md5a);
+    @Test
+    public void md5Test() throws IOException {
+        final String content = RandomUtils.alphanumeric(1000);
+        final String md5a = HashUtils.md5Hex(content);
+        Assert.assertNotNull(md5a);
 
-		final Path file = Files.createTempFile("hashUtils", ".txt");
-		IOUtils.writeStringToPath(content, Charset.defaultCharset(), file);
-		final String md5b = HashUtils.md5Hex(file);
+        final Path file = Files.createTempFile("hashUtils", ".txt");
+        IOUtils.writeStringToPath(content, Charset.defaultCharset(), file);
+        final String md5b = HashUtils.md5Hex(file);
 
-		Assert.assertEquals(md5a, md5b);
+        Assert.assertEquals(md5a, md5b);
 
-	}
+    }
 
-	@Test
-	public void timeConversion() {
-		UUID uuid = HashUtils.newTimeBasedUUID();
-		long time = HashUtils.getTimeFromUUID(uuid);
-		Assert.assertEquals(time, (uuid.timestamp() - 0x01b21dd213814000L) / 10000);
-	}
+    @Test
+    public void timeConversion() {
+        UUID uuid = HashUtils.newTimeBasedUUID();
+        long time = HashUtils.getTimeFromUUID(uuid);
+        Assert.assertEquals(time, (uuid.timestamp() - 0x01b21dd213814000L) / 10000);
+    }
 
-	private void checkBase64Uuuid(UUID uuid) {
-		final String encoded = HashUtils.toBase64(uuid);
-		final UUID decoded = HashUtils.fromBase64(encoded);
-		Assert.assertEquals(uuid, decoded);
-	}
+    private void checkBase64Uuids(final HashUtils.B64 b64, UUID... uuids) {
+        final String encoded = b64.toBase64(uuids);
+        final UUID[] decodedUuids = b64.fromBase64(encoded);
+        assertThat(uuids, arrayWithSize(decodedUuids.length));
+        assertThat(uuids, equalTo(decodedUuids));
+    }
 
-	@Test
-	public void base64UuidTimeBasesEncodingTest() {
-		checkBase64Uuuid(HashUtils.newTimeBasedUUID());
-	}
+    private void checkBase64Uuids(final UUID... uuids) {
+        checkBase64Uuids(HashUtils.b64(), uuids);
+        checkBase64Uuids(HashUtils.b64url(), uuids);
+    }
 
-	@Test
-	public void base64UuidRandomEncodingTest() {
-		checkBase64Uuuid(UUID.randomUUID());
-	}
+    @Test
+    public void base64UuidTimeBasesEncodingTest() {
+        checkBase64Uuids(HashUtils.newTimeBasedUUID());
+        checkBase64Uuids(HashUtils.newTimeBasedUUID(), HashUtils.newTimeBasedUUID());
+        checkBase64Uuids(HashUtils.newTimeBasedUUID(), HashUtils.newTimeBasedUUID(), HashUtils.newTimeBasedUUID());
+    }
+
+    @Test
+    public void base64UuidRandomEncodingTest() {
+        checkBase64Uuids(UUID.randomUUID());
+        checkBase64Uuids(UUID.randomUUID(), UUID.randomUUID());
+        checkBase64Uuids(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+    }
+
+    @Test
+    public void longToBase64Test() {
+        Assert.assertEquals("AAAAAkywFuo=", HashUtils.b64().longToBase64(9876543210L));
+    }
+
+    @Test
+    public void longGetMurmur3Hash32() {
+        Assert.assertEquals(0, HashUtils.getMurmur3Hash32("a", 10));
+        Assert.assertEquals(1, HashUtils.getMurmur3Hash32("b", 10));
+        Assert.assertEquals(7, HashUtils.getMurmur3Hash32("c", 10));
+        Assert.assertEquals(9, HashUtils.getMurmur3Hash32("d", 10));
+        Assert.assertEquals(9, HashUtils.getMurmur3Hash32("e", 10));
+        Assert.assertEquals(3, HashUtils.getMurmur3Hash32("f", 10));
+    }
+
+    @Test
+    public void longGetMurmur3Hash128Hex() {
+        Assert.assertEquals("e47d86bfaca3bf55b07109993321845c", HashUtils.getMurmur3Hash128Hex("abcdef"));
+        Assert.assertEquals("a6cd2f9fc09ee4991c3aa23ab155bbb6", HashUtils.getMurmur3Hash128Hex("abcdefg"));
+    }
+
+    @Test
+    public void longGetMurmur3Hash32Hex() {
+        Assert.assertEquals("6181c085", HashUtils.getMurmur3Hash32Hex("abcdef"));
+        Assert.assertEquals("883c9b06", HashUtils.getMurmur3Hash32Hex("abcdefg"));
+    }
 }

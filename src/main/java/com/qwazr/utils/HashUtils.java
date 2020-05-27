@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.Base64;
 import java.util.UUID;
 
 public class HashUtils {
-    
+
     public static int getMurmur3Hash32(final String stringToHash, final int mod) {
         return (Math.abs(MurmurHash3.hash32x86(stringToHash.getBytes())) % mod);
     }
@@ -77,32 +77,71 @@ public class HashUtils {
         return (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000;
     }
 
-    public static String longToBase64(final long value) {
-        return Base64.getEncoder().encodeToString(Longs.toByteArray(value));
+    public static B64 b64() {
+        return new B64(Base64.getEncoder(), Base64.getDecoder());
     }
 
-    public static long base64toLong(final String base64) {
-        return Longs.fromByteArray(Base64.getDecoder().decode(base64));
+    public static B64 b64url() {
+        return new B64(Base64.getUrlEncoder(), Base64.getUrlDecoder());
     }
 
-    /**
-     * Encode an UUID into a base64 string
-     *
-     * @param uuid the UUID to encode
-     * @return the encoded string
-     */
-    public static String toBase64(UUID uuid) {
-        return longToBase64(uuid.getMostSignificantBits()) + ' ' + longToBase64(uuid.getLeastSignificantBits());
-    }
+    public static class B64 {
 
-    /**
-     * Decode an UUID from a Base64 string
-     *
-     * @param shortString the encoded string
-     * @return the decoded UUID
-     */
-    public static UUID fromBase64(String shortString) {
-        final String[] parts = StringUtils.split(shortString, ' ');
-        return new UUID(base64toLong(parts[0]), base64toLong(parts[1]));
+        private final Base64.Encoder encoder;
+        private final Base64.Decoder decoder;
+
+        public B64(final Base64.Encoder encoder, final Base64.Decoder decoder) {
+            this.encoder = encoder;
+            this.decoder = decoder;
+        }
+
+        public String longToBase64(final long value) {
+            return encoder.encodeToString(Longs.toByteArray(value));
+        }
+
+        public long base64toLong(final String base64) {
+            return Longs.fromByteArray(decoder.decode(base64));
+        }
+
+        /**
+         * Encode an UUID into a base64 string
+         *
+         * @param uuids the UUIDS to encode
+         * @return the encoded string
+         */
+        public String toBase64(final UUID... uuids) {
+            final byte[] bytes = new byte[uuids.length * 16];
+            int i = 0;
+            for (final UUID uuid : uuids) {
+                System.arraycopy(Longs.toByteArray(uuid.getMostSignificantBits()), 0, bytes, i, 8);
+                i += 8;
+                System.arraycopy(Longs.toByteArray(uuid.getLeastSignificantBits()), 0, bytes, i, 8);
+                i += 8;
+            }
+            return encoder.encodeToString(bytes);
+        }
+
+        /**
+         * Decode an array of UUIDS from a Base64 string
+         *
+         * @param encodedString the encoded string
+         * @return the decoded UUID array
+         */
+        public UUID[] fromBase64(final String encodedString) {
+            final byte[] bytes = decoder.decode(encodedString);
+            final UUID[] uuids = new UUID[bytes.length / 16];
+            int i = 0;
+            final byte[] leastBytes = new byte[8];
+            final byte[] mostBytes = new byte[8];
+            for (int j = 0; j < uuids.length; j++) {
+                System.arraycopy(bytes, i, mostBytes, 0, 8);
+                i += 8;
+                System.arraycopy(bytes, i, leastBytes, 0, 8);
+                i += 8;
+                uuids[j] = new UUID(Longs.fromByteArray(mostBytes), Longs.fromByteArray(leastBytes));
+            }
+            return uuids;
+        }
+
     }
 }
