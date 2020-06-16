@@ -44,7 +44,7 @@ public abstract class Equalizer<T extends Equalizer<T>> {
      *
      * @param <T>
      */
-    static abstract class Immutable<T extends Immutable<T>> extends Equalizer<T> {
+    public static abstract class Immutable<T extends Immutable<T>> extends Equalizer<T> {
 
         private volatile boolean computed;
         private volatile int hashCode;
