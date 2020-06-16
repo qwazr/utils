@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.qwazr.utils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public abstract class Equalizer<T extends Equalizer> {
+public abstract class Equalizer<T extends Equalizer<T>> {
 
     protected Class<T> ownClass;
 
@@ -36,5 +36,36 @@ public abstract class Equalizer<T extends Equalizer> {
     @Override
     public final boolean equals(final Object o) {
         return ownClass.isInstance(o) && (o == this || isEqual(ownClass.cast(o)));
+    }
+
+    /**
+     * This immutable equalizer compute the hashcode once in a lazy way,
+     * and it stores it to avoid it to be computed continuously
+     *
+     * @param <T>
+     */
+    static abstract class Immutable<T extends Immutable<T>> extends Equalizer<T> {
+
+        private volatile boolean computed;
+        private volatile int hashCode;
+
+        protected Immutable(final Class<T> ownClass) {
+            super(ownClass);
+        }
+
+        @Override
+        final public int hashCode() {
+            if (computed)
+                return hashCode;
+            synchronized (this) {
+                if (computed)
+                    return hashCode;
+                hashCode = computeHashCode();
+                computed = true;
+            }
+            return hashCode;
+        }
+
+        protected abstract int computeHashCode();
     }
 }

@@ -15,6 +15,10 @@
  */
 package com.qwazr.utils;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -22,28 +26,81 @@ import java.util.Objects;
 
 public class EqualizerTest {
 
-	@Test
-	public void testEquals() {
-		Assert.assertEquals(new Same(2), new Same(2));
-	}
+    @Test
+    public void testEquals() {
+        Assert.assertEquals(new Same(2), new Same(2));
+    }
 
-	@Test
-	public void testNonEquals() {
-		Assert.assertNotEquals(new Same(2), new Same(3));
-	}
+    @Test
+    public void testNonEquals() {
+        Assert.assertNotEquals(new Same(2), new Same(3));
+    }
 
-	public static class Same extends Equalizer<Same> {
+    public static class Same extends Equalizer<Same> {
 
-		private final Integer value;
+        private final Integer value;
 
-		Same(Integer value) {
-			super(Same.class);
-			this.value = value;
-		}
+        Same(Integer value) {
+            super(Same.class);
+            this.value = value;
+        }
 
-		@Override
-		protected boolean isEqual(Same query) {
-			return Objects.equals(value, query.value);
-		}
-	}
+        @Override
+        protected boolean isEqual(Same query) {
+            return Objects.equals(value, query.value);
+        }
+    }
+
+    @Test
+    public void testImmutableEquals() {
+        Assert.assertEquals(new SameImmutable(Long.MAX_VALUE), new SameImmutable(Long.MAX_VALUE));
+    }
+
+    @Test
+    public void testImmutableNonEquals() {
+        Assert.assertNotEquals(new SameImmutable(Long.MAX_VALUE), new SameImmutable(Long.MIN_VALUE));
+    }
+
+    @Test
+    public void testImmutableHashCode() {
+        Assert.assertEquals(new SameImmutable(Long.MAX_VALUE).hashCode(), Objects.hash(Long.MAX_VALUE));
+        Assert.assertEquals(new SameImmutable(Long.MIN_VALUE).hashCode(), Objects.hash(Long.MIN_VALUE));
+        Assert.assertEquals(new SameImmutable(0L).hashCode(), Objects.hash(0L));
+    }
+
+    @Test
+    public void testConcurrentImmutableHashCode() {
+        final SameImmutable sameImmutable = new SameImmutable(RandomUtils.nextLong());
+        final List<CompletableFuture<Integer>> tasks = new ArrayList<>();
+        for (int i = 0; i < 100; i++)
+            tasks.add(CompletableFuture.supplyAsync(sameImmutable::hashCode));
+        CompletableFuture.allOf(tasks.toArray(new CompletableFuture<?>[0])).join();
+        Assert.assertEquals(sameImmutable.countCompute.get(), 1);
+        for (final CompletableFuture<Integer> task : tasks)
+            Assert.assertEquals(task.getNow(null), Integer.valueOf(sameImmutable.hashCode()));
+    }
+
+
+    public static class SameImmutable extends Equalizer.Immutable<SameImmutable> {
+
+        private final Long value;
+        private final AtomicInteger countCompute;
+
+        SameImmutable(Long value) {
+            super(SameImmutable.class);
+            this.value = value;
+            this.countCompute = new AtomicInteger(0);
+        }
+
+        @Override
+        protected boolean isEqual(SameImmutable query) {
+            return Objects.equals(value, query.value);
+        }
+
+        @Override
+        protected int computeHashCode() {
+            countCompute.incrementAndGet();
+            return Objects.hash(value);
+        }
+    }
 }
