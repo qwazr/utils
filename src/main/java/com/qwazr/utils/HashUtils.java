@@ -19,29 +19,29 @@ import com.fasterxml.uuid.EthernetAddress;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import com.google.common.primitives.Longs;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.codec.digest.MurmurHash3;
-
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Base64;
 import java.util.UUID;
+import java.util.function.Consumer;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.codec.digest.MurmurHash3;
+import org.bitcoinj.core.Base58;
 
-public class HashUtils {
+public interface HashUtils {
 
-    public static int getMurmur3Hash32(final String stringToHash, final int mod) {
+    static int getMurmur3Hash32(final String stringToHash, final int mod) {
         return (Math.abs(MurmurHash3.hash32x86(stringToHash.getBytes())) % mod);
     }
 
-    public static String getMurmur3Hash128Hex(final String stringToHash) {
+    static String getMurmur3Hash128Hex(final String stringToHash) {
         final long[] hash = MurmurHash3.hash128x64(stringToHash.getBytes());
         return Long.toHexString(hash[0]) + Long.toHexString(hash[1]);
     }
 
-    public static String getMurmur3Hash32Hex(final String stringToHash) {
+    static String getMurmur3Hash32Hex(final String stringToHash) {
         return Integer.toHexString(MurmurHash3.hash32x86(stringToHash.getBytes()));
     }
 
@@ -52,96 +52,97 @@ public class HashUtils {
      * @return an hexa representation of the md5
      * @throws IOException if any I/O exception occurs
      */
-    public static String md5Hex(final Path filePath) throws IOException {
+    static String md5Hex(final Path filePath) throws IOException {
         try (final InputStream in = Files.newInputStream(filePath);
              final BufferedInputStream bIn = new BufferedInputStream(in)) {
             return DigestUtils.md5Hex(bIn);
         }
     }
 
-    public static String md5Hex(String text) {
+    static String md5Hex(String text) {
         return DigestUtils.md5Hex(text);
     }
 
-    private static TimeBasedGenerator uuidGenerator = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
+    TimeBasedGenerator UUID_GENERATOR = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
 
-    public static UUID newTimeBasedUUID() {
-        return uuidGenerator.generate();
+    static UUID newTimeBasedUUID() {
+        return UUID_GENERATOR.generate();
     }
 
-    private static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
+    long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
 
     // This method comes from Hector's TimeUUIDUtils class:
     // https://github.com/rantav/hector/blob/master/core/src/main/java/me/prettyprint/cassandra/utils/TimeUUIDUtils.java
-    public static long getTimeFromUUID(UUID uuid) {
+    static long getTimeFromUUID(UUID uuid) {
         return (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000;
     }
 
-    public static B64 b64() {
-        return new B64(Base64.getEncoder(), Base64.getDecoder());
+    static void toByteArray(long value, final byte[] bytes, final int offset) {
+        for (int i = offset + 7; i >= offset; i--) {
+            bytes[i] = (byte) (value & 0xffL);
+            value >>= 8;
+        }
     }
 
-    public static B64 b64url() {
-        return new B64(Base64.getUrlEncoder(), Base64.getUrlDecoder());
+    static void toByteArray(final UUID uuid, final byte[] bytes, final int offset) {
+        toByteArray(uuid.getMostSignificantBits(), bytes, offset);
+        toByteArray(uuid.getLeastSignificantBits(), bytes, offset + 8);
     }
 
-    public static class B64 {
+    static long fromByteArray(final byte[] bytes, int offset) {
+        return Longs.fromBytes(
+                bytes[offset],
+                bytes[++offset],
+                bytes[++offset],
+                bytes[++offset],
+                bytes[++offset],
+                bytes[++offset],
+                bytes[++offset],
+                bytes[++offset]);
+    }
 
-        private final Base64.Encoder encoder;
-        private final Base64.Decoder decoder;
+    static byte[] getBase58buffer(int uuidCount) {
+        return new byte[uuidCount * 16];
+    }
 
-        public B64(final Base64.Encoder encoder, final Base64.Decoder decoder) {
-            this.encoder = encoder;
-            this.decoder = decoder;
+    /**
+     * @param uuid        the uuid to encode
+     * @param bytesBuffer a 16 bytes long bytes buffer
+     * @return the Base58 encoded string
+     */
+    static String base58encode(final UUID uuid, byte[] bytesBuffer) {
+        toByteArray(uuid, bytesBuffer, 0);
+        return Base58.encode(bytesBuffer);
+    }
+
+    static String base58encode(final UUID uuid) {
+        return base58encode(uuid, getBase58buffer(1));
+    }
+
+    static String base58encode(byte[] bytesBuffer, final UUID... uuids) {
+        int offset = 0;
+        for (final UUID uuid : uuids) {
+            toByteArray(uuid, bytesBuffer, offset);
+            offset += 16;
         }
+        return Base58.encode(bytesBuffer);
+    }
 
-        public String longToBase64(final long value) {
-            return encoder.encodeToString(Longs.toByteArray(value));
+    static String base58encode(final UUID... uuids) {
+        return base58encode(getBase58buffer(uuids.length), uuids);
+    }
+
+    static UUID base58decode(final String encoded) {
+        final byte[] bytes = Base58.decode(encoded);
+        return new UUID(fromByteArray(bytes, 0), fromByteArray(bytes, 8));
+    }
+
+    static void base58decode(final String encoded, final Consumer<UUID> uuidConsumer) {
+        final byte[] bytes = Base58.decode(encoded);
+        int offset = 0;
+        while (offset < bytes.length) {
+            uuidConsumer.accept(new UUID(fromByteArray(bytes, offset), fromByteArray(bytes, offset + 8)));
+            offset += 16;
         }
-
-        public long base64toLong(final String base64) {
-            return Longs.fromByteArray(decoder.decode(base64));
-        }
-
-        /**
-         * Encode an UUID into a base64 string
-         *
-         * @param uuids the UUIDS to encode
-         * @return the encoded string
-         */
-        public String toBase64(final UUID... uuids) {
-            final byte[] bytes = new byte[uuids.length * 16];
-            int i = 0;
-            for (final UUID uuid : uuids) {
-                System.arraycopy(Longs.toByteArray(uuid.getMostSignificantBits()), 0, bytes, i, 8);
-                i += 8;
-                System.arraycopy(Longs.toByteArray(uuid.getLeastSignificantBits()), 0, bytes, i, 8);
-                i += 8;
-            }
-            return encoder.encodeToString(bytes);
-        }
-
-        /**
-         * Decode an array of UUIDS from a Base64 string
-         *
-         * @param encodedString the encoded string
-         * @return the decoded UUID array
-         */
-        public UUID[] fromBase64(final String encodedString) {
-            final byte[] bytes = decoder.decode(encodedString);
-            final UUID[] uuids = new UUID[bytes.length / 16];
-            int i = 0;
-            final byte[] leastBytes = new byte[8];
-            final byte[] mostBytes = new byte[8];
-            for (int j = 0; j < uuids.length; j++) {
-                System.arraycopy(bytes, i, mostBytes, 0, 8);
-                i += 8;
-                System.arraycopy(bytes, i, leastBytes, 0, 8);
-                i += 8;
-                uuids[j] = new UUID(Longs.fromByteArray(mostBytes), Longs.fromByteArray(leastBytes));
-            }
-            return uuids;
-        }
-
     }
 }

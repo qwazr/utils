@@ -18,19 +18,19 @@ package com.qwazr.utils.test;
 import com.qwazr.utils.HashUtils;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.RandomUtils;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayWithSize;
 import static org.hamcrest.Matchers.equalTo;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class HashUtilTest {
 
@@ -65,35 +65,34 @@ public class HashUtilTest {
         Assert.assertEquals(time, (uuid.timestamp() - 0x01b21dd213814000L) / 10000);
     }
 
-    private void checkBase64Uuids(final HashUtils.B64 b64, UUID... uuids) {
-        final String encoded = b64.toBase64(uuids);
-        final UUID[] decodedUuids = b64.fromBase64(encoded);
-        assertThat(uuids, arrayWithSize(decodedUuids.length));
-        assertThat(uuids, equalTo(decodedUuids));
+    private void checkBase58Uuid(final UUID uuid) {
+        final String encoded = HashUtils.base58encode(uuid);
+        final UUID decodedUui = HashUtils.base58decode(encoded);
+        assertThat(decodedUui, equalTo(uuid));
     }
 
-    private void checkBase64Uuids(final UUID... uuids) {
-        checkBase64Uuids(HashUtils.b64(), uuids);
-        checkBase64Uuids(HashUtils.b64url(), uuids);
-    }
-
-    @Test
-    public void base64UuidTimeBasesEncodingTest() {
-        checkBase64Uuids(HashUtils.newTimeBasedUUID());
-        checkBase64Uuids(HashUtils.newTimeBasedUUID(), HashUtils.newTimeBasedUUID());
-        checkBase64Uuids(HashUtils.newTimeBasedUUID(), HashUtils.newTimeBasedUUID(), HashUtils.newTimeBasedUUID());
+    private void checkBase58Uuids(final UUID... uuids) {
+        final String encoded = HashUtils.base58encode(uuids);
+        final List<UUID> decodedUuids = new ArrayList<>();
+        HashUtils.base58decode(encoded, decodedUuids::add);
+        assertThat(uuids, arrayWithSize(decodedUuids.size()));
+        assertThat(uuids, equalTo(decodedUuids.toArray(new UUID[0])));
     }
 
     @Test
-    public void base64UuidRandomEncodingTest() {
-        checkBase64Uuids(UUID.randomUUID());
-        checkBase64Uuids(UUID.randomUUID(), UUID.randomUUID());
-        checkBase64Uuids(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+    public void base58UuidTimeBasesEncodingTest() {
+        checkBase58Uuids(HashUtils.newTimeBasedUUID());
+        checkBase58Uuids(HashUtils.newTimeBasedUUID(), HashUtils.newTimeBasedUUID());
+        checkBase58Uuids(HashUtils.newTimeBasedUUID(), HashUtils.newTimeBasedUUID(), HashUtils.newTimeBasedUUID());
+        checkBase58Uuid(HashUtils.newTimeBasedUUID());
     }
 
     @Test
-    public void longToBase64Test() {
-        Assert.assertEquals("AAAAAkywFuo=", HashUtils.b64().longToBase64(9876543210L));
+    public void base58UuidRandomEncodingTest() {
+        checkBase58Uuids(UUID.randomUUID());
+        checkBase58Uuids(UUID.randomUUID(), UUID.randomUUID());
+        checkBase58Uuids(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+        checkBase58Uuid(UUID.randomUUID());
     }
 
     @Test
