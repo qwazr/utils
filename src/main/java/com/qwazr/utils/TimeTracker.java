@@ -35,15 +35,16 @@ public interface TimeTracker {
     }
 
     static TimeTracker noDurations() {
-        return new NoDurations();
+        return new NoDurations<>(NoDurations.class);
     }
 
-    class NoDurations implements TimeTracker {
+    class NoDurations<T extends NoDurations<T>> extends Equalizer<T> implements TimeTracker {
 
         protected final Date startTime;
         protected volatile long lastTime;
 
-        protected NoDurations() {
+        protected NoDurations(final Class<T> ownClass) {
+            super(ownClass);
             startTime = new Date();
             lastTime = startTime.getTime();
         }
@@ -55,6 +56,17 @@ public interface TimeTracker {
             }
         }
 
+        public int hashCode() {
+            return Objects.hash(startTime);
+        }
+
+        @Override
+        protected boolean isEqual(T other) {
+            synchronized (startTime) {
+                return Objects.equals(other.startTime, startTime) && lastTime == other.lastTime;
+            }
+        }
+
         @Override
         public Status getStatus() {
             synchronized (startTime) {
@@ -63,7 +75,7 @@ public interface TimeTracker {
         }
     }
 
-    class WithDurations extends NoDurations {
+    class WithDurations extends NoDurations<WithDurations> {
 
         private volatile long unknownTime;
         private final LinkedHashMap<String, Long> entries;
@@ -72,6 +84,7 @@ public interface TimeTracker {
          * Initiate the time tracker and collect the starting time.
          */
         protected WithDurations() {
+            super(WithDurations.class);
             entries = new LinkedHashMap<>();
             unknownTime = 0;
         }
@@ -95,6 +108,13 @@ public interface TimeTracker {
                 } else
                     unknownTime += elapsed;
                 lastTime = t;
+            }
+        }
+
+        @Override
+        protected boolean isEqual(final WithDurations other) {
+            synchronized (entries) {
+                return super.isEqual(other) && unknownTime == other.unknownTime && Objects.equals(entries, other.entries);
             }
         }
 
