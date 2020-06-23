@@ -125,7 +125,7 @@ public interface TimeTracker {
         }
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonAutoDetect(
             creatorVisibility = JsonAutoDetect.Visibility.NONE,
             getterVisibility = JsonAutoDetect.Visibility.NONE,
