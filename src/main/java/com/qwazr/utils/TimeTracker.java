@@ -50,12 +50,16 @@ public interface TimeTracker {
 
         @Override
         public void next(String name) {
-            time = System.currentTimeMillis();
+            synchronized (startTime) {
+                time = System.currentTimeMillis();
+            }
         }
 
         @Override
-        public synchronized Status getStatus() {
-            return new Status(startTime, time, null, null);
+        public Status getStatus() {
+            synchronized (startTime) {
+                return new Status(startTime, time, null, null);
+            }
         }
     }
 
@@ -77,23 +81,27 @@ public interface TimeTracker {
          *
          * @param name the name of the time entry
          */
-        public synchronized void next(final String name) {
-            final long t = System.currentTimeMillis();
-            final long elapsed = t - time;
-            if (name != null) {
-                Long duration = entries.get(name);
-                if (duration == null)
-                    duration = elapsed;
-                else
-                    duration += elapsed;
-                entries.put(name, duration);
-            } else
-                unknownTime += elapsed;
-            time = t;
+        public void next(final String name) {
+            synchronized (entries) {
+                final long t = System.currentTimeMillis();
+                final long elapsed = t - time;
+                if (name != null) {
+                    Long duration = entries.get(name);
+                    if (duration == null)
+                        duration = elapsed;
+                    else
+                        duration += elapsed;
+                    entries.put(name, duration);
+                } else
+                    unknownTime += elapsed;
+                time = t;
+            }
         }
 
-        public synchronized Status getStatus() {
-            return new Status(startTime, time, unknownTime, new LinkedHashMap<>(entries));
+        public Status getStatus() {
+            synchronized (entries) {
+                return new Status(startTime, time, unknownTime, new LinkedHashMap<>(entries));
+            }
         }
     }
 
