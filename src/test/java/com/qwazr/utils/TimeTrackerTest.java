@@ -16,6 +16,8 @@
 package com.qwazr.utils;
 
 import com.qwazr.utils.concurrent.ThreadUtils;
+import org.hamcrest.MatcherAssert;
+import static org.hamcrest.Matchers.lessThan;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -43,6 +45,7 @@ public class TimeTrackerTest {
         timeTracker.next("test3");
         final TimeTracker.Status status3 = timeTracker.getStatus();
         Assert.assertNotEquals(status1, status3);
+        MatcherAssert.assertThat(status3.totalTime, lessThan(1000L));
 
         Assert.assertNotNull(status3.durations.get("test1"));
         Assert.assertNotNull(status3.durations.get("test2"));
@@ -63,7 +66,7 @@ public class TimeTrackerTest {
         timeTracker.next("test3");
         final TimeTracker.Status status3 = timeTracker.getStatus();
         Assert.assertNotEquals(status1, status3);
-
+        MatcherAssert.assertThat(status3.totalTime, lessThan(10000L));
         Assert.assertNull(status3.durations);
     }
 

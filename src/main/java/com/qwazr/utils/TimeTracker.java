@@ -41,24 +41,24 @@ public interface TimeTracker {
     class NoDurations implements TimeTracker {
 
         protected final Date startTime;
-        protected volatile long time;
+        protected volatile long lastTime;
 
         protected NoDurations() {
             startTime = new Date();
-            time = startTime.getTime();
+            lastTime = startTime.getTime();
         }
 
         @Override
         public void next(String name) {
             synchronized (startTime) {
-                time = System.currentTimeMillis();
+                lastTime = System.currentTimeMillis();
             }
         }
 
         @Override
         public Status getStatus() {
             synchronized (startTime) {
-                return new Status(startTime, time, null, null);
+                return new Status(startTime, lastTime - startTime.getTime(), null, null);
             }
         }
     }
@@ -84,7 +84,7 @@ public interface TimeTracker {
         public void next(final String name) {
             synchronized (entries) {
                 final long t = System.currentTimeMillis();
-                final long elapsed = t - time;
+                final long elapsed = t - lastTime;
                 if (name != null) {
                     Long duration = entries.get(name);
                     if (duration == null)
@@ -94,13 +94,13 @@ public interface TimeTracker {
                     entries.put(name, duration);
                 } else
                     unknownTime += elapsed;
-                time = t;
+                lastTime = t;
             }
         }
 
         public Status getStatus() {
             synchronized (entries) {
-                return new Status(startTime, time, unknownTime, new LinkedHashMap<>(entries));
+                return new Status(startTime, lastTime - startTime.getTime(), unknownTime, new LinkedHashMap<>(entries));
             }
         }
     }
