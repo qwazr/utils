@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,71 +15,96 @@
  */
 package com.qwazr.utils;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class TimeTracker {
+public interface TimeTracker {
 
-    private final long startTime;
-    private volatile long time;
-    private volatile long unknownTime;
+    void next(String name);
 
-    private final LinkedHashMap<String, Long> entries;
-    private volatile LinkedHashMap<String, Long> cachedEntries;
+    Status getStatus();
 
-    /**
-     * Initiate the time tracker and collect the starting time.
-     */
-    public TimeTracker() {
-        entries = new LinkedHashMap<>();
-        startTime = time = System.currentTimeMillis();
-        unknownTime = 0;
-        cachedEntries = null;
+    static TimeTracker withDurations() {
+        return new WithDurations();
     }
 
-    /**
-     * Add a new entry, with the given name and the elapsed time.
-     *
-     * @param name the name of the time entry
-     */
-    public synchronized void next(String name) {
-        final long t = System.currentTimeMillis();
-        final long elapsed = t - time;
-        if (name != null) {
-            Long duration = entries.get(name);
-            if (duration == null)
-                duration = elapsed;
-            else
-                duration += elapsed;
-            entries.put(name, duration);
-            cachedEntries = null;
-        } else
-            unknownTime += elapsed;
-        time = t;
+    static TimeTracker noDurations() {
+        return new NoDurations();
     }
 
-    /**
-     * @return the backed map
-     */
-    private synchronized LinkedHashMap<String, Long> buildCache() {
-        if (cachedEntries == null)
-            cachedEntries = new LinkedHashMap<>(entries);
-        return cachedEntries;
+    class NoDurations implements TimeTracker {
+
+        protected final Date startTime;
+        protected volatile long time;
+
+        protected NoDurations() {
+            startTime = new Date();
+            time = startTime.getTime();
+        }
+
+        @Override
+        public void next(String name) {
+            time = System.currentTimeMillis();
+        }
+
+        @Override
+        public synchronized Status getStatus() {
+            return new Status(startTime, time, null, null);
+        }
     }
 
-    public Status getStatus() {
-        return new Status(this);
+    class WithDurations extends NoDurations {
+
+        private volatile long unknownTime;
+        private final LinkedHashMap<String, Long> entries;
+
+        /**
+         * Initiate the time tracker and collect the starting time.
+         */
+        protected WithDurations() {
+            entries = new LinkedHashMap<>();
+            unknownTime = 0;
+        }
+
+        /**
+         * Add a new entry, with the given name and the elapsed time.
+         *
+         * @param name the name of the time entry
+         */
+        public synchronized void next(final String name) {
+            final long t = System.currentTimeMillis();
+            final long elapsed = t - time;
+            if (name != null) {
+                Long duration = entries.get(name);
+                if (duration == null)
+                    duration = elapsed;
+                else
+                    duration += elapsed;
+                entries.put(name, duration);
+            } else
+                unknownTime += elapsed;
+            time = t;
+        }
+
+        public synchronized Status getStatus() {
+            return new Status(startTime, time, unknownTime, new LinkedHashMap<>(entries));
+        }
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class Status {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonAutoDetect(
+            creatorVisibility = JsonAutoDetect.Visibility.NONE,
+            getterVisibility = JsonAutoDetect.Visibility.NONE,
+            setterVisibility = JsonAutoDetect.Visibility.NONE,
+            isGetterVisibility = JsonAutoDetect.Visibility.NONE,
+            fieldVisibility = JsonAutoDetect.Visibility.NONE)
+    class Status extends Equalizer.Immutable<Status> {
 
         @JsonProperty("start_time")
         final public Date startTime;
@@ -90,34 +115,29 @@ public class TimeTracker {
         @JsonProperty("unknown_time")
         final public Long unknownTime;
 
+        @JsonProperty("durations")
         final public LinkedHashMap<String, Long> durations;
 
         @JsonCreator
-        Status(@JsonProperty("start_time") Date startTime, @JsonProperty("total_time") Long totalTime,
+        Status(@JsonProperty("start_time") Date startTime,
+               @JsonProperty("total_time") Long totalTime,
                @JsonProperty("unknown_time") Long unknownTime,
                @JsonProperty("durations") LinkedHashMap<String, Long> durations) {
+            super(Status.class);
             this.startTime = startTime;
             this.totalTime = totalTime;
             this.unknownTime = unknownTime;
             this.durations = durations;
         }
 
-        private Status(TimeTracker timeTracker) {
-            this(new Date(timeTracker.startTime), timeTracker.time - timeTracker.startTime, timeTracker.unknownTime,
-                    timeTracker.buildCache());
-        }
-
-        @JsonIgnore
         public Date getStartTime() {
             return startTime == null ? null : new Date(startTime.getTime());
         }
 
-        @JsonIgnore
         public Long getTotalTime() {
             return totalTime;
         }
 
-        @JsonIgnore
         public Long getUnknownTime() {
             return unknownTime;
         }
@@ -127,19 +147,16 @@ public class TimeTracker {
         }
 
         @Override
-        public int hashCode() {
+        protected int computeHashCode() {
             return Objects.hash(startTime, totalTime, unknownTime);
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof Status))
-                return false;
-            if (o == this)
-                return true;
-            final Status s = (Status) o;
-            return Objects.equals(startTime, s.startTime) && Objects.equals(totalTime, s.totalTime) &&
-                    Objects.equals(unknownTime, s.unknownTime) && CollectionsUtils.equals(durations, s.durations);
+        protected boolean isEqual(final Status s) {
+            return Objects.equals(startTime, s.startTime)
+                    && Objects.equals(totalTime, s.totalTime)
+                    && Objects.equals(unknownTime, s.unknownTime)
+                    && Objects.equals(durations, s.durations);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 Emmanuel Keller / QWAZR
+ * Copyright 2016-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,50 +24,65 @@ import java.util.concurrent.TimeUnit;
 
 public class TimeTrackerTest {
 
-	private TimeTracker getTimeTracker() {
-		final TimeTracker timeTracker = new TimeTracker();
-		timeTracker.next("test1");
-		ThreadUtils.sleep(10, TimeUnit.MILLISECONDS);
-		timeTracker.next("test2");
-		return timeTracker;
-	}
+    private TimeTracker feedTimeTracker(final TimeTracker timeTracker) {
+        timeTracker.next("test1");
+        ThreadUtils.sleep(10, TimeUnit.MILLISECONDS);
+        timeTracker.next("test2");
+        return timeTracker;
+    }
 
-	@Test
-	public void testContentAndEquality() {
+    @Test
+    public void testContentAndEqualityWithDurations() {
 
-		final TimeTracker timeTracker = getTimeTracker();
-		final TimeTracker.Status status1 = timeTracker.getStatus();
-		final TimeTracker.Status status2 = timeTracker.getStatus();
+        final TimeTracker timeTracker = feedTimeTracker(TimeTracker.withDurations());
+        final TimeTracker.Status status1 = timeTracker.getStatus();
+        final TimeTracker.Status status2 = timeTracker.getStatus();
 
-		Assert.assertEquals(status1, status2);
+        Assert.assertEquals(status1, status2);
 
-		timeTracker.next("test3");
-		final TimeTracker.Status status3 = timeTracker.getStatus();
-		Assert.assertNotEquals(status1, status3);
+        timeTracker.next("test3");
+        final TimeTracker.Status status3 = timeTracker.getStatus();
+        Assert.assertNotEquals(status1, status3);
 
-		Assert.assertNotNull(status3.durations.get("test1"));
-		Assert.assertNotNull(status3.durations.get("test2"));
-		Assert.assertNotNull(status3.durations.get("test3"));
+        Assert.assertNotNull(status3.durations.get("test1"));
+        Assert.assertNotNull(status3.durations.get("test2"));
+        Assert.assertNotNull(status3.durations.get("test3"));
+    }
 
-	}
+    @Test
+    public void testContentAndEqualityWithoutDurations() throws InterruptedException {
 
-	@Test
-	public void statusJsonSerialisation() throws IOException {
+        final TimeTracker timeTracker = feedTimeTracker(TimeTracker.noDurations());
+        final TimeTracker.Status status1 = timeTracker.getStatus();
+        Assert.assertNull(status1.durations);
 
-		final TimeTracker timeTracker = getTimeTracker();
-		final TimeTracker.Status status1 = timeTracker.getStatus();
-		final TimeTracker.Status status2 =
-				ObjectMappers.JSON.readValue(ObjectMappers.JSON.writeValueAsString(status1), TimeTracker.Status.class);
+        final TimeTracker.Status status2 = timeTracker.getStatus();
+        Assert.assertEquals(status1, status2);
 
-		Assert.assertEquals(status1, status2);
-	}
+        Thread.sleep(100);
+        timeTracker.next("test3");
+        final TimeTracker.Status status3 = timeTracker.getStatus();
+        Assert.assertNotEquals(status1, status3);
 
-	@Test
-	public void testGetter() throws IOException {
-		final TimeTracker.Status status = getTimeTracker().getStatus();
-		Assert.assertEquals(status.startTime, status.getStartTime());
-		Assert.assertEquals(status.totalTime, status.getTotalTime());
-		Assert.assertEquals(status.unknownTime, status.getUnknownTime());
-		Assert.assertEquals(status.durations, status.getDurations());
-	}
+        Assert.assertNull(status3.durations);
+    }
+
+    @Test
+    public void statusJsonSerialisation() throws IOException {
+
+        final TimeTracker timeTracker = feedTimeTracker(TimeTracker.withDurations());
+        final TimeTracker.Status status1 = timeTracker.getStatus();
+        final TimeTracker.Status status2 =
+                ObjectMappers.JSON.readValue(ObjectMappers.JSON.writeValueAsString(status1), TimeTracker.Status.class);
+        Assert.assertEquals(status1, status2);
+    }
+
+    @Test
+    public void testGetter() {
+        final TimeTracker.Status status = feedTimeTracker(TimeTracker.withDurations()).getStatus();
+        Assert.assertEquals(status.startTime, status.getStartTime());
+        Assert.assertEquals(status.totalTime, status.getTotalTime());
+        Assert.assertEquals(status.unknownTime, status.getUnknownTime());
+        Assert.assertEquals(status.durations, status.getDurations());
+    }
 }
