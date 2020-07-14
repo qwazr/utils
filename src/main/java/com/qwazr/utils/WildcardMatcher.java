@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2014-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,22 @@
  */
 package com.qwazr.utils;
 
-import org.apache.commons.io.IOCase;
-
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.Objects;
 import java.util.Stack;
+import org.apache.commons.io.IOCase;
 
 /**
  * This class is inspired by  {@link org.apache.commons.io.FilenameUtils}
  */
-public class WildcardMatcher {
+public class WildcardMatcher extends Equalizer.Immutable<WildcardMatcher> {
 
     private final String[] wcs;
 
     private final String pattern;
 
     public WildcardMatcher(final String pattern) {
+        super(WildcardMatcher.class);
         this.pattern = pattern;
         wcs = pattern == null ? null : splitOnTokens(pattern);
     }
@@ -157,7 +156,7 @@ public class WildcardMatcher {
 
         char[] array = text.toCharArray();
         final ArrayList<String> list = new ArrayList<>();
-        StringBuilder buffer = new StringBuilder();
+        final StringBuilder buffer = new StringBuilder();
         for (int i = 0; i < array.length; i++) {
             if (array[i] == '?' || array[i] == '*') {
                 if (buffer.length() != 0) {
@@ -166,7 +165,7 @@ public class WildcardMatcher {
                 }
                 if (array[i] == '?') {
                     list.add("?");
-                } else if (list.isEmpty() || i > 0 && list.get(list.size() - 1).equals("*") == false) {
+                } else if (list.isEmpty() || i > 0 && !list.get(list.size() - 1).equals("*")) {
                     list.add("*");
                 }
             } else {
@@ -180,23 +179,13 @@ public class WildcardMatcher {
         return list.toArray(ArrayUtils.EMPTY_STRING_ARRAY);
     }
 
-    public final static List<WildcardMatcher> getList(final Collection<String> patternList) {
-        if (patternList == null || patternList.isEmpty())
-            return null;
-        final List<WildcardMatcher> matcherList = new ArrayList<>(patternList.size());
-        for (String pattern : patternList)
-            matcherList.add(new WildcardMatcher(pattern));
-        return matcherList;
+    @Override
+    protected boolean isEqual(final WildcardMatcher query) {
+        return Objects.equals(pattern, query.pattern);
     }
 
-    public final static boolean anyMatch(final String value, final List<WildcardMatcher> matcherList) {
-        for (WildcardMatcher matcher : matcherList) {
-            synchronized (matcher) {
-                if (matcher.match(value))
-                    return true;
-            }
-        }
-        return false;
+    @Override
+    protected int computeHashCode() {
+        return Objects.hashCode(pattern);
     }
-
 }

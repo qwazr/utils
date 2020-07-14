@@ -20,22 +20,13 @@ import com.qwazr.utils.WildcardMatcher;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class WildcardMatcherTest {
 
 	@Test
 	public void matcherTest() {
 		Assert.assertTrue(new WildcardMatcher("http://*.qwazr*").match("http://www.qwazr.com"));
 		Assert.assertFalse(new WildcardMatcher("http://*.qwazr*").match("http://www.opensearchserver.com"));
+		Assert.assertEquals(new WildcardMatcher("http://*.qwazr*").getPattern(), "http://*.qwazr*");
 	}
 
-	@Test
-	public void anyMatchTest() {
-		List<WildcardMatcher> list =
-				Arrays.asList(new WildcardMatcher("http://*.qwazr*"), new WildcardMatcher("https://*.qwazr*"));
-		Assert.assertTrue(WildcardMatcher.anyMatch("https://www.qwazr.com", list));
-		Assert.assertFalse(WildcardMatcher.anyMatch("https://www.opensearchserver.com", list));
-	}
 }
