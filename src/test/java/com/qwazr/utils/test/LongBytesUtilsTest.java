@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 Emmanuel Keller / QWAZR
+ * Copyright 2016-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,9 @@ package com.qwazr.utils.test;
 
 import com.qwazr.utils.LongBytesUtils;
 import com.qwazr.utils.RandomUtils;
-import org.junit.Assert;
-import org.junit.Test;
-
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import org.junit.Test;
 
 public class LongBytesUtilsTest {
 
@@ -29,6 +28,6 @@ public class LongBytesUtilsTest {
         final long longValue = RandomUtils.nextLong();
         final byte[] byteArray = new byte[8];
         LongBytesUtils.longToByteArray(longValue, byteArray);
-        Assert.assertThat(LongBytesUtils.byteArrayToLong(byteArray), equalTo(longValue));
+        assertThat(LongBytesUtils.byteArrayToLong(byteArray), equalTo(longValue));
     }
 }
