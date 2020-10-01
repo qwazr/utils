@@ -33,13 +33,15 @@ public class AutoLockSemaphoreTest {
 
     void action(final AutoLockSemaphore semaphore,
                 final AtomicBoolean done,
-                final AtomicInteger runningcount,
+                final AtomicInteger runningCount,
                 final AtomicInteger concurrentCount,
                 final AtomicInteger maxConcurrentCount) {
-        runningcount.incrementAndGet();
+        runningCount.incrementAndGet();
         try (final AutoLockSemaphore.Lock lock = semaphore.acquire()) {
             final int max = concurrentCount.incrementAndGet();
-            maxConcurrentCount.set(Math.max(max, maxConcurrentCount.get()));
+            synchronized (maxConcurrentCount) {
+                maxConcurrentCount.set(Math.max(max, maxConcurrentCount.get()));
+            }
             while (!done.get()) {
                 ThreadUtils.sleep(RandomUtils.nextInt(250, 500), TimeUnit.MICROSECONDS);
             }
