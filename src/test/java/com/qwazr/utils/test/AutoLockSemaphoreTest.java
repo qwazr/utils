@@ -38,10 +38,12 @@ public class AutoLockSemaphoreTest {
     void action(final AutoLockSemaphore semaphore,
                 final AtomicBoolean done,
                 final AtomicInteger runningCount,
+                final AtomicInteger endingCount,
                 final AtomicInteger concurrentCount,
                 final AtomicInteger maxConcurrentCount) {
         runningCount.incrementAndGet();
         try (final AutoLockSemaphore.Lock lock = semaphore.acquire()) {
+            assert lock != null;
             final int max = concurrentCount.incrementAndGet();
             while (!done.get()) {
                 synchronized (maxConcurrentCount) {
@@ -50,6 +52,8 @@ public class AutoLockSemaphoreTest {
                 ThreadUtils.sleep(RandomUtils.nextInt(250, 500), TimeUnit.MICROSECONDS);
             }
             concurrentCount.decrementAndGet();
+        } finally {
+            endingCount.incrementAndGet();
         }
     }
 
@@ -57,6 +61,7 @@ public class AutoLockSemaphoreTest {
             throws InterruptedException, ExecutionException {
 
         final AtomicInteger runningCount = new AtomicInteger(0);
+        final AtomicInteger endingCount = new AtomicInteger(0);
         final ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
         try {
 
@@ -66,17 +71,18 @@ public class AutoLockSemaphoreTest {
 
             final List<Future<?>> futures = new ArrayList<>();
             for (int i = 0; i < threadPoolSize; i++)
-                futures.add(executorService.submit(() -> action(semaphore, done, runningCount, concurrentCount, maxConcurrentCount)));
+                futures.add(executorService.submit(() -> action(semaphore, done, runningCount, endingCount, concurrentCount, maxConcurrentCount)));
 
             WaitFor.of().timeOut(TimeUnit.SECONDS, 10).until(() -> runningCount.get() == threadPoolSize);
             done.set(true);
             for (Future<?> future : futures)
                 future.get();
-            System.out.println(runningCount.get() + " " + concurrentCount.get() + " " + maxConcurrentCount.get());
+            System.out.println(runningCount.get() + " " + endingCount.get() + " " + concurrentCount.get() + " " + maxConcurrentCount.get());
             return maxConcurrentCount.get();
         } finally {
             ExecutorUtils.close(executorService, 3, TimeUnit.MINUTES);
             Assert.assertEquals(runningCount.get(), threadPoolSize);
+            Assert.assertEquals(endingCount.get(), threadPoolSize);
         }
     }
 
