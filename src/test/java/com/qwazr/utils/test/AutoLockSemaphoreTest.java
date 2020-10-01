@@ -72,6 +72,7 @@ public class AutoLockSemaphoreTest {
             done.set(true);
             for (Future<?> future : futures)
                 future.get();
+            System.out.println(runningCount.get() + " " + concurrentCount.get() + " " + maxConcurrentCount.get());
             return maxConcurrentCount.get();
         } finally {
             ExecutorUtils.close(executorService, 3, TimeUnit.MINUTES);
