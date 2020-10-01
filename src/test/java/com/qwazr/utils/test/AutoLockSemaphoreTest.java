@@ -63,8 +63,9 @@ public class AutoLockSemaphoreTest {
             for (int i = 0; i < threadPoolSize; i++)
                 executorService.submit(() -> action(semaphore, done, runningCount, concurrentCount, maxConcurrentCount));
 
-            WaitFor.of().timeOut(TimeUnit.SECONDS, 1).until(() -> runningCount.get() == threadPoolSize && concurrentCount.get() == 0);
+            WaitFor.of().timeOut(TimeUnit.SECONDS, 1).until(() -> runningCount.get() == threadPoolSize);
             done.set(true);
+            WaitFor.of().timeOut(TimeUnit.SECONDS, 1).until(() -> concurrentCount.get() == 0);
             return maxConcurrentCount.get();
         } finally {
             ExecutorUtils.close(executorService, 3, TimeUnit.MINUTES);
