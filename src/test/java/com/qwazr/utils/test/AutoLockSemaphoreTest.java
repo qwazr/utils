@@ -20,8 +20,12 @@ import com.qwazr.utils.WaitFor;
 import com.qwazr.utils.concurrent.AutoLockSemaphore;
 import com.qwazr.utils.concurrent.ExecutorUtils;
 import com.qwazr.utils.concurrent.ThreadUtils;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,10 +43,10 @@ public class AutoLockSemaphoreTest {
         runningCount.incrementAndGet();
         try (final AutoLockSemaphore.Lock lock = semaphore.acquire()) {
             final int max = concurrentCount.incrementAndGet();
-            synchronized (maxConcurrentCount) {
-                maxConcurrentCount.set(Math.max(max, maxConcurrentCount.get()));
-            }
             while (!done.get()) {
+                synchronized (maxConcurrentCount) {
+                    maxConcurrentCount.set(Math.max(max, maxConcurrentCount.get()));
+                }
                 ThreadUtils.sleep(RandomUtils.nextInt(250, 500), TimeUnit.MICROSECONDS);
             }
             concurrentCount.decrementAndGet();
@@ -50,7 +54,7 @@ public class AutoLockSemaphoreTest {
     }
 
     int doTest(final AutoLockSemaphore semaphore, final int threadPoolSize)
-            throws InterruptedException {
+            throws InterruptedException, ExecutionException {
 
         final AtomicInteger runningCount = new AtomicInteger(0);
         final ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
@@ -60,12 +64,14 @@ public class AutoLockSemaphoreTest {
             final AtomicInteger concurrentCount = new AtomicInteger(0);
             final AtomicInteger maxConcurrentCount = new AtomicInteger(0);
 
+            final List<Future<?>> futures = new ArrayList<>();
             for (int i = 0; i < threadPoolSize; i++)
-                executorService.submit(() -> action(semaphore, done, runningCount, concurrentCount, maxConcurrentCount));
+                futures.add(executorService.submit(() -> action(semaphore, done, runningCount, concurrentCount, maxConcurrentCount)));
 
-            WaitFor.of().timeOut(TimeUnit.SECONDS, 1).until(() -> runningCount.get() == threadPoolSize);
+            WaitFor.of().timeOut(TimeUnit.SECONDS, 10).until(() -> runningCount.get() == threadPoolSize);
             done.set(true);
-            WaitFor.of().timeOut(TimeUnit.SECONDS, 1).until(() -> concurrentCount.get() == 0);
+            for (Future<?> future : futures)
+                future.get();
             return maxConcurrentCount.get();
         } finally {
             ExecutorUtils.close(executorService, 3, TimeUnit.MINUTES);
@@ -74,27 +80,29 @@ public class AutoLockSemaphoreTest {
     }
 
     @Test
-    public void testUnlimited() throws InterruptedException {
+    public void testUnlimited() throws InterruptedException, ExecutionException {
         Assert.assertEquals(doTest(AutoLockSemaphore.UNLIMITED, 20), 20);
     }
 
     @Test
-    public void testNoPermit() throws InterruptedException {
-        Assert.assertEquals(doTest(AutoLockSemaphore.of(0), 20), 0);
+    public void testNoPermit() {
+        final ExecutionException executionException = Assert.assertThrows(ExecutionException.class, () -> doTest(AutoLockSemaphore.of(0), 20));
+        Assert.assertEquals(executionException.getCause().getClass(), AutoLockSemaphore.AcquireException.class);
+        Assert.assertEquals(executionException.getCause().getMessage(), "Permission rejected");
     }
 
     @Test
-    public void test1Permits() throws InterruptedException {
+    public void test1Permits() throws InterruptedException, ExecutionException {
         Assert.assertEquals(doTest(AutoLockSemaphore.of(1), 15), 1);
     }
 
     @Test
-    public void test2Permits() throws InterruptedException {
+    public void test2Permits() throws InterruptedException, ExecutionException {
         Assert.assertEquals(doTest(AutoLockSemaphore.of(2), 15), 2);
     }
 
     @Test
-    public void test100Permits() throws InterruptedException {
+    public void test100Permits() throws InterruptedException, ExecutionException {
         Assert.assertEquals(doTest(AutoLockSemaphore.of(100), 200), 100);
     }
 
