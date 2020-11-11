@@ -22,53 +22,63 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public interface ConstructorParameters {
 
-	<T> Object registerConstructorParameter(final Class<? extends T> objectClass, final T object);
+    <T> Object registerConstructorParameter(final Class<? extends T> objectClass, final T object);
 
-	default Object registerConstructorParameter(final Object object) {
-		return registerConstructorParameter(object.getClass(), object);
-	}
+    default Object registerConstructorParameter(final Object object) {
+        return registerConstructorParameter(object.getClass(), object);
+    }
 
-	Map<Class<?>, Object> getMap();
+    Map<Class<?>, Object> getMap();
 
-	<T> T unregisterConstructorParameter(final Class<? extends T> objectClass);
+    <T> T unregisterConstructorParameter(final Class<? extends T> objectClass);
 
-	default Object unregisterConstructorParameter(final Object object) {
-		return unregisterConstructorParameter(object.getClass());
-	}
+    default Object unregisterConstructorParameter(final Object object) {
+        return unregisterConstructorParameter(object.getClass());
+    }
 
-	/**
-	 * Fill a parameter map from the given parameters collection
-	 *
-	 * @param parameters the parameters to check
-	 */
-	default void registerConstructorParameters(final Collection<?> parameters) {
-		if (parameters == null)
-			return;
-		parameters.forEach(this::registerConstructorParameter);
-	}
+    /**
+     * Fill a parameter map from the given parameters collection
+     *
+     * @param parameters the parameters to check
+     */
+    default void registerConstructorParameters(final Collection<?> parameters) {
+        if (parameters == null)
+            return;
+        parameters.forEach(this::registerConstructorParameter);
+    }
 
-	/**
-	 * Fill a parameter map from the given parameters
-	 *
-	 * @param parameters the parameters to check
-	 */
-	default void registerConstructorParameters(final Object... parameters) {
-		if (parameters == null)
-			return;
-		for (final Object parameter : parameters)
-			registerConstructorParameter(parameter);
-	}
+    /**
+     * Fill a parameter map from the given parameters
+     *
+     * @param parameters the parameters to check
+     */
+    default void registerConstructorParameters(final Object... parameters) {
+        if (parameters == null)
+            return;
+        for (final Object parameter : parameters)
+            registerConstructorParameter(parameter);
+    }
 
-	static ConstructorParametersImpl withMap(Map<Class<?>, Object> map) {
-		return new ConstructorParametersImpl(map);
-	}
+    /**
+     * Find the first constructor who match the largest set of parameters present
+     *
+     * @param objectClass the class to introspect
+     * @param <T>         the type of the class
+     * @return the best matching constructor
+     * @throws NoSuchMethodException if no matching method is found
+     */
+    <T> InstanceFactory<T> findBestMatchingConstructor(final Class<T> objectClass) throws NoSuchMethodException;
 
-	static ConstructorParametersImpl withHashMap() {
-		return withMap(new HashMap<>());
-	}
+    static ConstructorParameters withMap(Map<Class<?>, Object> map) {
+        return new ConstructorParametersImpl(map);
+    }
 
-	static ConstructorParametersImpl withConcurrentMap() {
-		return withMap(new ConcurrentHashMap<>());
-	}
+    static ConstructorParameters withHashMap() {
+        return withMap(new HashMap<>());
+    }
+
+    static ConstructorParameters withConcurrentMap() {
+        return withMap(new ConcurrentHashMap<>());
+    }
 
 }

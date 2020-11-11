@@ -1,5 +1,5 @@
-/**
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-220 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class ConstructorParametersImpl extends InstancesSupplier.Impl implements
      * @return the best matching constructor
      * @throws NoSuchMethodException if no matching method is found
      */
+    @Override
     public <T> InstanceFactory<T> findBestMatchingConstructor(final Class<T> objectClass) throws NoSuchMethodException {
         final Constructor<T>[] constructors = (Constructor<T>[]) objectClass.getConstructors();
         if (map.size() == 0) {
