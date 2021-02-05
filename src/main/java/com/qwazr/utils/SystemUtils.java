@@ -15,7 +15,7 @@
  */
 package com.qwazr.utils;
 
-public class SystemUtils {
+public class SystemUtils extends org.apache.commons.lang3.SystemUtils {
 
     public static Integer getIntegerProperty(String key, Integer defaultValue) {
         final String value = System.getProperty(key);
