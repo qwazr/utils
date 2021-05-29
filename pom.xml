@@ -53,12 +53,11 @@
     <dependency>
       <groupId>com.ibm.icu</groupId>
       <artifactId>icu4j</artifactId>
-      <version>68.1</version>
     </dependency>
     <dependency>
       <groupId>org.bitcoinj</groupId>
       <artifactId>bitcoinj-core</artifactId>
-      <version>0.15.9</version>
+      <version>0.15.10</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -108,13 +107,13 @@
     <dependency>
       <groupId>org.openjdk.jmh</groupId>
       <artifactId>jmh-core</artifactId>
-      <version>1.27</version>
+      <version>1.31</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.openjdk.jmh</groupId>
       <artifactId>jmh-generator-annprocess</artifactId>
-      <version>1.27</version>
+      <version>1.31</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
